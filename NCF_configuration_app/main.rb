@@ -5,7 +5,7 @@ Shoes.app(title: " v1.0", width: 500, height: 600, resizable: false ) do
 			rect(left: 90, top: 25, curve: 10,  width: 270, height: 250, fill: rgb(245,245,220))
 			caption "Select NCF package to install", align: "center", top: 30
 			(Dir.entries("NCF_repository").reject {|fn| fn.include?('.')}).each_with_index do | f, i |
-				button("#{f}", left: 0.4, top: 0.25 + 0.1*i, width: 0.2) { list_creatures f }
+				button("#{f}", left: 0.4, top: 0.17 + 0.1*i, width: 0.2) { list_creatures f }
 			end
 			inscription "Note: Packages are not compatible.", top: 290
 		end
@@ -13,18 +13,15 @@ Shoes.app(title: " v1.0", width: 500, height: 600, resizable: false ) do
 	
 	def list_creatures folder
 		@main.clear fill: rgb(100,244,40) do
-			rect(left: 0, top: 0, curve: 10,  width: @main.width-18, height: @main.scroll_height-2, fill: rgb(245,245,220))
+			rect(left: 0, top: 0, curve: 10,  width: @main.width-3, height: @main.scroll_height-60, fill: rgb(245,245,220))
 			@from = 0
 			name_file = File.readlines("\NCF_lists\\legacy_list.txt")
 			tagline "Legacy pack list", align: "center"
 			line 20, 35, 420, 35
-			button "Next" do
-				
-			end
-			check(left: 130, top: 40, checked: false) { |c| @main.contents[6].contents.each { |f| f.contents[0].checked = c.checked? ? true : false} }
-			caption "Select All", left: 150, top: 39
+			check(left: 30, top: 40, checked: false) { |c| @main.contents[6].contents.each { |f| f.contents[0].checked = c.checked? ? true : false} }
+			caption "Select All", left: 50, top: 39
 			line 20, 70, 420, 70
-			@q = stack left: 20, top: 75, width: 400, height: 400, scroll: true do
+			@q = stack left: 20, top: 75, width: 420, height: 400, scroll: true do
 				#border orange
 				(Dir.entries("NCF_repository\\Legacy pack").reject {|fn| fn == '.' or fn == '..'}).each_with_index do |ncf, i|
 					num = ncf[/NCF_(.*?).pak/m, 1]
@@ -41,14 +38,20 @@ Shoes.app(title: " v1.0", width: 500, height: 600, resizable: false ) do
 					end
 				end
 			end
+			button( "Back", left: 10, top: 490 ) { main_page }
+			button("Next", left: 380, top: 490 ) { pre_deployment }
 		end
 		start { @q.scroll_top = 1 }
 		#inscription "Caution: NCF creatures in DATA folder are purged during package install."
 	end
+	
+	def pre_deployment
+	
+	end
 		
 	background tan
 	subtitle "NCF Configuration Utility", align: "center"
-	@main = stack left: 0.05, top: 0.1, width: 0.9, height: 0.8
+	@main = stack left: 0.05, top: 0.1, width: 0.9, height: 0.9
 	main_page		
 end
 
