@@ -1,5 +1,9 @@
 Shoes.app(title: " v1.0", width: 500, height: 600, resizable: false ) do
 
+	def filter_files path
+		return Dir.entries(path).reject { |rj| ['.','..'].include?(rj) }
+	end
+	
     def main_page
 		@main.clear do
 			stack left: 5, top: 15, width: 440, height: 100 do
@@ -13,7 +17,6 @@ Shoes.app(title: " v1.0", width: 500, height: 600, resizable: false ) do
 				caption "NCF package", align: "center"
 				Dir.entries("NCF_repository/packs").reject {|rj| rj.include?('.')}.each_with_index { | f, i | button("#{f}", left: 25, top: 35 + 40*i, width: 100) { list_creatures f } }
 			end
-			#inscription "Note: Packages are not compatible.", top: 400
 		end
 	end
 	
@@ -21,15 +24,15 @@ Shoes.app(title: " v1.0", width: 500, height: 600, resizable: false ) do
 		@core.clear do
 			rect(left: 0, top: 0, curve: 10,  width: 150, height: 250, fill: rgb(245,245,220))
 			caption "Core", align: "center"
-			Dir.entries("NCF_repository/core").reject {|rj| rj.include?('.')}.each_with_index do | f, i |
-				Dir.glob("NCF_repository/core/#{f}/**/*").reject{ |rjj| File.directory?(rjj) }.each do |fn|
-					Dir.glob("data/**/#{fn.split("/")[-1]}") == [] ? @flag=1 : @flag=0;
+			(filter_files "NCF_repository/core").each_with_index do | f, i |
+				if ((filter_files "NCF_repository/core/#{f}/data") & (File.directory?("data") ? (filter_files "data") : [] )).empty? then
+					button("#{f}", left: 25, top: 35 + 40*i, width: 100) { deploy_core f }
+				else
+					exist_core f; break;
 				end
-				@flag == 0? (exist_core f; break) : nil
-				button("#{f}", left: 25, top: 35 + 40*i, width: 100) { deploy_core f }
 			end
 		end
-	end
+	end	
 	
 	def exist_core f
 		@core.clear do
@@ -57,8 +60,6 @@ Shoes.app(title: " v1.0", width: 500, height: 600, resizable: false ) do
 		end
 	end
 		
-		
-	
 	def list_creatures folder
 		@custom_ncf_package = []
 		@main.clear fill: rgb(100,244,40) do
@@ -71,7 +72,7 @@ Shoes.app(title: " v1.0", width: 500, height: 600, resizable: false ) do
 			caption "Select All", left: 50, top: 39
 			line 20, 70, 420, 70
 			@q = stack left: 20, top: 75, width: 420, height: 400, scroll: true do
-				(Dir.entries("NCF_repository/packs/Legacy pack").reject {|rj| rj == '.' or rj == '..'}).each_with_index do |ncf, i|
+				(filter_files "NCF_repository/packs/Legacy pack").each_with_index do |ncf, i|
 					num = ncf[/NCF_(.*?).pak/m, 1]
 					name_file[@from..-1].each do |line|
 						@from+=1
@@ -93,12 +94,6 @@ Shoes.app(title: " v1.0", width: 500, height: 600, resizable: false ) do
 	end
 	
 	def pre_deployment
-		@main.clear fill: rgb(100,244,40) do
-			rect(left: 90, top: 25, curve: 10,  width: 270, height: 250, fill: rgb(245,245,220))
-			caption "Deploy NCF for:", top: 30, align: "center"
-			[ "Tribes of the East 3.1", "MMH5.5" ].each_with_index { |ver, i| radio( left: 135, top: 70+i*30 );  para ver, left: 155, top: 73+i*25 }
-			inscription "Note: Packages are not compatible.", top: 290
-		end
 	end
 		
 	background tan
