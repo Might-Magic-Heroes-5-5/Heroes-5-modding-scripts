@@ -19,6 +19,12 @@ Shoes.app(title: " v1.0", width: 500, height: 600, resizable: false ) do
 				caption "NCF package", align: "center"
 				Dir.entries("NCF_repository/packs").reject {|rj| rj.include?('.')}.each_with_index { | f, i | button("#{f}", left: 25, top: 35 + 40*i, width: 100) { select_creatures f } }
 			end
+			button "Purify", left: 175, top: 460, tooltip: "Removes any NCF installations", width: 100 do
+				if [ "yes", "y", "Y", "YES" ].include?(ask("WARNING! This will remove any installed NCF creature packs along with installed NCF cores. Are you sure(Y/N)?")) then
+					purge_core; purge_ncf_pack;
+					alert "Core modules and creature packs removed successfully!", title: nil
+				end
+			end
 		end
 	end
 	
@@ -36,7 +42,7 @@ Shoes.app(title: " v1.0", width: 500, height: 600, resizable: false ) do
 						rect(left: 0, top: 0, curve: 10,  width: 150, height: 250, fill: rgb(240,240,20))
 						caption "Core", align: "center" 
 						caption "#{f}\nis deployed", align: "center", displace_top: 40
-						button("Uninstall", left: 25, top: 200, width: 100 ) { purge_core }
+						button("Uninstall", left: 25, top: 200, width: 100 ) { [ "yes", "y", "Y", "YES" ].include?(ask("This will purge previous NCF installations. Are you sure(Y/N)?")) ? purge_core : nil }
 					end; 
 					break;
 				end
@@ -45,13 +51,11 @@ Shoes.app(title: " v1.0", width: 500, height: 600, resizable: false ) do
 	end	
 	
 	def purge_core
-		if [ "yes", "y", "Y", "YES" ].include?(ask("This will purge previous NCF installations. Are you sure(Y/N)?")) then
-			Dir.glob("NCF_repository/core/**/*").reject{ |rj| File.directory?(rj) }.each do |fn|
-				file_name = fn.split("/")[3..-1].join("/")
-				File.delete(file_name) if File.exist?(file_name)
-			end
-			main_core_block
+		Dir.glob("NCF_repository/core/**/*").reject{ |rj| File.directory?(rj) }.each do |fn|
+			file_name = fn.split("/")[3..-1].join("/")
+			File.delete(file_name) if File.exist?(file_name)
 		end
+		main_core_block
 	end
 	
 	def deploy_core folder
@@ -69,7 +73,7 @@ Shoes.app(title: " v1.0", width: 500, height: 600, resizable: false ) do
 			name_file = File.readlines("NCF_repository/lists/legacy_list.txt")
 			tagline "Legacy pack list", align: "center"
 			line 20, 35, 420, 35
-			check(left: 30, top: 40, checked: false) { |c| @main.contents[7].contents.each { |f| f.contents[0].checked = c.checked? ? true : false} }
+			check(left: 30, top: 40, checked: false) { |c| @main.contents[6].contents.each { |f| f.contents[0].checked = c.checked? ? true : false} }
 			caption "Select All", left: 50, top: 39
 			line 20, 70, 420, 70
 			@q = stack left: 20, top: 75, width: 420, height: 400, scroll: true do
@@ -90,7 +94,7 @@ Shoes.app(title: " v1.0", width: 500, height: 600, resizable: false ) do
 			button( "Back", left: 5, top: 490, width: 100 ) { main_page }
 			button( "Deploy", left: 340, top: 490, width: 100 ) do
 				if [ "yes", "y", "Y", "YES" ].include?( ask("Any previously installed NCF creatures will be removed. Are you sure(Y/N)?")) then
-					Dir.glob('data/NCF_*.pak').each { |file| File.delete(file)}
+					purge_ncf_pack
 					@custom_ncf_package.each_with_index { |ncf, i|	FileUtils.copy_file "NCF_repository/packs/#{folder}/#{ncf}", "data/#{ncf}" }
 					alert "#{folder} installed!", title: nil
 				end
@@ -100,6 +104,10 @@ Shoes.app(title: " v1.0", width: 500, height: 600, resizable: false ) do
 			#inscription "Caution: All NCF creatures in DATA folder are purged before package install.", top: 500
 		end
 		start { @q.scroll_top = 1 }
+	end
+	
+	def purge_ncf_pack
+		Dir.glob('data/NCF_*.pak').each { |file| File.delete(file)}
 	end
 	
 	background tan
