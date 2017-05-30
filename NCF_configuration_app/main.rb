@@ -30,7 +30,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 			caption "Core", align: "center"
 			main_pack_block "disabled"
 			(filter_files "NCF_repository/core").each_with_index do | f, i |
-				if ((filter_files "NCF_repository/core/#{f}/data") & (File.directory?("data") ? (filter_files "data") : [] )).empty? then
+				if ((filter_files "NCF_repository/core/#{f}/data") & (File.directory?("../data") ? (filter_files "../data") : [] )).empty? then
 					button("#{f}", left: 25, top: 35 + 40*i, width: 100) { deploy_core f; }
 					@info.replace "Please install NCF core for the required game."
 				else
@@ -58,7 +58,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 	
 	def deploy_core folder
 		if [ "yes", "y", "Y", "YES" ].include?(ask("Are you sure you want to deploy NCF core for #{folder}(Y/N)?\n")) then
-			FileUtils.copy_entry "NCF_repository/core/#{folder}/", "."
+			FileUtils.copy_entry "NCF_repository/core/#{folder}/", ".."
 			main_core_block
 		end
 	end
@@ -66,7 +66,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 	def purge_core
 		Dir.glob("NCF_repository/core/**/*").reject{ |rj| File.directory?(rj) }.each do |fn|
 			file_name = fn.split("/")[3..-1].join("/")
-			File.delete(file_name) if File.exist?(file_name)
+			File.delete("../#{file_name}") if File.exist?("../#{file_name}")
 		end
 		main_core_block
 	end
@@ -103,7 +103,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 				if [ "yes", "y", "Y", "YES" ].include?( ask("Any previously installed NCF creatures will be removed. Are you sure(Y/N)?")) then
 					purge_pack
 					@custom_ncf_package.each_with_index do |ncf, i|	
-						FileUtils.copy_file "NCF_repository/packs/#{folder}/#{ncf}", "data/#{ncf}"
+						FileUtils.copy_file "NCF_repository/packs/#{folder}/#{ncf}", "../data/#{ncf}"
 						@bar.fraction = (i*100)/@custom_ncf_package.count
 					end
 					alert "#{folder} installed!", title: nil
@@ -114,7 +114,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 	end
 	
 	def purge_pack
-		Dir.glob('data/NCF_*.pak').each { |file| File.delete(file)}
+		Dir.glob('../data/NCF_*.pak').each { |file| File.delete(file)}
 	end
 	
 	background tan
