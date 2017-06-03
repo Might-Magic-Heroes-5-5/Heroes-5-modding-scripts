@@ -1,0 +1,2 @@
+Legacy pack,https://raw.githubusercontent.com/dredknight/Heroes-5-modding-scripts/master/NCF_configuration_app/NCF_repository/packs/Legacy%20pack/NCF_180.pak,1.0,Known also as "NCF Megapack".,
+Official pack,https://raw.githubusercontent.com/dredknight/Heroes-5-modding-scripts/master/NCF_configuration_app/NCF_repository/packs/Legacy%20pack/NCF_180.pak,0,Pack includes all currently released NCF creatures.,
