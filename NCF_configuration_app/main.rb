@@ -44,25 +44,27 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 						caption "#{f} is deployed", align: "center"
 						button("Uninstall", left: 170, top: 65, width: 100 ) { [ "yes", "y", "Y", "YES" ].include?(ask("This will purge previous NCF installations. Are you sure(Y/N)?")) ? purge_core : nil }
 					end;
-					main_pack_block "enabled"
+					main_pack_block
 					break;
 				end
 			end
 		end
 	end
 
-	def main_pack_block stat
+	def main_pack_block stat=nil
 		@pack.clear do
 			rect(left: 0, top: 0, curve: 10,  width: 435, height: 320, fill: rgb(245,245,220))
 			caption "NCF packages", align: "center"
-			flow left: 0, top: 30, width: 217, height: 30 do
+			ofline = flow left: 0, top: 30, width: 217, height: 30 do
 				rect(left: 0, top: 0, curve: 10,  width: 215, height: 320, fill: rgb(225,225,220))
-				para "Addons", align: "center"
-			end.click { main_pack_block_offline stat }
-			flow left: 218, top: 30, width: 217, height: 30 do
+				@off_text = para "Addons", align: "center"
+			end
+			online = flow left: 218, top: 30, width: 217, height: 30 do
 				rect(left: 0, top: 0, curve: 10,  width: 217, height: 320, fill: rgb(245,225,200))
-				para "Store", align: "center"
-			end.click { main_pack_block_online }
+				para "Online store", align: "center"
+			end
+			ofline.click { main_pack_block_offline stat }
+			online.click { main_pack_block_online }
 			@show_packs = flow left: 0, top: 60, width: 435, height: 260;
 			main_pack_block_offline stat
 		end
@@ -84,7 +86,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 		packs = []
 		@show_packs.clear do
 			rect(left: 0, top: -10, curve: 10, width: 435, height: 270, fill: rgb(245,225,200))
-			File.readlines("NCF_repository/online_packs.txt").each_with_index do |pack, i |
+			File.readlines("NCF_repository/package_list.txt").each_with_index do |pack, i |
 				packs[i] =  flow left: 15, top: 10 + i*40, width: 430, height: 40 do
 					package = pack.split(',')
 					para "#{i+1}. #{package[0]} #{package[2]}", size: 15, align: "left" 
@@ -118,7 +120,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 		@main.clear fill: rgb(100,244,40) do
 			rect(left: 0, top: 0, curve: 10,  width: @main.width-3, height: @main.scroll_height-60, fill: rgb(245,245,220))
 			@from = 0
-			name_file = File.readlines("NCF_repository/lists/legacy_list.txt")
+			name_file = File.readlines("NCF_repository/packs/#{folder}/list/creature_list.txt")
 			tagline "Legacy pack list", align: "center"
 			line 20, 35, 420, 35
 			check(left: 30, top: 40, checked: false) { |c| @main.contents[7].contents.each { |f| f.contents[0].checked = c.checked? ? true : false} }
@@ -127,6 +129,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 			line 20, 70, 420, 70
 			@q = stack left: 20, top: 75, width: 420, height: 400, scroll: true do
 				(filter_files "NCF_repository/packs/#{folder}").each_with_index do |ncf, i|
+					ncf == 'list' ? next : nil
 					num = ncf[/NCF_(.*?).pak/m, 1]
 					name_file[@from..-1].each do |line|
 						@from+=1
