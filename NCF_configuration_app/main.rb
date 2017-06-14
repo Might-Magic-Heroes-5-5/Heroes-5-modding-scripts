@@ -93,6 +93,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 					button("info", left: 240, top: 0) { alert("#{package[3]}") }
 					button("Download", left: 310, top: 0) do
 						packs[i].append { progress left: 322, top: 33, width: 92, height: 3 }
+						debug("##{package[1]}#")
 						download package[1], save: "NCF_repository\\downloads\\#{File.basename(package[1])}", progress: proc { |dl| packs[i].contents[3].fraction = dl.percent }
 					end
 				end

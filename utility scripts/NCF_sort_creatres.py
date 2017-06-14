@@ -3,15 +3,25 @@ Created on Apr 28, 2017
 
 @author: dred
 '''
-from os import makedirs, walk
+from os import makedirs, walk, listdir
 from os.path import isfile, join
 from shutil import copyfile, move
 import re
 
-#source = 'D:\\mod workplace\\NCF_MegaPack'
-source = 'D:\\mod workplace\\NCF_MegaPack'
+#src = 'D:\\mod workplace\\NCF_MegaPack'
+src = 'D:\\mod workplace\\NCF\\All_NCF_creatures'
 dest = 'D:\\mod workplace\\New_NCF\\'
- 
+default_races = [ 'Academy', 'Haven', 'Dwarves', 'Necropolis', 'Dungeon', 'Preserve', 'Orcs', 'Inferno'] ## a quick list with all races in case it is needed.
+mode = 1 #selects what the script will do
+# 0 - is for NCFmegapack extraction;
+# ---> source: expects unarchievedNCF megapack folder 
+# ---> output: create separate folders for each NCF creature along with its accompanying files
+# 1 - is for creating Editor icons
+# ---> source: expects a folder with NCF creature folders (0 mode output)
+# ---> destination: creates "icon" folder with editor icons for all ncf creatures from source.
+# ---------> create separate folders for each NCF creature (copied from the source) where the MapObjects\_(AdvMapObjectLink)\Monsters\NCF\Creature_id.xdb
+# ---------> file is changed to refer the new icon that reside in <game folder>/Complete/Icons
+
 def migrate_files(file):
     if isfile(join(source,file)):
         dirr = file.split('\\')
@@ -63,7 +73,6 @@ def read_files(file, first, second, sanitize = True):
 
 def get_file_trees (file, i=0):
     paths, uuids, visuals = [], [], []
-    
     #print('-->', file)
     try:    
         paths = read_files( file, 'href="', '"')
@@ -87,25 +96,58 @@ def get_file_trees (file, i=0):
     except:
         pass
 
-#mypath = 'C:/Users/yordan.kostov/Desktop/NCF_MegaPack/GameMechanics/Creature/Creatures/Neutrals'
-#mypath = 'C:\\Users\\dred\\Desktop\\NCF\\NCF_MegaPack\\GameMechanics\\Creature\\Creatures\\Neutrals'
-#mypath = 'D:\\mod workplace\\NCF_MegaPack\\GameMechanics\\Creature\\Creatures\\Neutrals'
-
-defaultt = [ 'Academy', 'Haven', 'Dwarves', 'Necropolis', 'Dungeon', 'Preserve', 'Orcs', 'Inferno']
-
-#for race in defaultt:
+#for race in default_races:
 #for root, dirs, files in walk(join(source, 'GameMechanics\\Creature\\Creatures\\')): 
 #    for f in files:
 #        destination = (dest + f.split('.')[0] + '\\')
 #        print(('\\').join(root.split('\\')[3:]) + '\\' + f)
 #        get_file_trees(('\\').join(root.split('\\')[3:]) + '\\' + f)
+
     
-#for i in range(1,1000):
-i = 345
-destination = join(dest, '%d\\' %i)
-get_file_trees('GameMechanics\\Creature\\Creatures\\Neutrals\\Creature_%d.xdb' %i )
-#get_file_trees('Characters\\Creatures\\Academy\\Colossus_LOD_view.xdb')
-get_file_trees('MapObjects\\_(AdvMapObjectLink)\\Monsters\\NCF\\Creature_%d.xdb' %i )
-get_file_trees('scripts\\Creature_%d.lua' % i)
-get_file_trees('Cameras\\Interface\\HireCreatures\\Creature_%d.(Camera).xdb' % i)
-    #_LOD.(Character)
+cc = 0
+if mode == 0:
+    source = src
+    for i in range(1,1000):
+        destination = join(dest, '%d\\' %i)
+        get_file_trees('GameMechanics\\Creature\\Creatures\\Neutrals\\Creature_%d.xdb' %i )
+        #get_file_trees('Characters\\Creatures\\Academy\\Colossus_LOD_view.xdb')
+        get_file_trees('MapObjects\\_(AdvMapObjectLink)\\Monsters\\NCF\\Creature_%d.xdb' %i )
+        get_file_trees('scripts\\Creature_%d.lua' % i)
+        get_file_trees('Cameras\\Interface\\HireCreatures\\Creature_%d.(Camera).xdb' % i)
+        #_LOD.(Character)
+    
+if mode == 1:
+    icon_dest = join(dest, 'Complete')
+    #makedirs(icon_dest)
+    for i in range(180,182):
+        destination = join(dest, '%d\\' %i)
+        source = join(src, '%d\\' %i)
+        try:
+            file = 'GameMechanics\\Creature\\Creatures\\Neutrals\\creature_%d.xdb' %i
+            path = read_files( file, 'Visual href="', '#xpointer')
+            icon_path = read_files(path[0], 'Icon128 href="', '.xdb')
+            icon = icon_path[0].split('\\')[-1]
+            editor_link = 'MapObjects\\_(AdvMapObjectLink)\\Monsters\\NCF\\Creature_%d.xdb' %i
+            copyfile(join(source, icon_path[0] + ".dds"), join(icon_dest, 'Creature_%d.dds' %i ))
+            dirr = editor_link.split('\\')
+            try:
+                makedirs(destination + '\\'.join(dirr[0:len(dirr)-1]))
+            except:
+                pass
+            print(join(destination, editor_link))
+            NCF = open(join(destination, editor_link), 'w')
+            first = '<IconFile>'
+            second = '</IconFile>'
+            for line in open(join(source, editor_link)):
+                print(line)
+                try:
+                    start = line.index( first ) + len( first )
+                    end = line.index( second, start )
+                    string = line[start:end]
+                    NCF.write('\t' + first + 'Icons\\Creature_%d.dds' %i + second + '\n')
+                except ValueError:
+                    NCF.write(line)
+            NCF.close
+            print(i, path, icon_path, icon)
+        except:
+            pass
