@@ -74,8 +74,9 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 		@show_packs.clear do
 			rect(left: 0, top: -10, curve: 10, width: 435, height: 270, fill: rgb(225,225,220))
 			(filter_files "NCF_repository/packs").each_with_index do | f, i |
+				ver = File.open("NCF_repository/packs/#{f}/list/creature_list.txt", &:readline).split(',')[1]
 				flow left: 15, top: 10 + i*40, width: 430, height: 40 do
-					para "#{i+1}. #{f}", size: 15, align: "left" 
+					para "#{i+1}. #{f} #{ver}", size: 15, align: "left" 
 					button("Install", left: 300, top: 0, state: stat) { deploy_pack f }
 				end
 			end
@@ -87,7 +88,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 		@show_packs.clear do
 			rect(left: 0, top: -10, curve: 10, width: 435, height: 270, fill: rgb(245,225,200))
 			File.readlines("NCF_repository/package_list.txt").each_with_index do |pack, i |
-				packs[i] =  flow left: 15, top: 10 + i*40, width: 430, height: 40 do
+				packs[i] = flow left: 15, top: 10 + i*40, width: 430, height: 40 do
 					package = pack.split(',')
 					para "#{i+1}. #{package[0]} #{package[2]}", size: 15, align: "left" 
 					button("info", left: 240, top: 0) { alert("#{package[3]}") }
@@ -130,7 +131,8 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 			line 20, 70, 420, 70
 			@q = stack left: 20, top: 75, width: 420, height: 400, scroll: true do
 				(filter_files "NCF_repository/packs/#{folder}").each_with_index do |ncf, i|
-					ncf == 'list' ? next : nil
+					#ncf == 'list' ? next : nil
+					ncf.start_with?('NCF_') ?  nil : next
 					num = ncf[/NCF_(.*?).pak/m, 1]
 					name_file[@from..-1].each do |line|
 						@from+=1
@@ -161,6 +163,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 	
 	def purge_pack
 		Dir.glob('../data/NCF_*.pak').each { |file| File.delete(file)}
+		Dir.glob('../Editor/IconCache/AdvMapObjectLink/MapObjects/_(AdvMapObjectLink)/Monsters/NCF/Creature*').each { |file| File.delete(file)}
 	end
 	
 	background tan
