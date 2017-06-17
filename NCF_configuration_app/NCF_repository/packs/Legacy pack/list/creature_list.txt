@@ -1,4 +1,4 @@
-Legacy pack,1.0
+Legacy pack,1.0,
 ########################################################
 180 Thunderbird
 181 Suzaku

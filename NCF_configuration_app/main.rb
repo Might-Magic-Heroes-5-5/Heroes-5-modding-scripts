@@ -11,10 +11,6 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
     def main_page
 		@main.clear do
 			@core = stack left: 5, top: 15, width: 440, height: 100;# do
-				#rect(left: 0, top: 0, curve: 10,  width: 435, height: 98, fill: rgb(245,245,220))
-				#@info = caption "", align: "center"
-			#end
-			#@core = stack left: 40, top: 130, width: 152, height: 252;
 			@pack = stack left: 5, top: 130, width: 440, height: 330;
 			main_core_block
 			button "Purify", left: 175, top: 460, tooltip: "Removes any NCF installations", width: 100 do
@@ -28,7 +24,6 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 	
 	def main_core_block
 		@core.clear do
-			#rect(left: 0, top: 0, curve: 10,  width: 150, height: 250, fill: rgb(245,245,220))
 			rect(left: 0, top: 0, curve: 10,  width: 435, height: 98, fill: rgb(245,245,220))
 			caption "Core", align: "center"
 			main_pack_block "disabled"
@@ -37,7 +32,6 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 					button("#{f}", left: 20 + 120*i, top: 50, width: 100) { deploy_core f; }
 					#@info.replace "Please install NCF core for the required game."
 				else
-					#@info.replace "Deploy a NCF package."
 					@core.clear do
 						rect(left: 0, top: 0, curve: 10,  width: 435, height: 98, fill: rgb(240,240,20))
 						caption "Core", align: "center" 
@@ -57,7 +51,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 			caption "NCF packages", align: "center"
 			ofline = flow left: 0, top: 30, width: 217, height: 30 do
 				rect(left: 0, top: 0, curve: 10,  width: 215, height: 320, fill: rgb(225,225,220))
-				@off_text = para "Addons", align: "center"
+				@off_text = para "Packages", align: "center"
 			end
 			online = flow left: 218, top: 30, width: 217, height: 30 do
 				rect(left: 0, top: 0, curve: 10,  width: 217, height: 320, fill: rgb(245,225,200))
@@ -71,16 +65,19 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 	end
 	
 	def main_pack_block_offline stat
+		@existing_packs = Array.new(10) { Array.new(2) }
 		@show_packs.clear do
 			rect(left: 0, top: -10, curve: 10, width: 435, height: 270, fill: rgb(225,225,220))
 			(filter_files "NCF_repository/packs").each_with_index do | f, i |
-				ver = File.open("NCF_repository/packs/#{f}/list/creature_list.txt", &:readline).split(',')[1]
+				@existing_packs[i][0] = f
+				@existing_packs[i][1] = File.open("NCF_repository/packs/#{f}/list/creature_list.txt", &:readline).split(',')[1]
 				flow left: 15, top: 10 + i*40, width: 430, height: 40 do
-					para "#{i+1}. #{f} #{ver}", size: 15, align: "left" 
+					para "#{i+1}. #{f} #{@existing_packs[i][1]}", size: 15, align: "left" 
 					button("Install", left: 300, top: 0, state: stat) { deploy_pack f }
 				end
 			end
 		end
+		#debug(@existing_packs.collect {|name| name[0]})
 	end
 	
 	def main_pack_block_online
@@ -92,19 +89,32 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 					package = pack.split(',')
 					para "#{i+1}. #{package[0]} #{package[2]}", size: 15, align: "left" 
 					button("info", left: 240, top: 0) { alert("#{package[3]}") }
-					button("Download", left: 310, top: 0) do
-						packs[i].append { progress left: 322, top: 33, width: 92, height: 3 }
-						debug("##{package[1]}#")
-						download package[1], save: "NCF_repository\\downloads\\#{File.basename(package[1])}", progress: proc { |dl| packs[i].contents[3].fraction = dl.percent }
-					end
+					if @existing_packs.collect {|name| name[0]}.include?(package[0]) then 
+						@existing_packs.each_with_index do |p, i|
+							if p[0] == package[0] then
+								package[2] <= p[1] ? ( package_button "Up to date", "disabled" ) : ( package_button "Update" ); 
+								break;
+							end
+						end
+					else
+						package_button "Download"
+					end	
 				end
 			end
+		end
+	end
+	
+	def package_button text, state = nil
+		button(text, left: 310, top: 0, width: 100, state: state) do
+			packs[i].append { progress left: 322, top: 33, width: 92, height: 3 }
+			download package[1], save: "NCF_repository\\downloads\\#{File.basename(package[1])}", progress: proc { |dl| packs[i].contents[3].fraction = dl.percent }
 		end
 	end
 	
 	def deploy_core folder
 		if [ "yes", "y", "Y", "YES" ].include?(ask("Are you sure you want to deploy NCF core for #{folder}(Y/N)?\n")) then
 			FileUtils.copy_entry "NCF_repository/core/#{folder}/", ".."
+			FileUtils.mkdir_p '../Complete/Icons'
 			main_core_block
 		end
 	end
@@ -131,7 +141,6 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 			line 20, 70, 420, 70
 			@q = stack left: 20, top: 75, width: 420, height: 400, scroll: true do
 				(filter_files "NCF_repository/packs/#{folder}").each_with_index do |ncf, i|
-					#ncf == 'list' ? next : nil
 					ncf.start_with?('NCF_') ?  nil : next
 					num = ncf[/NCF_(.*?).pak/m, 1]
 					name_file[@from..-1].each do |line|
@@ -152,6 +161,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 					purge_pack
 					@custom_ncf_package.each_with_index do |ncf, i|	
 						FileUtils.copy_file "NCF_repository/packs/#{folder}/#{ncf}", "../data/#{ncf}"
+						FileUtils.copy_file "NCF_repository/packs/#{folder}/Icons/#{ncf.split(".")[0]}.dds", "../Complete/icons/#{ncf.split(".")[0]}.dds"
 						@bar.fraction = (i*100)/@custom_ncf_package.count
 					end
 					alert "#{folder} installed!", title: nil
@@ -164,6 +174,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 	def purge_pack
 		Dir.glob('../data/NCF_*.pak').each { |file| File.delete(file)}
 		Dir.glob('../Editor/IconCache/AdvMapObjectLink/MapObjects/_(AdvMapObjectLink)/Monsters/NCF/Creature*').each { |file| File.delete(file)}
+		Dir.glob('../Complete/Icons/*.dds').each { |file| File.delete(file)}
 	end
 	
 	background tan
