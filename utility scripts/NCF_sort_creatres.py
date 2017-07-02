@@ -3,16 +3,18 @@ Created on Apr 28, 2017
 
 @author: dred
 '''
-from os import makedirs, walk, listdir
-from os.path import isfile, join
-from shutil import copyfile, move
+from os import makedirs, walk, rename, rmdir
+from os.path import isfile, join, sep, isdir
+from shutil import copyfile
 import re
+from scipy.optimize import _root
 
 #src = 'D:\\mod workplace\\NCF_MegaPack'
-src = 'D:\\mod workplace\\NCF\\New_to_extract'
-dest = 'D:\\mod workplace\\NCF\\target\\'
+src = 'D:\\mod workplace\\NCF\\test'
+dest = 'D:\\mod workplace\\NCF\\test_out\\'
+rng = range(10, 50)
 default_races = [ 'Academy', 'Haven', 'Dwarves', 'Necropolis', 'Dungeon', 'Preserve', 'Orcs', 'Inferno'] ## a quick list with all races in case it is needed.
-mode = 2 #selects what the script will do
+mode = 3  #selects what the script will do
 # 0 - is for NCFmegapack extraction;
 # ---> source: expects unarchievedNCF megapack folder 
 # ---> output: create separate folders for each NCF creature along with its accompanying files
@@ -21,29 +23,31 @@ mode = 2 #selects what the script will do
 # ---> destination: creates "icon" folder with editor icons for all ncf creatures from source.
 # ---------> create separate folders for each NCF creature (copied from the source) where the MapObjects\_(AdvMapObjectLink)\Monsters\NCF\Creature_id.xdb
 # ---------> file is changed to refer the new icon that reside in <game folder>/Complete/Icons
-# 1 - is for extracting models that overlap vanilla creatures
+# 2 - is for extracting models that overlap vanilla creatures
 # ---> source: expects unarchievedNCF data folder 
 # ---> output: create separate folder for each vanilla creature along with its accompanying files
+# 3 - is for migrating Vanilla models to NCF creatures
+# ---> source: expects unarchievedNCF data folder of one vanilla creature
+# ---> output: create separate folder for a converted NCF compatible creature
 
-def migrate_files(file):
+def migrate_files(file, file_d_path):
     if isfile(join(source,file)):
-        dirr = file.split('\\')
-        try:
-            makedirs(destination + '\\'.join(dirr[0:len(dirr)-1]))
-        except:
-            pass
+        dirr = file_d_path.split('\\')
+        create_dir(destination + '\\'.join(dirr[0:len(dirr)-1]))
     else:
         return 1
-    print(join(source,file))
-    copyfile(join(source,file), join(destination ,file))
-    #move(join(source,file), join(destination,file))
+    #print(join(source,file))
+    copyfile(join(source,file), join(destination ,file_d_path))
+    #move(join(source,file), join(destination,file_d_path))
     return 0
 
 def list_files(uuid, int_source):
     for root, dirs, files in walk(join(source, int_source)):  
         for name in files:
             if name == uuid:
-                migrate_files(join('\\'.join(root.split('\\')[len(source.split('\\')):]), name))
+                file = join('\\'.join(root.split('\\')[len(source.split('\\')):])) + "\\" + name
+                #print(file)
+                migrate_files(file, file)
     return
     
 def read_files(file, first, second, sanitize = True): 
@@ -74,13 +78,13 @@ def read_files(file, first, second, sanitize = True):
             pass
     return file_arr
 
-def get_file_trees (file, i=0):
+def get_file_trees (file, mod=0, i=0):
     paths, uuids, visuals = [], [], []
     #print('-->', file)
-    if isfile(join(destination ,file)) == False:
+    if isfile(join(destination, file)) == False:
         try:    
             paths = read_files( file, 'href="', '"')
-            print('-->',paths)
+            #print('-->',paths)
             uuids = read_files( file, '<uid>', '</uid>', False)
             #print(paths,uuids)
             for uuid in uuids:
@@ -88,11 +92,12 @@ def get_file_trees (file, i=0):
             visuals = read_files( file, '<Model href="', '#xpointer')
             for v in visuals:
                 visuals = v.split('.')
-                migrate_files(visuals[0] + '.(CharacterView).' + visuals[1])
-                #print(visuals[0] + '.(CharacterView).' + visuals[1], source, destination)
+                visuals_file = visuals[0] + '.(CharacterView).' + visuals[1]
+                #print(visuals_file)
+                migrate_files(visuals_file, visuals_file)
         except:
             pass
-        migrate_files(file)
+        migrate_files(file, file)
         try:
             nmb = len(paths)
             while(i < nmb):
@@ -100,7 +105,7 @@ def get_file_trees (file, i=0):
                 get_file_trees(paths[i])
                 i=i+1
         except:
-            pass
+            pass   
     
 def create_dir(location):
     try:
@@ -108,13 +113,21 @@ def create_dir(location):
     except:
         pass
 
-
-
+def walklevel(some_dir, level=1):
+    some_dir = some_dir.rstrip(sep)
+    assert isdir(some_dir)
+    num_sep = some_dir.count(sep)
+    for root, dirs, files in walk(some_dir):
+        yield root, dirs, files
+        num_sep_this = root.count(sep)
+        if num_sep + level <= num_sep_this:
+            del dirs[:]    
+    
 
 cc = 0
 if mode == 0:
     source = src
-    for i in range(1,1000):
+    for i in rng:
         destination = join(dest, '%d\\' %i)
         get_file_trees('GameMechanics\\Creature\\Creatures\\Neutrals\\Creature_%d.xdb' %i )
         #get_file_trees('Characters\\Creatures\\Academy\\Colossus_LOD_view.xdb')
@@ -126,7 +139,7 @@ if mode == 0:
 if mode == 1:
     icon_dest = join(dest, 'Complete\\Icons')
     create_dir(icon_dest)
-    for i in range(1,1000):
+    for i in rng:
         destination = join(dest, '%d\\' %i)
         source = join(src, '%d\\' %i)
         try:
@@ -135,7 +148,7 @@ if mode == 1:
             icon_xdb = read_files(path[0], 'Icon128 href="', '#xpointer')
             icon_f = read_files(icon_xdb[0], '<DestName href="', '"')
             editor_link = 'MapObjects\\_(AdvMapObjectLink)\\Monsters\\NCF\\Creature_%d.xdb' %i
-            print(icon_xdb)
+            #print(icon_xdb)
             copyfile(join(source, icon_f[0]), join(icon_dest, 'Creature_%d.dds' %i ))
             
             dirr = editor_link.split('\\')
@@ -144,7 +157,7 @@ if mode == 1:
             first = '<IconFile>'
             second = '</IconFile>'
             for line in open(join(source, editor_link)):
-                print(line)
+                #print(line)
                 try:
                     start = line.index( first ) + len( first )
                     end = line.index( second, start )
@@ -161,10 +174,55 @@ if mode == 2:
     for race in default_races:
         for root, dirs, files in walk(join(source, 'GameMechanics\\Creature\\Creatures\\')): 
             for f in files:
-                destination = (dest + f.split('.')[0] + '\\')
-                print(('\\').join(root.split('\\')[4:]) + '\\' + f)
-                #print(destination)
-                get_file_trees(('\\').join(root.split('\\')[4:]) + '\\' + f)
-
+                if '<AttackSkill>' in open(join(root,f)).read():
+                    destination = (dest + f.split('.')[0] + '\\')
+                    get_file_trees(('\\').join(root.split('\\')[4:]) + '\\' + f)
         
-        
+if mode == 3:
+    i=rng[0]
+    for creature_list in walklevel(src, level=0):
+        for creature in creature_list[1]:
+            source = join(src, creature)
+            destination = join(dest, '%d\\' %i)
+            ###fix this
+            for root1, dirs1, files1 in walk(join(source, 'GameMechanics\\Creature\\Creatures\\')):
+                for f in files1:
+                    if '<AttackSkill>' in open(join(root1,f)).read(): ###Using the string to filter if this is a creature file
+                        outer, inner = root1.rsplit('GameMechanics', 1)
+                        get_file_trees('GameMechanics%s\\%s' %(inner,f) )
+                        inner_s = inner.split('\\')
+                        inner_o = inner.split('\\')
+                        inner_s[3] = "Neutrals"
+                        #print(i-1,inner_o,inner_s)
+                        fr = destination + 'GameMechanics' + ('\\').join(inner_o)
+                        to = destination + 'GameMechanics' +  ('\\').join(inner_s[0:4])
+                        rename(fr , to)
+                        if len(inner_o) == 5:
+                            rmdir(destination + 'GameMechanics' + ('\\').join(inner_o[0:4]))
+                        #print(to)    
+                        for root2, dirs2, files2 in walk(to):
+                            for fl in files2:
+                                if '<AttackSkill>' in open(join(root2,fl)).read():
+                                    creature_file = join(root2,fl)
+                                    rename(to + '\\' + fl,to + '\\Creature_%d.xdb' %i)
+                        for root3, dirs3, files3 in walk(destination + 'MapObjects'):
+                            for fls in files3:
+                                if '<Model href=' in open(join(root3,fls)).read():
+                                    AdvMapMonsterShared = join(root3,fls)
+                                    temp = read_files(join(root3,fls), '<Model href="' , '"')[0].split("\\")
+                                    lua_name = temp[len(temp) - 2].upper()
+                                    print(lua_name)
+                        scripts_path = destination + 'scripts'
+                        scripts_lua = scripts_path + '\\creature_%s.lua' %i
+                        create_dir(destination + 'scripts')
+                        with open(scripts_lua, "w") as write_f:
+                            write_f.write("    CREATURE_%s = %s" %(lua_name, i))
+                        for line in open(AdvMapMonsterShared,'r').readlines():
+                            line = re.sub(r'<AdvMapMonsterShared.+',r'<AdvMapMonsterShared>', line)
+                            line = re.sub(r'<Creature>.+',r'<Creature>CREATURE_%s</Creature>'%i, line)
+            i=i+1                
+                            
+                        
+                        
+                #print(source)
+            #i+=1

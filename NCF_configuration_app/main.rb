@@ -1,4 +1,6 @@
 require 'fileutils'
+require 'net/https'
+require 'uri'
 
 Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, height: 600, resizable: false ) do
 
@@ -106,11 +108,18 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 		end
 	end
 	
-	def dl_button slot, text, dl_file, state = nil
+	def dl_button slot, text, url, state = nil
 		button(text, left: 310, top: 0, width: 100, state: state) do
 			slot.append { progress left: 313, top: 33, width: 92, height: 3 }
-			debug(dl_file)
-			download dl_file, save: "NCF_repository\\downloads\\#{File.basename(dl_file)}", progress: proc { |dl| contents[3].fraction = dl.percent }
+			uri = URI.parse(url)
+			http = Net::HTTP.new(uri.host, uri.port)
+			http.use_ssl = true
+			http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+			request = Net::HTTP::Get.new(uri.request_uri)
+			debug("request is #{request}")
+			resp = http.request(request)
+			real_url = http.request(request)['location']
+			download real_url, save: "NCF_repository\\downloads\\", progress: proc { |dl| slot.contents[3].fraction = dl.percent }
 		end
 	end
 	
