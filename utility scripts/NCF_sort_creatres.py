@@ -3,16 +3,17 @@ Created on Apr 28, 2017
 
 @author: dred
 '''
-from os import makedirs, walk, rename, rmdir
+from os import makedirs, walk, rename, rmdir, fdopen, remove
 from os.path import isfile, join, sep, isdir
-from shutil import copyfile
+from shutil import copyfile, move
+from tempfile import mkstemp
 import re
 from scipy.optimize import _root
 
 #src = 'D:\\mod workplace\\NCF_MegaPack'
 src = 'D:\\mod workplace\\NCF\\test'
 dest = 'D:\\mod workplace\\NCF\\test_out\\'
-rng = range(10, 50)
+rng = range(600, 650)
 default_races = [ 'Academy', 'Haven', 'Dwarves', 'Necropolis', 'Dungeon', 'Preserve', 'Orcs', 'Inferno'] ## a quick list with all races in case it is needed.
 mode = 3  #selects what the script will do
 # 0 - is for NCFmegapack extraction;
@@ -122,7 +123,20 @@ def walklevel(some_dir, level=1):
         num_sep_this = root.count(sep)
         if num_sep + level <= num_sep_this:
             del dirs[:]    
-    
+
+def replace(file_path):
+    #Create temp file
+    fh, abs_path = mkstemp()
+    with fdopen(fh,'w') as new_file:
+        with open(file_path) as old_file:
+            for line in old_file:
+                line = re.sub(r'<AdvMapMonsterShared.+',r'<AdvMapMonsterShared>', line)
+                line = re.sub(r'<Creature>.+',r'<Creature>CREATURE_%s</Creature>'%i, line)
+                new_file.write(line)
+    #Remove original file
+    remove(file_path)
+    #Move new file
+    move(abs_path, file_path)    
 
 cc = 0
 if mode == 0:
@@ -212,14 +226,22 @@ if mode == 3:
                                     temp = read_files(join(root3,fls), '<Model href="' , '"')[0].split("\\")
                                     lua_name = temp[len(temp) - 2].upper()
                                     print(lua_name)
+                        print(destination + 'scripts')
                         scripts_path = destination + 'scripts'
                         scripts_lua = scripts_path + '\\creature_%s.lua' %i
                         create_dir(destination + 'scripts')
                         with open(scripts_lua, "w") as write_f:
                             write_f.write("    CREATURE_%s = %s" %(lua_name, i))
-                        for line in open(AdvMapMonsterShared,'r').readlines():
-                            line = re.sub(r'<AdvMapMonsterShared.+',r'<AdvMapMonsterShared>', line)
-                            line = re.sub(r'<Creature>.+',r'<Creature>CREATURE_%s</Creature>'%i, line)
+                        replace(AdvMapMonsterShared)
+                        NCF_editor_entry = destination + 'MapObjects\\_(AdvMapObjectLink)\\Monsters\\NCF'
+                        NCF_editor_file = NCF_editor_entry + '\\Creature_%s.xdb' %i
+                        NCF_editor_file_entry = (AdvMapMonsterShared.rsplit('MapObjects',1)[1]).replace('\\', '/')
+                        
+                        print(NCF_editor_file_entry)
+                        create_dir(NCF_editor_entry)
+                        with open(NCF_editor_file, "w") as editor_f:
+                            editor_f.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<AdvMapObjectLink>\n    <Link href=\"/MapObjects%s#xpointer(/AdvMapMonsterShared)\"/>\n    <RndGroup/>\n    <IconFile>Icons\Creature_%s.dds</IconFile>\n    <HideInEditor>false</HideInEditor>\n</AdvMapObjectLink>" %(NCF_editor_file_entry, i))
+                                
             i=i+1                
                             
                         
