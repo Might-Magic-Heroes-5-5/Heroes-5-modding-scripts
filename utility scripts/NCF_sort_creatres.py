@@ -11,9 +11,9 @@ import re
 from scipy.optimize import _root
 
 #src = 'D:\\mod workplace\\NCF_MegaPack'
-src = 'D:\\mod workplace\\NCF\\test'
-dest = 'D:\\mod workplace\\NCF\\test_out\\'
-rng = range(600, 650)
+src = 'D:\\mod workplace\\NCF\\Boulder_test'
+dest = 'D:\\mod workplace\\NCF\\Boulder_test_ncf\\'
+rng = range(650, 672)
 default_races = [ 'Academy', 'Haven', 'Dwarves', 'Necropolis', 'Dungeon', 'Preserve', 'Orcs', 'Inferno'] ## a quick list with all races in case it is needed.
 mode = 3  #selects what the script will do
 # 0 - is for NCFmegapack extraction;
@@ -28,8 +28,8 @@ mode = 3  #selects what the script will do
 # ---> source: expects unarchievedNCF data folder 
 # ---> output: create separate folder for each vanilla creature along with its accompanying files
 # 3 - is for migrating Vanilla models to NCF creatures
-# ---> source: expects unarchievedNCF data folder of one vanilla creature
-# ---> output: create separate folder for a converted NCF compatible creature
+# ---> source: expects folder with vanilla cratures. Each creature should be in separate folder (mode 3 output)
+# ---> output: create separate folders for each converted NCF compatible creature
 
 def migrate_files(file, file_d_path):
     if isfile(join(source,file)):
@@ -124,14 +124,17 @@ def walklevel(some_dir, level=1):
         if num_sep + level <= num_sep_this:
             del dirs[:]    
 
-def replace(file_path):
+
+
+
+def replace(file_path, first, second):
     #Create temp file
     fh, abs_path = mkstemp()
     with fdopen(fh,'w') as new_file:
         with open(file_path) as old_file:
             for line in old_file:
-                line = re.sub(r'<AdvMapMonsterShared.+',r'<AdvMapMonsterShared>', line)
-                line = re.sub(r'<Creature>.+',r'<Creature>CREATURE_%s</Creature>'%i, line)
+                #print(f)
+                line = re.sub(first, second, line)
                 new_file.write(line)
     #Remove original file
     remove(file_path)
@@ -199,6 +202,7 @@ if mode == 3:
             source = join(src, creature)
             destination = join(dest, '%d\\' %i)
             ###fix this
+### Find vanila gamemechanics, creature.xdb file and based on the root tree move all creature related files
             for root1, dirs1, files1 in walk(join(source, 'GameMechanics\\Creature\\Creatures\\')):
                 for f in files1:
                     if '<AttackSkill>' in open(join(root1,f)).read(): ###Using the string to filter if this is a creature file
@@ -226,13 +230,14 @@ if mode == 3:
                                     temp = read_files(join(root3,fls), '<Model href="' , '"')[0].split("\\")
                                     lua_name = temp[len(temp) - 2].upper()
                                     print(lua_name)
-                        print(destination + 'scripts')
+                        #print(destination + 'scripts')
                         scripts_path = destination + 'scripts'
                         scripts_lua = scripts_path + '\\creature_%s.lua' %i
                         create_dir(destination + 'scripts')
                         with open(scripts_lua, "w") as write_f:
                             write_f.write("    CREATURE_%s = %s" %(lua_name, i))
-                        replace(AdvMapMonsterShared)
+                        replace(AdvMapMonsterShared, r'<AdvMapMonsterShared.+', r'<AdvMapMonsterShared>' )
+                        replace(AdvMapMonsterShared, r'<Creature>.+', r'<Creature>CREATURE_%s</Creature>'%i )
                         NCF_editor_entry = destination + 'MapObjects\\_(AdvMapObjectLink)\\Monsters\\NCF'
                         NCF_editor_file = NCF_editor_entry + '\\Creature_%s.xdb' %i
                         NCF_editor_file_entry = (AdvMapMonsterShared.rsplit('MapObjects',1)[1]).replace('\\', '/')
@@ -241,10 +246,18 @@ if mode == 3:
                         create_dir(NCF_editor_entry)
                         with open(NCF_editor_file, "w") as editor_f:
                             editor_f.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<AdvMapObjectLink>\n    <Link href=\"/MapObjects%s#xpointer(/AdvMapMonsterShared)\"/>\n    <RndGroup/>\n    <IconFile>Icons\Creature_%s.dds</IconFile>\n    <HideInEditor>false</HideInEditor>\n</AdvMapObjectLink>" %(NCF_editor_file_entry, i))
-                                
-            i=i+1                
                             
-                        
-                        
-                #print(source)
-            #i+=1
+                        char_fix = destination + 'Characters\\Creatures\\'
+                        for root4, dirs4, files4 in walk(destination + 'Characters\\Creatures'):
+                            for x in dirs4:
+                                if x in default_races:
+                                    rename(char_fix + x , char_fix + "Neutrals")
+                                    for root5, dirs5, files5 in walk(destination):
+                                        for f5 in files5:
+                                            print(f5)
+                                            try:
+                                                replace(join(root5,f5), '"/Characters/Creatures/%s' %x,'"/Characters/Creatures/Neutrals')
+                                            except:
+                                                pass
+                                        
+            i=i+1                
