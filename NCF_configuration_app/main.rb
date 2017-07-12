@@ -1,6 +1,7 @@
 require 'fileutils'
 require 'net/https'
 require 'uri'
+require 'zip'
 
 Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, height: 600, resizable: false ) do
 
@@ -96,19 +97,19 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 					if @existing_packs.collect {|name| name[0]}.include?(package[0]) then 
 						@existing_packs.each_with_index do |p, i|
 							if p[0] == package[0] then
-								package[2] <= p[1] ? ( dl_button contents[0].parent, "Up to date", package[1], "disabled" ) : (  dl_button contents[0].parent, "Update", package[1] ); 
+								package[2] <= p[1] ? ( dl_button contents[0].parent, "Up to date", package[1], "#{package[0]}", "#{package[2]}", "disabled" ) : (  dl_button contents[0].parent, "Update", package[1], "#{package[0]}", "#{package[2]}" ); 
 								break;
 							end
 						end
 					else
-						dl_button contents[0].parent, "Download", package[1]
+						dl_button contents[0].parent, "Download", package[1], "#{package[0]}", "#{package[2]}"
 					end	
 				end
 			end
 		end
 	end
 	
-	def dl_button slot, text, url, state = nil
+	def dl_button slot, text, url, name, ver, state = nil
 		button(text, left: 310, top: 0, width: 100, state: state) do
 			slot.append { progress left: 313, top: 33, width: 92, height: 3 }
 			uri = URI.parse(url)
@@ -116,11 +117,27 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 			http.use_ssl = true
 			http.verify_mode = OpenSSL::SSL::VERIFY_NONE
 			request = Net::HTTP::Get.new(uri.request_uri)
-			debug("request is #{request}")
 			resp = http.request(request)
 			real_url = http.request(request)['location']
-			download real_url, save: "NCF_repository\\downloads\\", progress: proc { |dl| slot.contents[3].fraction = dl.percent }
+			download real_url, save: "NCF_repository\\downloads\\#{name}_#{ver}.zip", progress: proc { |dl| slot.contents[3].fraction = dl.percent } do
+				FileUtils.rm_r "NCF_repository/packs/#{name}"
+				extract_zip( "NCF_repository/downloads/#{name}_#{ver}.zip","NCF_repository/packs/#{name}")
+			
+			end
+			
+			
 		end
+	end
+	
+	def extract_zip(file, destination)
+	  FileUtils.mkdir_p(destination)
+	
+	  Zip::File.open(file) do |zip_file|
+		zip_file.each do |f|
+		  fpath = File.join(destination, f.name)
+		  zip_file.extract(f, fpath) unless File.exist?(fpath)
+		end
+	  end
 	end
 	
 	def deploy_core folder
