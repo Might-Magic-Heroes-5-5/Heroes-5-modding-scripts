@@ -110,19 +110,24 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 	end
 	
 	def dl_button slot, text, url, name, ver, state = nil
-		button(text, left: 310, top: 0, width: 100, state: state) do
+		q = button(text, left: 310, top: 0, width: 100, state: state) do
 			slot.append { progress left: 313, top: 33, width: 92, height: 3 }
 			uri = URI.parse(url)
 			http = Net::HTTP.new(uri.host, uri.port)
-			http.use_ssl = true
+			#http.use_ssl = true
+			debug(http)
 			http.verify_mode = OpenSSL::SSL::VERIFY_NONE
 			request = Net::HTTP::Get.new(uri.request_uri)
+			debug(request)
 			resp = http.request(request)
+			debug(resp)
 			real_url = http.request(request)['location']
-			download real_url, save: "NCF_repository\\downloads\\#{name}_#{ver}.zip", progress: proc { |dl| slot.contents[3].fraction = dl.percent } do
-				FileUtils.rm_r "NCF_repository/packs/#{name}"
-				extract_zip( "NCF_repository/downloads/#{name}_#{ver}.zip","NCF_repository/packs/#{name}")
-			
+			debug(real_url)
+			download real_url, save: "NCF_repository\\downloads\\#{name}_#{ver}.zip", progress: proc { |dl| slot.contents[3].fraction = dl.percent/2 } do
+				File.directory?("NCF_repository/packs/#{name}")? ( FileUtils.rm_r "NCF_repository/packs/#{name}" ) : nil
+				#extract_zip( "NCF_repository/downloads/#{name}_#{ver}.zip","NCF_repository/packs/#{name}")
+				q.remove
+				slot.append { dl_button slot, "Done!", nil, nil, nil, "disabled" }
 			end
 			
 			

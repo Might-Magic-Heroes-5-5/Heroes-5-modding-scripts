@@ -1,2 +1,2 @@
-Legacy pack,https://www.dropbox.com/s/0c5louft63xle0o/NCF_Units_Plus.pak?dl=0,1.1,Known also as "NCF Megapack".,
-Official pack,https://www.dropbox.com/s/d6ra8mx780q4c1a/long-lost-nikola-tesla-drawings-reveal-genius-map-for-multiplication2.jpg?dl=1,2.0,Pack includes all currently released NCF creatures.,
+Legacy pack,https://www.dropbox.com/s/0c5louft63xle0o/NCF_Units_Plus.pak?dl=1,1.1,Known also as "NCF Megapack".,
+Official pack,http://www.moddb.com/downloads/mirror/123434/113/ce75d5145f8727860215d3938c9873ab,2.0,Pack includes all currently released NCF creatures.,

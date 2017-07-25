@@ -9,13 +9,14 @@ from shutil import copyfile, move
 from tempfile import mkstemp
 import re
 from scipy.optimize import _root
+from pip.cmdoptions import src
 
 #src = 'D:\\mod workplace\\NCF_MegaPack'
-src = 'D:\\mod workplace\\NCF\\Boulder_test'
-dest = 'D:\\mod workplace\\NCF\\Boulder_test_ncf\\'
-rng = range(650, 672)
+src = 'D:\\mod workplace\\NCF\\plus\\NCF_Units_Plus'
+dest = 'D:\\mod workplace\\NCF\\plus\\NCF_separated'
+rng = range(0, 999)
 default_races = [ 'Academy', 'Haven', 'Dwarves', 'Necropolis', 'Dungeon', 'Preserve', 'Orcs', 'Inferno'] ## a quick list with all races in case it is needed.
-mode = 3  #selects what the script will do
+mode = 0 #selects what the script will do
 # 0 - is for NCFmegapack extraction;
 # ---> source: expects unarchievedNCF megapack folder 
 # ---> output: create separate folders for each NCF creature along with its accompanying files
@@ -123,9 +124,6 @@ def walklevel(some_dir, level=1):
         num_sep_this = root.count(sep)
         if num_sep + level <= num_sep_this:
             del dirs[:]    
-
-
-
 
 def replace(file_path, first, second):
     #Create temp file
@@ -260,4 +258,78 @@ if mode == 3:
                                             except:
                                                 pass
                                         
-            i=i+1                
+            i=i+1   
+               
+if mode == 4:
+    source = src
+    for i in rng:
+        print(source + "\\%s\\UI\Icons\\Creatures\\Boulder\\64x64"%i)
+        create_dir(source + "\\%s\\UI\\Icons\\Creatures\\Boulder\\64x64"%i)
+        create_dir(source + "\\%s\\UI\\Icons\\Creatures\\Boulder\\128x128"%i)
+
+if mode == 5:
+    source = src
+    #path = '/UI/Icons/Creatures/Boulder/128x128/'
+    for i in rng:
+        for root, dirs, files in walk(source + '\\%s\\GameMechanics\\CreatureVisual\\Creatures\\Boulder'%i):
+            for fls in files:
+                texts = (root + '\\' + fls)
+                
+                try:
+                    creature_name_file = read_files(texts, '<DescriptionFileRef href="', '"/>')[0]
+                 
+                    to = creature_name_file.split('\\')
+                    to[3] = 'Boulder'
+                    too = ('/').join(to)
+                    print(i,too)
+                    replace(texts, '\t<DescriptionFileRef.+', '    <DescriptionFileRef href="/%s"/>'%too)
+                except:
+                    pass
+                
+                #to = creature_name_file.split('\\')
+                #to[3] = 'Boulder'
+                #too = ('/').join(to)
+                #too[8] = 'Boulder'
+                #create_folder = ('\\').join(too[0:-1])\
+                #print(creature_name_file)
+                #print ('<CreatureNameFileRef href="/Text/Game/Creatures/Dwarf/Axe_Fighter.txt"/>')
+                #create_dir(create_folder)
+                #replace(texts, '\t<CreatureAbilitiesFileRef.+', '    <CreatureNameFileRef href="/%s"/>'%too)
+                
+if mode == 6:
+    source = src
+    for i in rng:
+        NCF_editor_entry = source + '\\%s\\MapObjects\\_(AdvMapObjectLink)\\Monsters\\NCF'%i
+        NCF_editor_file = NCF_editor_entry + '\\Creature_%s.xdb' %i
+        
+        #print(NCF_editor_entry, NCF_editor_file)
+        for root, dirs, files in walk(source + '\\%s\\MapObjects'%i):
+            for fls in files:
+                if '<Model href=' in open(join(root,fls)).read():
+                    AdvMapMonsterShared = join(root,fls)
+                    NCF_editor_file_entry = (AdvMapMonsterShared.rsplit('MapObjects',1)[1]).replace('\\', '/')
+                    print(NCF_editor_file)
+                    create_dir(NCF_editor_entry)
+                    with open(NCF_editor_file, "w") as editor_f:
+                        editor_f.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<AdvMapObjectLink>\n    <Link href=\"/MapObjects%s#xpointer(/AdvMapMonsterShared)\"/>\n    <RndGroup/>\n    <IconFile>Icons\Creature_%s.dds</IconFile>\n    <HideInEditor>false</HideInEditor>\n</AdvMapObjectLink>" %(NCF_editor_file_entry, i))
+                            
+if mode == 7:
+    source = src
+    for i in rng:
+        NCF_editor_entry = source + '\\%s\\Text\\Game\\Creatures\\Neutrals'%i
+        #print(NCF_editor_entry, NCF_editor_file)
+        for root, dirs, files in walk(source + '\\%s'%i):
+            for fls in files:
+                create_dir(NCF_editor_entry)
+                               
+if mode == 8:
+    source = src
+    #Also change in  Mapobect/Nexus/AbberantScourge.xdb line to point to the texture xdb <Icon128 href="/Textures/Interface/CombatArena/Faces/Neutral/Aberant/Aberant.xdb#xpointer(/Texture)"/>
+    #/Textures/Interface/CombatArena/Faces/Neutral/Aberant/Aberant.xdb line 
+    for i in rng:
+        NCF_editor_entry = source + '\\%s\\Textures\\Interface\\CombatArena\\Faces\\Neutral'%i
+        #print(NCF_editor_entry, NCF_editor_file)
+        for root, dirs, files in walk(source + '\\%s'%i):
+            for fls in files:
+                create_dir(NCF_editor_entry)
+                
