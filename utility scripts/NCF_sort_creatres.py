@@ -1,6 +1,5 @@
 '''
 Created on Apr 28, 2017
-
 @author: dred
 '''
 from os import makedirs, walk, rename, rmdir, fdopen, remove
@@ -11,12 +10,15 @@ import re
 from scipy.optimize import _root
 from pip.cmdoptions import src
 
+src1 = 'white_armada'
+src2 =  'default_separated'
+src3 = 'NCF_separated'
 #src = 'D:\\mod workplace\\NCF_MegaPack'
-src = 'D:\\mod workplace\\NCF\\plus\\NCF_Units_Plus'
-dest = 'D:\\mod workplace\\NCF\\plus\\NCF_separated'
-rng = range(0, 999)
+src = 'D:\\mod workplace\\NCF\\' + src3
+dest = 'D:\\mod workplace\\NCF\\' + src3 + '\\'
+rng = range(670, 691)
 default_races = [ 'Academy', 'Haven', 'Dwarves', 'Necropolis', 'Dungeon', 'Preserve', 'Orcs', 'Inferno'] ## a quick list with all races in case it is needed.
-mode = 0 #selects what the script will do
+mode = 4 #selects what the script will do
 # 0 - is for NCFmegapack extraction;
 # ---> source: expects unarchievedNCF megapack folder 
 # ---> output: create separate folders for each NCF creature along with its accompanying files
@@ -29,8 +31,12 @@ mode = 0 #selects what the script will do
 # ---> source: expects unarchievedNCF data folder 
 # ---> output: create separate folder for each vanilla creature along with its accompanying files
 # 3 - is for migrating Vanilla models to NCF creatures
-# ---> source: expects folder with vanilla cratures. Each creature should be in separate folder (mode 3 output)
+# ---> source: expects folder with vanilla cratures. Each creature should be in separate folder (mode 2 output)
 # ---> output: create separate folders for each converted NCF compatible creature
+# 4 - is for adding In-game incons.
+#---> soruce - expects a folder with NCF creature folders (0 mode output)
+#---> destination - not used
+#---------> edits the existing NCF creatures by adding folder tree and .xdb file for in-game creature icon. The icon itself should be added manually
 
 def migrate_files(file, file_d_path):
     if isfile(join(source,file)):
@@ -263,9 +269,40 @@ if mode == 3:
 if mode == 4:
     source = src
     for i in rng:
-        print(source + "\\%s\\UI\Icons\\Creatures\\Boulder\\64x64"%i)
-        create_dir(source + "\\%s\\UI\\Icons\\Creatures\\Boulder\\64x64"%i)
-        create_dir(source + "\\%s\\UI\\Icons\\Creatures\\Boulder\\128x128"%i)
+        for root, dirs, files in walk(source + '\\%s\\GameMechanics\\CreatureVisual\\Creatures\\white armada'%i):
+            for fls in files:
+                source_f = root + '\\' + fls
+                dest_f = "\\" + read_files(source_f, '<Icon128 href="','#xpointer(/Texture)')[0]
+                name = dest_f.split("\\")
+                folder = source + "\\%s"%i + ("\\".join(name[:-1]))
+                print(source + "\\%s"%i + dest_f)
+                try:
+                    create_dir(folder)
+                except:
+                    pass
+                #print(create_file_name[-1].split(".")[0])
+                with open(source + "\\%s"%i + dest_f, "w") as editor_f:
+                    editor_f.write("""<?xml version="1.0" encoding="UTF-8" ?>
+<Texture>
+    <SrcName/>
+    <DestName href="%s.dds"/>
+    <Type>TEXTURE_2D</Type>
+    <ConversionType>CONVERT_ORDINARY</ConversionType>
+    <AddrType>CLAMP</AddrType>
+    <Format>TF_8888</Format>
+    <Width>128</Width>
+    <Height>128</Height>
+    <MappingSize>0</MappingSize>
+    <NMips>1</NMips>
+    <Gain>0</Gain>
+    <AverageColor>6112771</AverageColor>
+    <InstantLoad>false</InstantLoad>
+    <IsDXT>false</IsDXT>
+    <FlipY>false</FlipY>
+    <StandardExport>true</StandardExport>
+    <UseS3TC>false</UseS3TC>
+</Texture>
+"""%(name[-1]))
 
 if mode == 5:
     source = src
@@ -277,7 +314,6 @@ if mode == 5:
                 
                 try:
                     creature_name_file = read_files(texts, '<DescriptionFileRef href="', '"/>')[0]
-                 
                     to = creature_name_file.split('\\')
                     to[3] = 'Boulder'
                     too = ('/').join(to)
