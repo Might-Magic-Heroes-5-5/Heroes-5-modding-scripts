@@ -57,7 +57,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 			caption "NCF packages", align: "center"
 			ofline = flow left: 0, top: 30, width: 217, height: 30 do
 				rect(left: 0, top: 0, curve: 10,  width: 215, height: 320, fill: rgb(225,225,220))
-				@off_text = para "Packages", align: "center"
+				@off_text = para "Local Repository", align: "center"
 			end
 			online = flow left: 218, top: 30, width: 217, height: 30 do
 				rect(left: 0, top: 0, curve: 10,  width: 217, height: 320, fill: chocolate)
@@ -79,7 +79,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 				@existing_packs[i][1] = File.open("NCF_repository/packs/#{f}/list/creature_list.txt", &:readline).split(',')[1]
 				flow left: 15, top: 10 + i*40, width: 430, height: 40 do
 					para "#{i+1}. #{f} #{@existing_packs[i][1]}", size: 15, align: "left" 
-					button("Install", left: 300, top: 0, state: stat) { deploy_pack f }
+					button("Install",tooltip: "If this is greyed out deploy core first", left: 300, top: 0, state: stat) { deploy_pack f }
 				end
 			end
 		end
@@ -114,16 +114,26 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 			slot.append { progress left: 313, top: 33, width: 92, height: 3 }
 			uri = URI.parse(url)
 			http = Net::HTTP.new(uri.host, uri.port)
-			request = Net::HTTP.get(uri.host,uri.request_uri)
-			url_redirect=request[/a href="(.*?)">/, 1]
-			real_url="#{uri.scheme}://#{uri.host}#{url_redirect}"
-			debug(real_url)
-			download real_url, save: "NCF_repository\\downloads\\#{name}_#{ver}.zip", progress: proc { |dl| slot.contents[3].fraction = dl.percent/2 } do
+			case uri.scheme
+				when 'http' then
+					request = Net::HTTP.get(uri.host,uri.request_uri)
+					url_redirect = request[/a href="(.*?)">/, 1]
+					real_url = "#{uri.scheme}://#{uri.host}#{url_redirect}"
+				when 'https' then
+					http.use_ssl = true
+					http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+					request = Net::HTTP::Get.new(uri.request_uri)
+					real_url = http.request(request)['location']
+			end
+			debug("real_url is #{real_url}, #{name}_#{ver}.zip")
+			File.file?("NCF_repository/downloads/#{name}_#{ver}.zip")? ( FileUtils.rm "NCF_repository/downloads/#{name}_#{ver}.zip") : nil
+			download real_url, save: "NCF_repository/downloads/#{name}_#{ver}.zip", progress: proc { |dl| slot.contents[3].fraction = dl.percent*0.9 } do
 				File.directory?("NCF_repository/packs/#{name}")? ( FileUtils.rm_r "NCF_repository/packs/#{name}" ) : nil
-				#extract_zip( "NCF_repository/downloads/#{name}_#{ver}.zip","NCF_repository/packs/#{name}")
+				extract_zip( "NCF_repository/downloads/#{name}_#{ver}.zip","NCF_repository/packs/#{name}")
+				slot.contents[3].fraction = 1.0
 				q.remove
 				slot.append { dl_button slot, "Done!", nil, nil, nil, "disabled" }
-			end
+				end
 		end
 	end
 	
