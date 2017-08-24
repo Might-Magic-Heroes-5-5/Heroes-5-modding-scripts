@@ -17,8 +17,8 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 	
     def main_page
 		@main.clear do
-			@core = stack left: 5, top: 15, width: 440, height: 100;# do
-			@pack = stack left: 5, top: 130, width: 440, height: 330;
+			@core = stack left: 5, top: 15, width: 440, height: 100
+			@pack = stack left: 5, top: 130, width: 440, height: 330
 			main_core_block
 			button "Purify", left: 175, top: 460, tooltip: "Removes any NCF installations", width: 100 do
 				if [ "yes", "y", "Y", "YES" ].include?(ask("WARNING! This will remove any installed NCF creature packs along with installed NCF cores. Are you sure(Y/N)?")) then
@@ -84,26 +84,34 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 			end
 		end
 	end
-	
+
 	def main_pack_block_online
 		packs = []
 		@show_packs.clear do
 			rect(left: 0, top: -10, curve: 10, width: 435, height: 270, fill: chocolate)
-			File.readlines("NCF_repository/package_list.txt").each_with_index do |pack, i |
-				packs[i] = flow left: 15, top: 10 + i*40, width: 430, height: 40 do
-					package = pack.split(',')
-					@wqe = para "#{i+1}. #{package[0]} #{package[2]}", size: 15, align: "left" 
-					button("info", left: 240, top: 0) { alert("#{package[3]}") }
-					if @existing_packs.collect {|name| name[0]}.include?(package[0]) then 
-						@existing_packs.each_with_index do |p, i|
-							if p[0] == package[0] then
-								package[2] <= p[1] ? ( dl_button contents[0].parent, "Up to date", package[1], "#{package[0]}", "#{package[2]}", "disabled" ) : (  dl_button contents[0].parent, "Update", package[1], "#{package[0]}", "#{package[2]}" ); 
-								break;
+			button("Refresh list", left: 30, top: 10, width: 360, height: 20) do
+				@pack_contain.clear do 
+					spinner left: 113, top: 90, start: true, tooltip: "waiting for something?"
+				end
+			end
+			@pack_contain = flow left: 0, top: 35, width: 431, height: 220 do
+				border yellow
+				File.readlines("NCF_repository/package_list.txt").each_with_index do |pack, i |
+					packs[i] = flow left: 15, top: i*40, width: 430, height: 40 do
+						package = pack.split(',')
+						@wqe = para "#{i+1}. #{package[0]} #{package[2]}", size: 15, align: "left" 
+						button("info", left: 240, top: 0) { alert("#{package[3]}") }
+						if @existing_packs.collect {|name| name[0]}.include?(package[0]) then 
+							@existing_packs.each_with_index do |p, i|
+								if p[0] == package[0] then
+									package[2] <= p[1] ? ( dl_button contents[0].parent, "Up to date", package[1], "#{package[0]}", "#{package[2]}", "disabled" ) : (  dl_button contents[0].parent, "Update", package[1], "#{package[0]}", "#{package[2]}" ); 
+									break;
+								end
 							end
+						else
+							dl_button contents[0].parent, "Download", package[1], "#{package[0]}", "#{package[2]}"
 						end
-					else
-						dl_button contents[0].parent, "Download", package[1], "#{package[0]}", "#{package[2]}"
-					end	
+					end
 				end
 			end
 		end
@@ -133,7 +141,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 				slot.contents[3].fraction = 1.0
 				q.remove
 				slot.append { dl_button slot, "Done!", nil, nil, nil, "disabled" }
-				end
+			end
 		end
 	end
 	
