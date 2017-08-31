@@ -6,6 +6,7 @@ require 'zip'
 Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, height: 600, resizable: false ) do
 
 	style Shoes::Para, font: "Bell MT", size: 10, align: "center"
+	@server_url = "https://raw.githubusercontent.com/dredknight/NCF_Utility__production/master/package_list.txt"
 	
 	def filter_files path
 		return Dir.entries(path).reject { |rj| ['.','..'].include?(rj) }
@@ -87,19 +88,22 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 
 	def main_pack_block_online
 		packs = []
+		threads = []
 		@show_packs.clear do
 			rect(left: 0, top: -10, curve: 10, width: 435, height: 270, fill: chocolate)
-			button("Refresh list", left: 30, top: 10, width: 360, height: 20) do
-				@pack_contain.clear do 
-					spinner left: 113, top: 90, start: true, tooltip: "waiting for something?"
+			button("Update package list", left: 30, top: 10, width: 360, height: 20) do
+				@pack_contain.clear { spinner left: 113, top: 90, start: true, tooltip: "waiting for something?" }
+				Thread.new do
+					repo_data = online_text @server_url
+					File.open('NCF_repository/package_list.txt', "w") { |f| f.write repo_data }
+					main_pack_block_online
 				end
 			end
 			@pack_contain = flow left: 0, top: 35, width: 431, height: 220 do
-				border yellow
 				File.readlines("NCF_repository/package_list.txt").each_with_index do |pack, i |
 					packs[i] = flow left: 15, top: i*40, width: 430, height: 40 do
 						package = pack.split(',')
-						@wqe = para "#{i+1}. #{package[0]} #{package[2]}", size: 15, align: "left" 
+						para "#{i+1}. #{package[0]} #{package[2]}", size: 15, align: "left" 
 						button("info", left: 240, top: 0) { alert("#{package[3]}") }
 						if @existing_packs.collect {|name| name[0]}.include?(package[0]) then 
 							@existing_packs.each_with_index do |p, i|
@@ -120,19 +124,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 	def dl_button slot, text, url, name, ver, state = nil
 		q = button(text, left: 310, top: 0, width: 100, state: state) do
 			slot.append { progress left: 313, top: 33, width: 92, height: 3 }
-			uri = URI.parse(url)
-			http = Net::HTTP.new(uri.host, uri.port)
-			case uri.scheme
-				when 'http' then
-					request = Net::HTTP.get(uri.host,uri.request_uri)
-					url_redirect = request[/a href="(.*?)">/, 1]
-					real_url = "#{uri.scheme}://#{uri.host}#{url_redirect}"
-				when 'https' then
-					http.use_ssl = true
-					http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-					request = Net::HTTP::Get.new(uri.request_uri)
-					real_url = http.request(request)['location']
-			end
+			real_url = online_request url
 			debug("real_url is #{real_url}, #{name}_#{ver}.zip")
 			File.file?("NCF_repository/downloads/#{name}_#{ver}.zip")? ( FileUtils.rm "NCF_repository/downloads/#{name}_#{ver}.zip") : nil
 			download real_url, save: "NCF_repository/downloads/#{name}_#{ver}.zip", progress: proc { |dl| slot.contents[3].fraction = dl.percent*0.9 } do
@@ -143,6 +135,40 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 				slot.append { dl_button slot, "Done!", nil, nil, nil, "disabled" }
 			end
 		end
+	end
+	
+	def online_text url
+		uri = URI.parse(url)
+		http = Net::HTTP.new(uri.host, uri.port)
+		case uri.scheme
+			when 'http' then
+				request = Net::HTTP.get(uri.host,uri.request_uri)
+				url_redirect = request[/a href="(.*?)">/, 1]
+				real_url = "#{uri.scheme}://#{uri.host}#{url_redirect}"
+			when 'https' then
+				http.use_ssl = true
+				http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+				request = Net::HTTP::Get.new(uri.request_uri)
+				response = http.request(request)
+		end
+		return response.body
+	end
+	
+	def online_request url
+		uri = URI.parse(url)
+		http = Net::HTTP.new(uri.host, uri.port)
+		case uri.scheme
+			when 'http' then
+				request = Net::HTTP.get(uri.host,uri.request_uri)
+				url_redirect = request[/a href="(.*?)">/, 1]
+				real_url = "#{uri.scheme}://#{uri.host}#{url_redirect}"
+			when 'https' then
+				http.use_ssl = true
+				http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+				request = Net::HTTP::Get.new(uri.request_uri)
+				real_url = http.request(request)['location']
+		end
+		return real_url
 	end
 	
 	def extract_zip(file, destination)
