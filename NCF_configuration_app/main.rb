@@ -147,7 +147,6 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 	
 	def extract_zip(file, destination)
 	  FileUtils.mkdir_p(destination)
-	
 	  Zip::File.open(file) do |zip_file|
 		zip_file.each do |f|
 		  fpath = File.join(destination, f.name)
