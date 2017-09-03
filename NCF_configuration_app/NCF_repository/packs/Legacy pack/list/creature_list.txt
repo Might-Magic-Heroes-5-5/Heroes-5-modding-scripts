@@ -1,0 +1,189 @@
+Legacy pack,1.0,
+########################################################
+180 Thunderbird
+181 Suzaku
+182 Plague Treant
+183 Apocalypse Knight
+184 Undead Cyclops
+185 Ballista
+186 Winterwolf
+187 Worg
+188 Arcane Blades
+189 Mother Nature's Protector
+190 Pyrogiant
+191 Atlante
+192 Geogiant
+193 Animated Protector
+200 Ice Elemental
+201 Mist Elemental
+202 Storm Elemental
+203 Gas Elemental
+204 Magma Elemental
+205 Onyx Elemental
+206 Plasma Elemental
+207 Energy Elemental
+209 Fallen Angel
+210 Chaos Angel
+211 Apocalypse Angel
+212 Enchanter
+213 Sun Warrior
+214 Basilisk
+215 Greater Basilisk
+216 Salamander
+218 Magic Daggers
+219 Runic Axes
+220 Dendroid
+221 Dendroid Guardian
+222 Dendroid Soldier
+223 Devaster
+224 Maradeur
+225 Vopar
+226 Schismatic
+227 Chastener
+228 Robber
+229 Armatier
+230 Hermit
+232 Guerrier
+233 Gremlin Arsonist
+234 Malachite Gargoyle
+235 Nunkuga
+236 Komthur
+239 Kikimora
+240 Pit Overseer
+241 Cherub
+242 Kutrub
+243 Cadaver
+244 Namtar
+245 Succubus Emaciater
+246 Gnoll
+273 Daughter of Shadows
+274 Daughter of Chaos
+275 Daughter of Night
+276 Templar
+278 Heretic
+279 Lost Soul
+280 Raging Soul
+281 Damned Soul
+282 Planeswalker
+283 Runelord
+284 Dark Champion
+285 Stone Keeper
+286 Dark Guard
+287 Guardian of Shadows
+290 Sylvan Healer
+291 Crystal Dragon
+294 Dark Mummy
+295 Royal Mummy
+298 Skeleton Mage
+304 Rakshasa Vetalâ
+311 Royal Basilisk
+312 Ghost Knight
+313 Guardian Idol
+325 Magog
+326 War Lord
+327 Acid Dragon
+328 Fiery Dragon
+329 Guardian Angel
+330 Behemoth
+331 Blood Dragon
+332 Cyclop Thrower
+333 Stone Dragon
+334 Raja Rakshasa
+335 Shadow Mistress
+336 Stone Lord
+337 Cavalry Commander
+338 Pit Annihilator
+339 Frost Reaper
+340 Demonic Wyvern
+341 Symbiotic Treant
+342 Genie
+343 Chaos Hydra
+344 Fire Master
+345 Inquisitor
+346 Terrifying Horse
+347 Shock Lich
+348 Shamanist Warrior
+349 Rainbow Unicorn
+350 Greater Mage
+351 Berserker Marauder
+352 Boxer
+353 Griffin Skirmisher
+354 Vengeful Succubus
+355 Vampire Knight
+356 Night Daughter
+357 Guardian Druid
+358 Temple Guardian
+359 Brutal Minotaur
+360 War Priest
+361 Infantry Commander
+362 Infernal Hound
+363 Mane
+364 Night Warrior
+365 Dark Archer
+366 Peridotite Gargoyle
+367 Blood Prowler
+368 Javelins Thrower
+369 Poisoner
+370 Horned Brute
+371 Butcher Zombi
+372 Centaur Scout
+373 Night Dancer
+374 Gremlin Artillerist
+375 Killer
+376 Turtle-Guard
+377 Verminous Peasant
+378 Mystic
+379 Legionnary Skeleton
+380 Goblin Warrior
+381 Leprechaun
+383 MystoDragon
+384 Ninja
+385 Omega Dragon
+386 Power Master
+387 Centaur Captain
+388 Abyss Angel
+389 Balrog
+390 Abyss Princess 
+391 Royal Guard
+392 Naga
+393 Wisp
+394 Wisp Elder
+395 Medusa
+396 Plague Wisp
+397 Minor Walkyrie
+398 Walkyrie
+399 Academy Cadet
+400 Ghost Charger
+401 Blood Hound
+402 Samurai
+403 Magma Golem
+404 Stone Demon
+405 Sea Golem
+406 Doppleganger
+407 Aquamancer
+408 Ice Dragon
+409 Spiritual Cherub
+412 Death Angel
+413 Grunt
+414 Spirit Elemental
+415 Garuda
+416 Night Elf Archer
+417 Rakshasa Shiva
+418 High-Lich
+419 Night Elf Huntress
+420 Mimic Crystal
+423 Wizard King
+424 Bean Sith
+425 Granite Golem
+450 Scorpicore
+451 Supreme Exemplar
+452 Ancient Thunderbringer
+453 Burned Corpse
+496 Lycanthrope
+497 Zenithale
+498 Zenithale
+499 Evil Sorceress
+500 Arcanes Ballista
+501 Iron Ballista
+502 Lucky Charm
+999 Memory Mentor
