@@ -1,0 +1,10 @@
+Test Pack,1.1,
+########################################################
+603 Black Talon
+604 Paladin
+605 Defender of Faith
+606 White Wizard
+607 Dread Wyrm
+608 Guardsman
+609 Bone Guard
+610 Griffin

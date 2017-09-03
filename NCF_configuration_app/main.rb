@@ -135,6 +135,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 	def dl_button slot, text, url, name, ver, state = nil
 		q = button(text, left: 310, top: 0, width: 100, state: state) do
 			slot.append { progress left: 313, top: 33, width: 92, height: 3 }
+			q.state = "disabled"
 			real_url = get_url url
 			File.file?("NCF_repository/downloads/#{name}_#{ver}.zip")? ( FileUtils.rm "NCF_repository/downloads/#{name}_#{ver}.zip") : nil
 			download real_url, save: "NCF_repository/downloads/#{name}_#{ver}.zip", progress: proc { |dl| slot.contents[3].fraction = dl.percent*0.9 } do
@@ -166,6 +167,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 				request = Net::HTTP::Get.new(uri.request_uri)
 				real_url = http.request(request).body
 		end
+		real_url.nil? ? alert("Error, no connection to server", title: nil) : nil
 		return real_url
 	end
 	
@@ -247,7 +249,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 			#	when n.items[2] then list_filtered_creatures name_file[2..-1], "old"
 			#	end
 			#end
-			back = button( "Back", left: 5, top: 490, width: 100 ) { main_page }
+			back = button( "Back", left: 8, top: 490, width: 100 ) { main_page }
 			deploy = button( "Deploy", left: 340, top: 490, width: 100 ) do                                											####### pressing the button installs checked creatures
 				if [ "yes", "y", "Y", "YES" ].include?( ask("Any previously installed NCF creatures will be removed. Are you sure(Y/N)?")) then
 					purge_pack																														####### clean currently installed creatures
