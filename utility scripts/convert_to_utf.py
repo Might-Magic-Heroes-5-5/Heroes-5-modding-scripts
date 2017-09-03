@@ -1,6 +1,6 @@
 import os;
 import sys;
-filePathSrc="D:\\mod workplace\\All_NCF_creatures"
+filePathSrc="D:\\mod workplace\\NCF\\Raw\\NCF_separated"
 files = [f for f in os.listdir(filePathSrc)]
 for fold in files:
 		print(fold)

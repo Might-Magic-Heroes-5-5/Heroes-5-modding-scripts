@@ -200,7 +200,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 			p = line.split(" ")
 			@creature_table.append do
 				flow left: 0, top: 5 + 30*i, width: 0.8 do
-					check(checked: false) { |cc| cc.checked? ? @custom_ncf_package.push("NCF_#{p[0]}.pak") : @custom_ncf_package.delete("NCF_#{p[0]}.pak") }			
+					check(checked: false) { |cc| cc.checked? ? @custom_ncf_package.push(p[0]) : @custom_ncf_package.delete(p[0]) }			
 					para "#{p[0]}. #{p[1]}", align: "left", size: 13
 				end
 			end
@@ -247,37 +247,32 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 			#	when n.items[2] then list_filtered_creatures name_file[2..-1], "old"
 			#	end
 			#end
-			button( "Back", left: 5, top: 490, width: 100 ) { main_page }
-			button( "Deploy", left: 340, top: 490, width: 100 ) do                                													####### pressing the button installs checked creatures
+			back = button( "Back", left: 5, top: 490, width: 100 ) { main_page }
+			deploy = button( "Deploy", left: 340, top: 490, width: 100 ) do                                											####### pressing the button installs checked creatures
 				if [ "yes", "y", "Y", "YES" ].include?( ask("Any previously installed NCF creatures will be removed. Are you sure(Y/N)?")) then
 					purge_pack																														####### clean currently installed creatures
+					back.state = "disabled"
+					deploy.state = "disabled"
 					check_global.state = "disabled"																									####### Disable "Select all" check box during installation
 					@creature_table.contents.each { |f| f.contents[0].state = "disabled" }															####### Disable Creatures check boxes during installation
-					@read = 0
 					Thread.new do
 						@custom_ncf_package.each_with_index do |ncf, i|																				####### Iterate over all currentely chosen creatures and install them
-							FileUtils.copy_file "NCF_repository/packs/#{folder}/#{ncf}", "../data/#{ncf}"
-							FileUtils.copy_file "NCF_repository/packs/#{folder}/Icons/#{ncf.split(".")[0]}.dds", "../Complete/icons/#{ncf.split(".")[0]}.dds"
+							FileUtils.copy_file "NCF_repository/packs/#{folder}/NCF_#{ncf}.pak", "../data/NCF_#{ncf}.pak"
+							FileUtils.copy_file "NCF_repository/packs/#{folder}/Icons/Creature_#{ncf}.dds", "../Complete/icons/Creature_#{ncf}.dds"
 							@bar.fraction = ((i+1).to_f/@custom_ncf_package.count).round(2)
 						end
-					@read = 1
-					end	
-					#Thread.new do
-						sleep(0.1) until @read==1
-							debug("shit #{@read}")
-							alert "#{folder} installed!", title: nil 
-					#end
-					
+						start { alert("Installation complete", title: nil); }
+					end
 				end
 			end
 		end
 		start { @creature_table.scroll_top = 1 } ### this is a workaround for a scroll bug that comes with shoes
 	end
 	
-	def purge_pack
-		Dir.glob('../data/NCF_*.pak').each { |file| File.delete(file)} ###  NCF creatures
+	def purge_pack   															### cleans currently installed NCF creatures, editor icons, and editor icon cache.
+		Dir.glob('../data/NCF_*.pak').each { |file| File.delete(file)} 			###  NCF creatures
 		Dir.glob('../Editor/IconCache/AdvMapObjectLink/MapObjects/_(AdvMapObjectLink)/Monsters/NCF/Creature*').each { |file| File.delete(file)} ###  Cleaning editor Icon cache
-		Dir.glob('../Complete/Icons/*.dds').each { |file| File.delete(file)} ###  Editor Icons
+		Dir.glob('../Complete/Icons/*.dds').each { |file| File.delete(file)}	###  Editor Icons
 	end
 	
 	background colour_app
