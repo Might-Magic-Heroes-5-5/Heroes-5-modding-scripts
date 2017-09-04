@@ -7,15 +7,15 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 
 	style Shoes::Para, font: "Bell MT", size: 10, align: "center"
 	@server_url = "https://raw.githubusercontent.com/dredknight/NCF_Utility__production/master/package_list.txt"
-	#colour_app = tan..green 				## this is the frame colour
+	#colour_app = tan..green 				 ## this is the frame colour
 	#@colour_menu_default = rgb(245,245,220) ## Default colour for all subwindows
 	#@colour_menu_applied = yellow..orange   ## Alnternative colour for all subwindows when a package is applied.
 	#@colour_menu_local = rgb(225,225,220)
 	#@colour_menu_online = chocolate
 	
 	colour_app = forestgreen..yellowgreen	## this is the frame colour
-	@colour_menu_default = white ## Default colour for all subwindows
-	@colour_menu_applied = yellow  ## Alnternative colour for all subwindows when a package is applied.
+	@colour_menu_default = white 			## Default colour for all subwindows
+	@colour_menu_applied = yellow  			## Alnternative colour for all subwindows when a package is applied.
 	@colour_menu_local = silver
 	@colour_menu_online = gray
 
@@ -134,16 +134,20 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 	
 	def dl_button slot, text, url, name, ver, state = nil
 		q = button(text, left: 310, top: 0, width: 100, state: state) do
-			slot.append { progress left: 313, top: 33, width: 92, height: 3 }
-			q.state = "disabled"
 			real_url = get_url url
-			File.file?("NCF_repository/downloads/#{name}_#{ver}.zip")? ( FileUtils.rm "NCF_repository/downloads/#{name}_#{ver}.zip") : nil
-			download real_url, save: "NCF_repository/downloads/#{name}_#{ver}.zip", progress: proc { |dl| slot.contents[3].fraction = dl.percent*0.9 } do
-				File.directory?("NCF_repository/packs/#{name}")? ( FileUtils.rm_r "NCF_repository/packs/#{name}" ) : nil
-				extract_zip( "NCF_repository/downloads/#{name}_#{ver}.zip","NCF_repository/packs/#{name}")
-				slot.contents[3].fraction = 1.0
-				q.remove
-				slot.append { dl_button slot, "Done!", nil, nil, nil, "disabled" }
+			if real_url.nil? then
+				alert("Error, no connection to server", title: nil)
+			else
+				q.state = "disabled"
+				File.file?("NCF_repository/downloads/#{name}_#{ver}.zip")? ( FileUtils.rm "NCF_repository/downloads/#{name}_#{ver}.zip") : nil
+				slot.append { progress left: 313, top: 33, width: 92, height: 3 }
+				download real_url, save: "NCF_repository/downloads/#{name}_#{ver}.zip", progress: proc { |dl| slot.contents[3].fraction = dl.percent*0.9 } do
+					File.directory?("NCF_repository/packs/#{name}")? ( FileUtils.rm_r "NCF_repository/packs/#{name}" ) : nil
+					extract_zip( "NCF_repository/downloads/#{name}_#{ver}.zip","NCF_repository/packs/#{name}")
+					slot.contents[3].fraction = 1.0
+					q.remove
+					slot.append { dl_button slot, "Done!", nil, nil, nil, "disabled" }
+				end
 			end
 		end
 	end
@@ -167,7 +171,6 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 				request = Net::HTTP::Get.new(uri.request_uri)
 				real_url = http.request(request).body
 		end
-		real_url.nil? ? alert("Error, no connection to server", title: nil) : nil
 		return real_url
 	end
 	
