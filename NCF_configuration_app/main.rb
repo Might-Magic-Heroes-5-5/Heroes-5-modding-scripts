@@ -6,18 +6,16 @@ require 'zip'
 Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, height: 600, resizable: false ) do
 
 	style Shoes::Para, font: "Bell MT", size: 10, align: "center"
-	@server_url = "https://raw.githubusercontent.com/dredknight/NCF_Utility__production/master/package_list.txt"
-	#colour_app = tan..green 				 ## this is the frame colour
-	#@colour_menu_default = rgb(245,245,220) ## Default colour for all subwindows
-	#@colour_menu_applied = yellow..orange   ## Alnternative colour for all subwindows when a package is applied.
-	#@colour_menu_local = rgb(225,225,220)
-	#@colour_menu_online = chocolate
+	@server_url = "https://raw.githubusercontent.com/dredknight/NCF_Utility__production/master/package_list.txt" ###Packages store server
 	
+	
+	####################### Defining menu colouring ###############################
 	colour_app = forestgreen..yellowgreen	## this is the frame colour
 	@colour_menu_default = white 			## Default colour for all subwindows
 	@colour_menu_applied = yellow  			## Alnternative colour for all subwindows when a package is applied.
-	@colour_menu_local = silver
-	@colour_menu_online = gray
+	@colour_menu1 = silver
+	@colour_menu2 = rgb(160,160,160) 	
+	@colour_menu3 = rgb(180,180,180) 
 
 	def filter_files path
 		return Dir.entries(path).reject { |rj| ['.','..'].include?(rj) }
@@ -30,7 +28,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
     def main_page
 		@main.clear do
 			@core = stack left: 5, top: 15, width: 440, height: 100
-			@pack = stack left: 5, top: 130, width: 440, height: 350
+			@pack = stack left: 5, top: 130, width: 440, height: 355
 			main_core_block
 			button "Purify", left: 175, top: 500, tooltip: "Removes any NCF installations", width: 100 do
 				if [ "yes", "y", "Y", "YES" ].include?(ask("WARNING! This will remove any installed NCF creature packs along with installed NCF cores. Are you sure(Y/N)?")) then
@@ -66,18 +64,23 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 
 	def main_pack_block stat=nil
 		@pack.clear do
-			rect(left: 0, top: 0, curve: 10,  width: 435, height: 345, fill: @colour_menu_default)
+			rect(left: 0, top: 0, curve: 10,  width: 435, height: 355, fill: @colour_menu_default)
 			caption "NCF packages", align: "center"
-			ofline = flow left: 0, top: 30, width: 217, height: 30 do
-				rect(left: 0, top: 0, curve: 10,  width: 215, height: 320, fill: @colour_menu_local)
+			ofline = flow left: 0, top: 30, width: 144, height: 30 do
+				rect(left: 0, top: 0, curve: 10,  width: 143, height: 320, fill: @colour_menu1)
 				@off_text = para "Local Repository", align: "center"
 			end
-			online = flow left: 218, top: 30, width: 217, height: 30 do
-				rect(left: 0, top: 0, curve: 10,  width: 217, height: 320, fill: @colour_menu_online)
+			online = flow left: 145, top: 30, width: 144, height: 30 do
+				rect(left: 0, top: 0, curve: 10,  width: 143, height: 320, fill: @colour_menu2)
 				para "Online store", align: "center"
+			end
+			about = flow left: 290, top: 30, width: 146, height: 30 do
+				rect(left: 0, top: 0, curve: 10,  width: 145, height: 320, fill: @colour_menu3)
+				para "About", align: "center"
 			end
 			ofline.click { main_pack_block_offline stat }
 			online.click { main_pack_block_online }
+			about.click { main_pack_block_about }
 			@show_packs = flow left: 0, top: 60, width: 435, height: 300;
 			main_pack_block_offline stat
 		end
@@ -86,7 +89,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 	def main_pack_block_offline stat
 		@existing_packs = Array.new(10) { Array.new(2) }
 		@show_packs.clear do
-			rect(left: 0, top: -10, curve: 10, width: 435, height: 305, fill: @colour_menu_local)
+			rect(left: 0, top: -10, curve: 10, width: 435, height: 305, fill: @colour_menu1)
 			(filter_files "NCF_repository/packs").each_with_index do | f, i |
 				@existing_packs[i][0] = f
 				@existing_packs[i][1] = File.open("NCF_repository/packs/#{f}/list/creature_list.txt", &:readline).split(',')[1]
@@ -101,7 +104,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 	def main_pack_block_online
 		packs = []
 		@show_packs.clear do
-			rect(left: 0, top: -10, curve: 10, width: 435, height: 305, fill: @colour_menu_online)
+			rect(left: 0, top: -10, curve: 10, width: 435, height: 305, fill: @colour_menu2)
 			button("Update package list", left: 30, top: 10, width: 360, height: 20) do
 				@pack_contain.clear { spinner left: 113, top: 90, start: true, tooltip: "waiting for something?" }
 				Thread.new do
@@ -129,6 +132,18 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 					end
 				end
 			end
+		end
+	end
+	
+	def main_pack_block_about
+		@show_packs.clear do
+			rect(left: 0, top: -10, curve: 10, width: 435, height: 305, fill: @colour_menu3)
+			caption "Useful links", align: "center", top: 10
+			button("The NCF project on GitHub.", left: 30, top: 50, width: 360, height: 25) { system("start https://github.com/dredknight/Heroes-5-modding-scripts/tree/master/NCF_configuration_app") } 
+			button("Ask for help or provide feedback.", left: 30, top: 80, width: 360, height: 25) { system("start http://heroescommunity.com/viewthread.php3?TID=44287") } 
+			button("Might and Magic 5.5 official page", left: 30, top: 110, width: 360, height: 25) { system("start http://www.moddb.com/mods/might-magic-heroes-55") } 
+			button("Subscribe and rate us on Moddb!", left: 30, top: 140, width: 360, height: 25) { system("start http://www.moddb.com/mods/heroes-v-new-creature-framework/reviews") }
+			para "Created by Dredknight", allign: "right", top: 260
 		end
 	end
 	
