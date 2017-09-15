@@ -16,7 +16,9 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 	@colour_menu1 = silver
 	@colour_menu2 = rgb(160,160,160) 	
 	@colour_menu3 = rgb(180,180,180) 
-
+	@pack_contain = flow;
+	@submenu = 1
+	
 	def filter_files path
 		return Dir.entries(path).reject { |rj| ['.','..'].include?(rj) }
 	end
@@ -30,12 +32,6 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 			@core = stack left: 5, top: 15, width: 440, height: 100
 			@pack = stack left: 5, top: 130, width: 440, height: 355
 			main_core_block
-			button "Purify", left: 175, top: 500, tooltip: "Removes any NCF installations", width: 100 do
-				if [ "yes", "y", "Y", "YES" ].include?(ask("WARNING! This will remove any installed NCF creature packs along with installed NCF cores. Are you sure(Y/N)?")) then
-					purge_core; purge_pack;
-					alert "Core modules and creature packs removed successfully!", title: nil
-				end
-			end
 		end
 	end
 	
@@ -78,15 +74,22 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 				rect(left: 0, top: 0, curve: 10,  width: 145, height: 320, fill: @colour_menu3)
 				para "About", align: "center"
 			end
-			ofline.click { main_pack_block_offline stat }
-			online.click { main_pack_block_online }
-			about.click { main_pack_block_about }
+			ofline.click { check_dl == 0? (main_pack_block_offline stat) : (alert "Wait until download completes", title: nil) }
+			online.click { check_dl == 0? main_pack_block_online : (alert "Wait until download completes", title: nil) }
+			about.click  { check_dl == 0? main_pack_block_about : (alert "Wait until download completes", title: nil) }
 			@show_packs = flow left: 0, top: 60, width: 435, height: 300;
 			main_pack_block_offline stat
 		end
 	end
 	
+	def check_dl
+		flag = 0
+		@pack_contain.contents.each { |n| n.contents.count > 3 ? (flag = 1; break): nil }
+		return flag
+	end
+	
 	def main_pack_block_offline stat
+		@submenu = 1
 		@existing_packs = Array.new(10) { Array.new(2) }
 		@show_packs.clear do
 			rect(left: 0, top: -10, curve: 10, width: 435, height: 305, fill: @colour_menu1)
@@ -98,14 +101,22 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 					button("Install",tooltip: "If this is greyed out deploy core first", left: 300, top: 0, state: stat) { deploy_pack f }
 				end
 			end
+			button "Purify", left: 175, top: 260, tooltip: "Removes any NCF installations", width: 100, height: 25 do
+				if [ "yes", "y", "Y", "YES" ].include?(ask("WARNING! This will remove any installed NCF creature packs along with installed NCF cores. Are you sure(Y/N)?")) then
+					purge_core; purge_pack;
+					alert "Core modules and creature packs removed successfully!", title: nil
+				end
+			end
 		end
 	end
 
 	def main_pack_block_online
+		@submenu = 2
 		packs = []
 		@show_packs.clear do
 			rect(left: 0, top: -10, curve: 10, width: 435, height: 305, fill: @colour_menu2)
 			button("Update package list", left: 30, top: 10, width: 360, height: 20) do
+				check_dl == 0? nil : (alert "Wait until download completes", title: nil; break;)
 				@pack_contain.clear { spinner left: 113, top: 90, start: true, tooltip: "waiting for something?" }
 				Thread.new do
 					repo_data = get_url @server_url
@@ -136,6 +147,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 	end
 	
 	def main_pack_block_about
+		@submenu = 3
 		@show_packs.clear do
 			rect(left: 0, top: -10, curve: 10, width: 435, height: 305, fill: @colour_menu3)
 			caption "Useful links", align: "center", top: 10
@@ -203,7 +215,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 		if [ "yes", "y", "Y", "YES" ].include?(ask("Are you sure you want to deploy NCF core for #{folder}(Y/N)?\n")) then
 			FileUtils.copy_entry "NCF_repository/core/#{folder}/", ".."
 			FileUtils.mkdir_p '../Complete/Icons'
-			main_core_block
+			@submenu == 1 ? main_core_block : nil
 		end
 	end
 	
