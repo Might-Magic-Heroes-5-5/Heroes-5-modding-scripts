@@ -5,33 +5,50 @@ require 'zip'
 
 Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, height: 600, resizable: false ) do
 
-	style Shoes::Para, font: "Bell MT", size: 10, align: "center"
-	@server_url = "https://raw.githubusercontent.com/dredknight/NCF_Utility__production/master/package_list.txt" ###Packages store server
-	
+	style Shoes::Para, font: "Bell MT", size: 10, align: "center"	
 	
 	####################### Defining menu colouring ###############################
 	colour_app = forestgreen..yellowgreen	## this is the frame colour
 	@colour_menu_default = white 			## Default colour for all subwindows
-	@colour_menu_applied = yellow  			## Alnternative colour for all subwindows when a package is applied.
-	@colour_menu1 = silver
-	@colour_menu2 = rgb(160,160,160) 	
-	@colour_menu3 = rgb(180,180,180) 
-	@pack_contain = flow;
-	@submenu = 1
+	@colour_menu_applied = yellow  			## Alternative colour for all subwindows when a package is applied.
+	@colour_menu1 = silver					## submenu1 colour
+	@colour_menu2 = rgb(160,160,160) 		## submenu2 colour
+	@colour_menu3 = rgb(180,180,180) 		## submenu3 colour
 	
-	def filter_files path
+	####################### Defining global variables ###########################
+	@server_url = "https://raw.githubusercontent.com/dredknight/NCF_Utility__production/master/package_list.txt" ###Packages store server
+	@submenu = 1 							## Defines which submenu is opened
+	@core_deployed = 0						## 0 - core is not deployed; 1 core is deployed
+	
+	def messages m, text=nil		        ####All alerts that pop in the application
+		alert(case m
+				when 0 then "Wait until download completes"
+				when 1 then "Installation complete"
+				when 2 then "Core modules and creature packs removed successfully!"
+				when 3 then "No connection to server"
+				when 99 then text 
+			  end, title: nil)
+	end
+	
+	def filter_files path				## returns all files found in a specific path
 		return Dir.entries(path).reject { |rj| ['.','..'].include?(rj) }
 	end
 	
-	def letters?(string)
+	def letters?(string)				## makes all chars downcase
 		string.chars.any? { |char| ('a'..'z').include? char.downcase }
 	end
 	
-    def main_page
+	def check_dl flag = 0				## Checks if any download is currently in progress
+		@pack_contain.nil? ? nil : ( @pack_contain.contents.each { |n| n.contents.count > 3 ? (flag = 1; break): nil } )
+		return flag
+	end
+	
+    def main_page						##defines the main drawing block and launches the starting pages
 		@main.clear do
 			@core = stack left: 5, top: 15, width: 440, height: 100
 			@pack = stack left: 5, top: 130, width: 440, height: 355
 			main_core_block
+			main_pack_block
 		end
 	end
 	
@@ -40,10 +57,10 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 			rect(left: 0, top: 0, curve: 10,  width: 435, height: 85, fill: @colour_menu_default)
 			caption "Install a core package", align: "center", top: 4
 			line 30,35,400,35
-			main_pack_block "disabled"
 			(filter_files "NCF_repository/core").each_with_index do | f, i |
 				if ((filter_files "NCF_repository/core/#{f}/data") & (File.directory?("../data") ? (filter_files "../data") : [] )).empty? then
 					button("#{f}", left: 35 + 120*i, top: 46, width: 100) { deploy_core f; }
+					@core_deployed = 0
 				else
 					@core.clear do
 						rect(left: 0, top: 0, curve: 10,  width: 435, height: 85, fill: @colour_menu_applied)
@@ -51,14 +68,15 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 						line 30,35,400,35
 						button("Uninstall", left: 170, top: 46, width: 100 ) { [ "yes", "y", "Y", "YES" ].include?(ask("This will purge previous NCF installations. Are you sure(Y/N)?")) ? purge_core : nil }
 					end;
-					main_pack_block
+					@core_deployed = 1
+					@submenu == 1 ? main_pack_block_offline : nil
 					break;
 				end
 			end
 		end
 	end
 
-	def main_pack_block stat=nil
+	def main_pack_block
 		@pack.clear do
 			rect(left: 0, top: 0, curve: 10,  width: 435, height: 355, fill: @colour_menu_default)
 			caption "NCF packages", align: "center"
@@ -74,22 +92,17 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 				rect(left: 0, top: 0, curve: 10,  width: 145, height: 320, fill: @colour_menu3)
 				para "About", align: "center"
 			end
-			ofline.click { check_dl == 0? (main_pack_block_offline stat) : (alert "Wait until download completes", title: nil) }
-			online.click { check_dl == 0? main_pack_block_online : (alert "Wait until download completes", title: nil) }
-			about.click  { check_dl == 0? main_pack_block_about : (alert "Wait until download completes", title: nil) }
+			ofline.click { check_dl == 0? main_pack_block_offline : (messages 0) }
+			online.click { check_dl == 0? main_pack_block_online : (messages 0) }
+			about.click  { check_dl == 0? main_pack_block_about : (messages 0) }
 			@show_packs = flow left: 0, top: 60, width: 435, height: 300;
-			main_pack_block_offline stat
+			main_pack_block_offline
 		end
 	end
 	
-	def check_dl
-		flag = 0
-		@pack_contain.contents.each { |n| n.contents.count > 3 ? (flag = 1; break): nil }
-		return flag
-	end
-	
-	def main_pack_block_offline stat
+	def main_pack_block_offline
 		@submenu = 1
+		stat = @core_deployed == 1 ? nil : "disabled"
 		@existing_packs = Array.new(10) { Array.new(2) }
 		@show_packs.clear do
 			rect(left: 0, top: -10, curve: 10, width: 435, height: 305, fill: @colour_menu1)
@@ -104,7 +117,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 			button "Purify", left: 175, top: 260, tooltip: "Removes any NCF installations", width: 100, height: 25 do
 				if [ "yes", "y", "Y", "YES" ].include?(ask("WARNING! This will remove any installed NCF creature packs along with installed NCF cores. Are you sure(Y/N)?")) then
 					purge_core; purge_pack;
-					alert "Core modules and creature packs removed successfully!", title: nil
+					messages 2
 				end
 			end
 		end
@@ -116,12 +129,14 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 		@show_packs.clear do
 			rect(left: 0, top: -10, curve: 10, width: 435, height: 305, fill: @colour_menu2)
 			button("Update package list", left: 30, top: 10, width: 360, height: 20) do
-				check_dl == 0? nil : (alert "Wait until download completes", title: nil; break;)
-				@pack_contain.clear { spinner left: 113, top: 90, start: true, tooltip: "waiting for something?" }
+				check_dl == 0? nil : (messages 0; next)
+				@pack_contain.clear { spinner left: 113, top: 90, start: true, tooltip: "Waiting for something?" }
 				Thread.new do
 					repo_data = get_url @server_url
-					File.open('NCF_repository/package_list.txt', "w") { |f| f.write repo_data }
-					main_pack_block_online
+					start do
+						repo_data.nil? ? ( messages 3 ) : ( File.open('NCF_repository/package_list.txt', "w") { |f| f.write repo_data } )
+						main_pack_block_online
+					end
 				end
 			end
 			@pack_contain = flow left: 0, top: 35, width: 431, height: 220 do
@@ -129,7 +144,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 					packs[i] = flow left: 15, top: i*40, width: 430, height: 40 do
 						package = pack.split(',')
 						para "#{i+1}. #{package[0]} #{package[2]}", size: 15, align: "left" 
-						button("info", left: 240, top: 0) { alert("#{package[3]}") }
+						button("info", left: 240, top: 0) { messages 99, package[3] }
 						if @existing_packs.collect {|name| name[0]}.include?(package[0]) then 
 							@existing_packs.each_with_index do |p, i|
 								if p[0] == package[0] then
@@ -163,7 +178,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 		q = button(text, left: 310, top: 0, width: 100, state: state) do
 			real_url = get_url url
 			if real_url.nil? then
-				alert("Error, no connection to server", title: nil)
+				messages 3
 			else
 				q.state = "disabled"
 				File.file?("NCF_repository/downloads/#{name}_#{ver}.zip")? ( FileUtils.rm "NCF_repository/downloads/#{name}_#{ver}.zip") : nil
@@ -172,7 +187,8 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 					File.directory?("NCF_repository/packs/#{name}")? ( FileUtils.rm_r "NCF_repository/packs/#{name}" ) : nil
 					extract_zip( "NCF_repository/downloads/#{name}_#{ver}.zip","NCF_repository/packs/#{name}")
 					slot.contents[3].fraction = 1.0
-					q.remove
+					slot.contents[3].remove
+					slot.contents[2].remove
 					slot.append { dl_button slot, "Done!", nil, nil, nil, "disabled" }
 				end
 			end
@@ -182,22 +198,28 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 	def get_url url
 		uri = URI.parse(url)
 		http = Net::HTTP.new(uri.host, uri.port)
-		case uri.host
-			when /.moddb./ then
-				request = Net::HTTP.get(uri.host,uri.request_uri)
-				url_redirect = request[/a href="(.*?)">/, 1]
-				real_url = "#{uri.scheme}://#{uri.host}#{url_redirect}"
-			when /.dropbox./ then
-				http.use_ssl = true
-				http.verify_mode = OpenSSL::SSL::VERIFY_NONE	
-				request = Net::HTTP::Get.new(uri.request_uri)	
-				real_url = http.request(request)['location']
-			when /.github./
-				http.use_ssl = true
-				http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-				request = Net::HTTP::Get.new(uri.request_uri)
-				real_url = http.request(request).body
+		debug(http)
+		begin
+			case uri.host
+				when /.moddb./ then
+					request = Net::HTTP.get(uri.host,uri.request_uri)
+					url_redirect = request[/a href="(.*?)">/, 1]
+					real_url = "#{uri.scheme}://#{uri.host}#{url_redirect}"
+				when /.dropbox./ then
+					http.use_ssl = true
+					http.verify_mode = OpenSSL::SSL::VERIFY_NONE	
+					request = Net::HTTP::Get.new(uri.request_uri)	
+					real_url = http.request(request)['location']
+				when /.github./
+					http.use_ssl = true
+					http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+					request = Net::HTTP::Get.new(uri.request_uri)
+					real_url = http.request(request).body
+			end
+		rescue
+			return nil
 		end
+		debug("url is #{real_url}")
 		return real_url
 	end
 	
@@ -215,7 +237,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 		if [ "yes", "y", "Y", "YES" ].include?(ask("Are you sure you want to deploy NCF core for #{folder}(Y/N)?\n")) then
 			FileUtils.copy_entry "NCF_repository/core/#{folder}/", ".."
 			FileUtils.mkdir_p '../Complete/Icons'
-			@submenu == 1 ? main_core_block : nil
+			main_core_block
 		end
 	end
 	
@@ -224,7 +246,9 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 			file_name = fn.split("/")[3..-1].join("/")
 			File.delete("../#{file_name}") if File.exist?("../#{file_name}")
 		end
+		@core_deployed = 0
 		main_core_block
+		@submenu == 1 ? main_pack_block_offline : nil
 	end
 	
 	def list_all_creatures list
@@ -250,7 +274,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 		base_arr.each do |ncf|
 			@creature_table.append do
 				flow displace_left: (ncf[2] == "none" or letters?(ncf[2])) ? 60 : 90, width: 0.8 do
-					check(checked: false) { |cc| cc.checked? ? @custom_ncf_package.push("NCF_#{ncf[0]}.pak") : @custom_ncf_package.delete("NCF_#{ncf[0]}.pak"); debug("#{p[0]}, #{@custom_ncf_package.count}") }
+					check(checked: false) { |cc| cc.checked? ? @custom_ncf_package.push("NCF_#{ncf[0]}.pak") : @custom_ncf_package.delete("NCF_#{ncf[0]}.pak") }
 					para "#{ncf[0]}. #{ncf[1]}", align: "left", size: 13
 				end
 			end
@@ -293,7 +317,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 							FileUtils.copy_file "NCF_repository/packs/#{folder}/Icons/Creature_#{ncf}.dds", "../Complete/icons/Creature_#{ncf}.dds"
 							@bar.fraction = ((i+1).to_f/@custom_ncf_package.count).round(2)
 						end
-						start { alert("Installation complete", title: nil); }
+						start { messages 1 }
 					end
 				end
 			end
