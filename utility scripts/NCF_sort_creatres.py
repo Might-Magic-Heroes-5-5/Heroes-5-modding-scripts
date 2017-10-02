@@ -10,15 +10,16 @@ import re
 from scipy.optimize import _root
 from pip.cmdoptions import src
 
-src1 = 'white_armada'
-src2 =  'default_separated'
-src3 = 'NCF_separated'
+#src1 = 'white_armada'
+src1 = 'new towns\\KC-GOLD\\Part-1\\data\\KC123-data'
+src2 = 'NCF\\new towns\\vanila_separated'
+src3 = 'NCF\\new towns\\NCF_separated'
 #src = 'D:\\mod workplace\\NCF_MegaPack'
-src = 'D:\\mod workplace\\NCF\\' + src3
-dest = 'D:\\mod workplace\\NCF\\' + src3 + '\\'
-rng = range(670, 691)
+src = 'D:\\mod workplace\\' + src2
+dest = 'D:\\mod workplace\\' + src3 + '\\'
+rng = range(550, 551)
 default_races = [ 'Academy', 'Haven', 'Dwarves', 'Necropolis', 'Dungeon', 'Preserve', 'Orcs', 'Inferno'] ## a quick list with all races in case it is needed.
-mode = 4 #selects what the script will do
+mode = 3 #selects what the script will do
 # 0 - is for NCFmegapack extraction;
 # ---> source: expects unarchievedNCF megapack folder 
 # ---> output: create separate folders for each NCF creature along with its accompanying files
@@ -28,7 +29,7 @@ mode = 4 #selects what the script will do
 # ---------> create separate folders for each NCF creature (copied from the source) where the MapObjects\_(AdvMapObjectLink)\Monsters\NCF\Creature_id.xdb
 # ---------> file is changed to refer the new icon that reside in <game folder>/Complete/Icons
 # 2 - is for extracting models that overlap vanilla creatures
-# ---> source: expects unarchievedNCF data folder 
+# ---> source: expects unarchieved modded data folder 
 # ---> output: create separate folder for each vanilla creature along with its accompanying files
 # 3 - is for migrating Vanilla models to NCF creatures
 # ---> source: expects folder with vanilla cratures. Each creature should be in separate folder (mode 2 output)
@@ -53,8 +54,8 @@ def list_files(uuid, int_source):
     for root, dirs, files in walk(join(source, int_source)):  
         for name in files:
             if name == uuid:
-                file = join('\\'.join(root.split('\\')[len(source.split('\\')):])) + "\\" + name
-                #print(file)
+                file = join('bin\\' +  '\\'.join(root.split('\\')[len(source.split('\\')):])) + "\\" + name
+                print(file)
                 migrate_files(file, file)
     return
     
@@ -72,7 +73,7 @@ def read_files(file, first, second, sanitize = True):
             #print('-------->', string)
             if sanitize is True:
                 if re.match("^/", string) is None:
-                    target = (file.split('\\'))
+                    target = (target.split('\\'))
                     target = join('\\'.join(target[0:len(target)-1]), string)
                     #print('-------->>','yes')
                 else:
@@ -86,11 +87,12 @@ def read_files(file, first, second, sanitize = True):
             pass
     return file_arr
 
-def get_file_trees (file, mod=0, i=0):
+def get_file_trees (file, i=0):
     paths, uuids, visuals = [], [], []
-    #print('-->', file)
+    f_path = '\\'.join(file.split('\\')[0:-1])
+    #print('->', file)
     if isfile(join(destination, file)) == False:
-        try:    
+        try:
             paths = read_files( file, 'href="', '"')
             #print('-->',paths)
             uuids = read_files( file, '<uid>', '</uid>', False)
@@ -108,8 +110,13 @@ def get_file_trees (file, mod=0, i=0):
         migrate_files(file, file)
         try:
             nmb = len(paths)
+            #print(paths)
             while(i < nmb):
                 #print(i*"##")
+                if '\\' not in paths[i]:
+                    #print(paths[i], f_path)
+                    #print(join(f_path, paths[i]))
+                    paths[i] = join(f_path, paths[i])
                 get_file_trees(paths[i])
                 i=i+1
         except:
@@ -197,7 +204,7 @@ if mode == 2:
             for f in files:
                 if '<AttackSkill>' in open(join(root,f)).read():
                     destination = (dest + f.split('.')[0] + '\\')
-                    get_file_trees(('\\').join(root.split('\\')[4:]) + '\\' + f)
+                    get_file_trees(('\\').join(root.split('\\')[7:]) + '\\' + f)
         
 if mode == 3:
     i=rng[0]
@@ -352,7 +359,7 @@ if mode == 6:
 if mode == 7:
     source = src
     for i in rng:
-        NCF_editor_entry = source + '\\%s\\Text\\Game\\Creatures\\Neutrals'%i
+        NCF_editor_entry = source + '\\%s\\Text\\Game\\Creatures\\Neutrals\\white armada'%i
         #print(NCF_editor_entry, NCF_editor_file)
         for root, dirs, files in walk(source + '\\%s'%i):
             for fls in files:
@@ -369,3 +376,17 @@ if mode == 8:
             for fls in files:
                 create_dir(NCF_editor_entry)
                 
+if mode == 9:
+    source = src
+    for i in rng:
+        NCF_editor_entry = source + '\\%s\\GameMechanics\\CreatureVisual\\Creatures\\white armada'%i
+        for root, dirs, files in walk(NCF_editor_entry):
+            for fls in files:
+                #print(root + '\\' + fls)
+                get_text_line = read_files(root + '\\' + fls, "<DescriptionFileRef href=\"",".txt")[0]
+                #get_text_line_split = get_text_line.split('\\')
+                print(source + '\\%s\\'%i + get_text_line + '.txt')
+                #replace(root + '\\' + fls, r'<DescriptionFileRef.+', r'<DescriptionFileRef href="/Text/Game/Creatures/Neutrals/white armada/%s.txt"/>'%get_text_line_split[-1] )
+                #create_dir(location)
+                with open(source + '\\%s\\'%i + get_text_line + '.txt', "w") as editor_f:
+                        editor_f.write("")
