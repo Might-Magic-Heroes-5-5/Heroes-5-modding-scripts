@@ -11,13 +11,13 @@ from scipy.optimize import _root
 from pip.cmdoptions import src
 
 #src1 = 'white_armada'
-src1 = 'new towns\\KC-GOLD\\Part-1\\data\\KC123-data'
+src1 = 'NCF\\new towns\\data'
 src2 = 'NCF\\new towns\\vanila_separated'
 src3 = 'NCF\\new towns\\NCF_separated'
 #src = 'D:\\mod workplace\\NCF_MegaPack'
 src = 'D:\\mod workplace\\' + src2
 dest = 'D:\\mod workplace\\' + src3 + '\\'
-rng = range(550, 551)
+rng = range(510, 551)
 default_races = [ 'Academy', 'Haven', 'Dwarves', 'Necropolis', 'Dungeon', 'Preserve', 'Orcs', 'Inferno'] ## a quick list with all races in case it is needed.
 mode = 3 #selects what the script will do
 # 0 - is for NCFmegapack extraction;
@@ -40,13 +40,18 @@ mode = 3 #selects what the script will do
 #---------> edits the existing NCF creatures by adding folder tree and .xdb file for in-game creature icon. The icon itself should be added manually
 
 def migrate_files(file, file_d_path):
-    if isfile(join(source,file)):
+    if isfile(source + file):
         dirr = file_d_path.split('\\')
         create_dir(destination + '\\'.join(dirr[0:len(dirr)-1]))
     else:
+        if file.endswith((".mb", ".ma", ".tga", ".TGA",".ges")) or 'n:inline' in file:
+            pass
+        else:
+            print("not a file",source + file)
+            #pass
         return 1
-    #print(join(source,file))
-    copyfile(join(source,file), join(destination ,file_d_path))
+    #print("---->" + join(source,file))
+    copyfile(source + file, destination + file_d_path)
     #move(join(source,file), join(destination,file_d_path))
     return 0
 
@@ -54,14 +59,14 @@ def list_files(uuid, int_source):
     for root, dirs, files in walk(join(source, int_source)):  
         for name in files:
             if name == uuid:
-                file = join('bin\\' +  '\\'.join(root.split('\\')[len(source.split('\\')):])) + "\\" + name
-                print(file)
+                file = join('\\bin\\' +  '\\'.join(root.split('\\')[len(source.split('\\')):])) + "\\" + name
                 migrate_files(file, file)
     return
     
 def read_files(file, first, second, sanitize = True): 
+    #print(source, file)
     file_arr = []  
-    for i, line in enumerate(open(join(source, file))):
+    for i, line in enumerate(open(source + file)):
         try:
             start = line.index( first ) + len( first )
             end = line.index( second, start )
@@ -72,52 +77,61 @@ def read_files(file, first, second, sanitize = True):
                 target = string
             #print('-------->', string)
             if sanitize is True:
-                if re.match("^/", string) is None:
-                    target = (target.split('\\'))
-                    target = join('\\'.join(target[0:len(target)-1]), string)
-                    #print('-------->>','yes')
-                else:
-                    target = re.sub('^/','',string)
-                    #print('-------->>','no')
                 target = re.sub('/','\\\\', target)
                 target = (target.split('#xpointer'))[0]
-                #print('-------->>',target)
+                #print('-------->>>',target)
             file_arr.append(target)
         except ValueError:
             pass
     return file_arr
 
-def get_file_trees (file, i=0):
+def sanitize_paths (paths, current_path):
+    path_list = []
+    for p in paths:
+        if re.match('^\\\\', p) is None:
+            #print('=====>',p)
+            p = current_path + "\\" + p
+        path_list.append(p)
+    return path_list
+
+def get_file_trees (file, mode=0, i=0):
     paths, uuids, visuals = [], [], []
     f_path = '\\'.join(file.split('\\')[0:-1])
-    #print('->', file)
-    if isfile(join(destination, file)) == False:
+    if isfile(destination + file) == False:
         try:
             paths = read_files( file, 'href="', '"')
-            #print('-->',paths)
+            paths = sanitize_paths(paths, f_path)
+            if mode == 1:
+                print(paths)
             uuids = read_files( file, '<uid>', '</uid>', False)
-            #print(paths,uuids)
             for uuid in uuids:
                 list_files(uuid, 'bin')
-            visuals = read_files( file, '<Model href="', '#xpointer')
-            for v in visuals:
-                visuals = v.split('.')
-                visuals_file = visuals[0] + '.(CharacterView).' + visuals[1]
-                #print(visuals_file)
-                migrate_files(visuals_file, visuals_file)
+            if mode != file:    
+                visual_batch = read_files( file, '<Model href="', '#xpointer')
+                visual_batch = sanitize_paths(visual_batch, f_path)
+                for v in visual_batch:
+                    visuals = v.split('.')
+                    visuals_file = visuals[0] + '.(CharacterView).' + visuals[1]
+                    visuals_file2 = visuals[0] + '.(Character).' + visuals[1]
+                    print("-------------------------->",visuals_file, visuals_file2)
+                    get_file_trees(visuals_file,visuals_file)
+                    get_file_trees(visuals_file2,visuals_file2)
+                    for root, subdirs, files in walk(source + f_path):
+                        for filename in files:
+                            if "LOD" in filename:
+                                print( "===========>",f_path + '\\' + filename)
+                                get_file_trees(f_path + '\\' + filename, f_path + '\\' + filename)
         except:
             pass
+        if mode == 1:
+                print("file",file, paths, mode)
         migrate_files(file, file)
         try:
             nmb = len(paths)
-            #print(paths)
             while(i < nmb):
-                #print(i*"##")
-                if '\\' not in paths[i]:
-                    #print(paths[i], f_path)
-                    #print(join(f_path, paths[i]))
-                    paths[i] = join(f_path, paths[i])
-                get_file_trees(paths[i])
+                if mode == 1:
+                    print("file and mode",paths[i])
+                get_file_trees(paths[i], mode)
                 i=i+1
         except:
             pass   
@@ -178,7 +192,6 @@ if mode == 1:
             editor_link = 'MapObjects\\_(AdvMapObjectLink)\\Monsters\\NCF\\Creature_%d.xdb' %i
             #print(icon_xdb)
             copyfile(join(source, icon_f[0]), join(icon_dest, 'Creature_%d.dds' %i ))
-            
             dirr = editor_link.split('\\')
             create_dir(destination + '\\'.join(dirr[0:len(dirr)-1]))
             NCF = open(join(destination, editor_link), 'w')
@@ -203,69 +216,66 @@ if mode == 2:
         for root, dirs, files in walk(join(source, 'GameMechanics\\Creature\\Creatures\\')): 
             for f in files:
                 if '<AttackSkill>' in open(join(root,f)).read():
-                    destination = (dest + f.split('.')[0] + '\\')
-                    get_file_trees(('\\').join(root.split('\\')[7:]) + '\\' + f)
+                    destination = (dest + f.split('.')[0])
+                    trees = "\\GameMechanics" + root.split("GameMechanics")[1] + '\\' + f
+                    get_file_trees(trees)
         
 if mode == 3:
     i=rng[0]
     for creature_list in walklevel(src, level=0):
         for creature in creature_list[1]:
             source = join(src, creature)
-            destination = join(dest, '%d\\' %i)
-            ###fix this
-### Find vanila gamemechanics, creature.xdb file and based on the root tree move all creature related files
+            destination = join(dest, '%d' %i)
+            ### Find vanila gamemechanics, creature.xdb file and based on the root tree move all creature related files
             for root1, dirs1, files1 in walk(join(source, 'GameMechanics\\Creature\\Creatures\\')):
                 for f in files1:
                     if '<AttackSkill>' in open(join(root1,f)).read(): ###Using the string to filter if this is a creature file
                         outer, inner = root1.rsplit('GameMechanics', 1)
-                        get_file_trees('GameMechanics%s\\%s' %(inner,f) )
+                        get_file_trees('\\GameMechanics%s\\%s' %(inner,f) )
                         inner_s = inner.split('\\')
                         inner_o = inner.split('\\')
                         inner_s[3] = "Neutrals"
                         #print(i-1,inner_o,inner_s)
-                        fr = destination + 'GameMechanics' + ('\\').join(inner_o)
-                        to = destination + 'GameMechanics' +  ('\\').join(inner_s[0:4])
+                        fr = destination + '\\GameMechanics' + ('\\').join(inner_o)
+                        to = destination + '\\GameMechanics' +  ('\\').join(inner_s[0:4])
                         rename(fr , to)
                         if len(inner_o) == 5:
-                            rmdir(destination + 'GameMechanics' + ('\\').join(inner_o[0:4]))
-                        #print(to)    
+                            rmdir(destination + 'GameMechanics' + ('\\').join(inner_o[0:4]))   
                         for root2, dirs2, files2 in walk(to):
                             for fl in files2:
                                 if '<AttackSkill>' in open(join(root2,fl)).read():
                                     creature_file = join(root2,fl)
                                     rename(to + '\\' + fl,to + '\\Creature_%d.xdb' %i)
-                        for root3, dirs3, files3 in walk(destination + 'MapObjects'):
+                        for root3, dirs3, files3 in walk(destination + '\\MapObjects'):
                             for fls in files3:
                                 if '<Model href=' in open(join(root3,fls)).read():
                                     AdvMapMonsterShared = join(root3,fls)
-                                    temp = read_files(join(root3,fls), '<Model href="' , '"')[0].split("\\")
+                                    if re.match("^/", fls) is None:
+                                        fls = "\\MapObjects" + root3.split('MapObjects')[1] + "\\" + fls
+                                    temp = read_files(fls, '<Model href="' , '"')[0].split("\\")
                                     lua_name = temp[len(temp) - 2].upper()
-                                    print(lua_name)
-                        #print(destination + 'scripts')
-                        scripts_path = destination + 'scripts'
-                        scripts_lua = scripts_path + '\\creature_%s.lua' %i
-                        create_dir(destination + 'scripts')
+                                    #print(lua_name)
+                        scripts_lua = destination + '\scripts' + '\\creature_%s.lua' %i
+                        create_dir(destination + '\scripts')
                         with open(scripts_lua, "w") as write_f:
                             write_f.write("    CREATURE_%s = %s" %(lua_name, i))
                         replace(AdvMapMonsterShared, r'<AdvMapMonsterShared.+', r'<AdvMapMonsterShared>' )
                         replace(AdvMapMonsterShared, r'<Creature>.+', r'<Creature>CREATURE_%s</Creature>'%i )
-                        NCF_editor_entry = destination + 'MapObjects\\_(AdvMapObjectLink)\\Monsters\\NCF'
+                        NCF_editor_entry = destination + '\\MapObjects\\_(AdvMapObjectLink)\\Monsters\\NCF'
                         NCF_editor_file = NCF_editor_entry + '\\Creature_%s.xdb' %i
                         NCF_editor_file_entry = (AdvMapMonsterShared.rsplit('MapObjects',1)[1]).replace('\\', '/')
-                        
-                        print(NCF_editor_file_entry)
                         create_dir(NCF_editor_entry)
                         with open(NCF_editor_file, "w") as editor_f:
                             editor_f.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<AdvMapObjectLink>\n    <Link href=\"/MapObjects%s#xpointer(/AdvMapMonsterShared)\"/>\n    <RndGroup/>\n    <IconFile>Icons\Creature_%s.dds</IconFile>\n    <HideInEditor>false</HideInEditor>\n</AdvMapObjectLink>" %(NCF_editor_file_entry, i))
                             
-                        char_fix = destination + 'Characters\\Creatures\\'
-                        for root4, dirs4, files4 in walk(destination + 'Characters\\Creatures'):
+                        char_fix = destination + '\\Characters\\Creatures\\'
+                        for root4, dirs4, files4 in walk(destination + '\\Characters\\Creatures'):
                             for x in dirs4:
                                 if x in default_races:
                                     rename(char_fix + x , char_fix + "Neutrals")
                                     for root5, dirs5, files5 in walk(destination):
                                         for f5 in files5:
-                                            print(f5)
+                                            #print(f5)
                                             try:
                                                 replace(join(root5,f5), '"/Characters/Creatures/%s' %x,'"/Characters/Creatures/Neutrals')
                                             except:
@@ -324,7 +334,6 @@ if mode == 5:
                     to = creature_name_file.split('\\')
                     to[3] = 'Boulder'
                     too = ('/').join(to)
-                    print(i,too)
                     replace(texts, '\t<DescriptionFileRef.+', '    <DescriptionFileRef href="/%s"/>'%too)
                 except:
                     pass
@@ -351,7 +360,6 @@ if mode == 6:
                 if '<Model href=' in open(join(root,fls)).read():
                     AdvMapMonsterShared = join(root,fls)
                     NCF_editor_file_entry = (AdvMapMonsterShared.rsplit('MapObjects',1)[1]).replace('\\', '/')
-                    print(NCF_editor_file)
                     create_dir(NCF_editor_entry)
                     with open(NCF_editor_file, "w") as editor_f:
                         editor_f.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<AdvMapObjectLink>\n    <Link href=\"/MapObjects%s#xpointer(/AdvMapMonsterShared)\"/>\n    <RndGroup/>\n    <IconFile>Icons\Creature_%s.dds</IconFile>\n    <HideInEditor>false</HideInEditor>\n</AdvMapObjectLink>" %(NCF_editor_file_entry, i))
@@ -385,8 +393,32 @@ if mode == 9:
                 #print(root + '\\' + fls)
                 get_text_line = read_files(root + '\\' + fls, "<DescriptionFileRef href=\"",".txt")[0]
                 #get_text_line_split = get_text_line.split('\\')
-                print(source + '\\%s\\'%i + get_text_line + '.txt')
+                #print(source + '\\%s\\'%i + get_text_line + '.txt')
                 #replace(root + '\\' + fls, r'<DescriptionFileRef.+', r'<DescriptionFileRef href="/Text/Game/Creatures/Neutrals/white armada/%s.txt"/>'%get_text_line_split[-1] )
                 #create_dir(location)
                 with open(source + '\\%s\\'%i + get_text_line + '.txt', "w") as editor_f:
                         editor_f.write("")
+                        
+if mode == 10:
+    source = src
+    y=0
+    a = 999
+    for i in rng:
+        for root, dirs, files in walk(source + '\\%s\\Text\\Game\\Creatures'%i):
+            for fls in files:
+                if 'esc' not in fls and 'bilit' not in fls and 'isc' not in fls:
+                    #fff = (root + '\\' + fls)
+                    #new = read_files(fff,'<MonsterShared href="', '#xpointer', False)
+                    #if new[0] in open('D:\\mod workplace\\NCF\\Raw\\exist.txt').read():
+                    y=y + 1
+                    file_object = open(root + '\\' + fls, 'r', encoding='UTF16')
+                    print(i, file_object.readline())
+                    break;
+    
+    #print(y)            
+
+                    #with open(NCF_editor_file, "w") as editor_f:
+                    #        editor_f.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<AdvMapObjectLink>\n    <Link href=\"/MapObjects%s#xpointer(/AdvMapMonsterShared)\"/>\n    <RndGroup/>\n    <IconFile>Icons\Creature_%s.dds</IconFile>\n    <HideInEditor>false</HideInEditor>\n</AdvMapObjectLink>" %(NCF_editor_file_entry, i))
+                            
+                    #print(new)
+                
