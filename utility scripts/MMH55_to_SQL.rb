@@ -187,10 +187,10 @@ Shoes.app do
 			
 		db.execute "insert into classes values ( ?, ?, ?, ?, ?, ? )", classes.last.stats
 		classes.last.get_skills n, "obj/SkillsProbs/Item/SkillID | obj/SkillsProbs/Item/Prob"
-		db.execute "create table #{id} (skill string, chance int, app_order int);"
+		db.execute "create table #{id} (skill string, chance int, type string, app_order int);"
 		skills_name, skills_chance = classes.last.skills
 		skills_name.each_with_index do |_,i|
-			db.execute "insert into #{id} values ( ?, ?, ? );", skills_name[i], skills_chance[i], i
+			db.execute "insert into #{id} values ( ?, ?, ?, ? );", skills_name[i], skills_chance[i], 'SKILLTYPE_SKILL', i
 		end
 		make_text "en/classes/#{id}", ["name"], "Rc10/data/MMH55-Texts-EN/GameMechanics/RefTables/#{classes.last.texts}"
 	end
@@ -234,7 +234,7 @@ Shoes.app do
 				klas = t.xpath("Class").text
 				t.xpath("dependenciesIDs/Item").each { |p| req_skills << p.text }
 				unless req_skills.empty? then
-					db.execute "insert into #{klas} values ( ?, ?, ?);",id, req_skills.join(','), '12'
+					db.execute "insert into #{klas} values ( ?, ?, ?, ?);",id, req_skills.join(','), type, '99'
 					make_text "en/skills/#{id}", ["name"], "Rc10/data/MMH55-Texts-EN/#{txt_name[0]}"
 					make_text "en/skills/#{id}", ["desc"], "Rc10/data/MMH55-Texts-EN/#{txt_desc[0]}"
 				end
@@ -427,4 +427,4 @@ Shoes.app do
 	doc.xpath("//BladeBarrier//Base").each do |n|
 		debug(n.text)
 	end
-end
+=end
