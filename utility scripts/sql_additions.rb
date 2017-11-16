@@ -117,7 +117,7 @@ Shoes.app do
 	id = 'HERO_CLASS_KNIGHT_RENEGADE'
 	get_klas = db.execute "select * from HERO_CLASS_KNIGHT"
 	db.execute "delete from classes WHERE id='#{id}';"
-	db.execute "DROP TABLE #{id};"
+	#db.execute "DROP TABLE #{id};"
 	db.execute "CREATE TABLE #{id} ( skill string, chance int, type string, app_order int );"
 	klas_entry = (db.execute "select * from classes WHERE id='HERO_CLASS_KNIGHT'")[0]
 	db.execute "INSERT into classes VALUES ( ?, ?, ?, ?, ?, ?);", id, klas_entry[1..-1]
@@ -136,7 +136,7 @@ Shoes.app do
 	db.execute "delete from classes WHERE id='#{id}';"
 	klas_entry = (db.execute "select * from classes WHERE id='HERO_CLASS_BARBARIAN'")[0]
 	db.execute "INSERT into classes VALUES ( ?, ?, ?, ?, ?, ?);", id, klas_entry[1..-1]
-	db.execute "DROP TABLE #{id};"
+	#db.execute "DROP TABLE #{id};"
 	db.execute "CREATE TABLE #{id} ( skill string, chance int, type string, app_order int );"
 	get_klas.each { |n| db.execute "INSERT into #{id} VALUES ( ?, ?, ?, ?);",n }
 	db.execute "INSERT into #{id} VALUES ( 'HERO_SKILL_VOICE', 12, 'SKILLTYPE_SKILL', 12);"
@@ -152,7 +152,7 @@ Shoes.app do
 	get_klas = db.execute "select * from HERO_CLASS_BARBARIAN"
 	db.execute "delete from classes WHERE id='#{id}';"
 	klas_entry = (db.execute "select * from classes WHERE id='HERO_CLASS_BARBARIAN'")[0]
-	db.execute "DROP TABLE #{id};"
+	#db.execute "DROP TABLE #{id};"
 	db.execute "CREATE TABLE #{id} ( skill string, chance int, type string, app_order int );"
 	db.execute "INSERT into classes VALUES ( ?, ?, ?, ?, ?, ?);", id, klas_entry[1..-1]
 	get_klas.each { |n| db.execute "INSERT into #{id} VALUES ( ?, ?, ?, ?);",n }

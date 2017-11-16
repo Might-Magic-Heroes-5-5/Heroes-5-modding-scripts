@@ -127,7 +127,7 @@ Shoes.app do
 			make_text "en/factions/#{n.text}", ["name"], "Rc10/data/MMH55-Texts-EN/#{texts[i].text}"
 		end
 	end
-
+#=end
 	############ create table with all in-game heroes and their starting primary and secondary stats
 	source_hero = 'RC10/data/MMH55-Index/MapObjects'
 	db.execute "create table heroes ( id string, atk int, def int, spp int, knw int, skills string, masteries string, perks string, spells string, classes string, faction string );"
@@ -207,10 +207,10 @@ Shoes.app do
 		(n.xpath("obj/DescriptionFileRef/Item/@href").each { |d| txt_desc << d.text })
 		id = n.xpath("ID").text
 		type = n.xpath("obj/SkillType").text
-		
+		base = n.xpath("obj/BasicSkillID").text
 		perks << Perk.new( id,
 			type,
-			n.xpath("obj/BasicSkillID").text,
+			base,
 			txt_name,
 			txt_desc)
 		
@@ -233,14 +233,17 @@ Shoes.app do
 				req_skills = []
 				klas = t.xpath("Class").text
 				t.xpath("dependenciesIDs/Item").each { |p| req_skills << p.text }
-				unless req_skills.empty? then
-					db.execute "insert into #{klas} values ( ?, ?, ?, ?);",id, req_skills.join(','), type, '99'
-					make_text "en/skills/#{id}", ["name"], "Rc10/data/MMH55-Texts-EN/#{txt_name[0]}"
-					make_text "en/skills/#{id}", ["desc"], "Rc10/data/MMH55-Texts-EN/#{txt_desc[0]}"
+				if (db.execute "select skill from #{klas} where type='SKILLTYPE_SKILL'").join(",").include?(base) then
+					unless req_skills.empty? then
+						db.execute "insert into #{klas} values ( ?, ?, ?, ?);",id, req_skills.join(','), type, '99'
+						make_text "en/skills/#{id}", ["name"], "Rc10/data/MMH55-Texts-EN/#{txt_name[0]}"
+						make_text "en/skills/#{id}", ["desc"], "Rc10/data/MMH55-Texts-EN/#{txt_desc[0]}"
+					end
 				end
 			end
 		end
 	end
+
 	############ create creature table 
 	source_creatures = 'RC10/data/MMH55-Index/GameMechanics/creature/creatures'
 	db.execute "create table creatures ( id string, at int, df int, shots int, min_d int, max_d int, spd int, init int, fly int, hp int, spells string, spell_mastery string, mana int, tier int, faction string, growth int, ability string );"
@@ -419,7 +422,7 @@ Shoes.app do
 
 	para "Success"
 end
-	
+
 =begin
 Shoes.app do
 	source_defaultstats = 'Rc10/data/MMH55-Index/GameMechanics/RPGStats/DefaultStats.xdb'
