@@ -292,28 +292,29 @@ Shoes.app do
 		make_text "en/abilities/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN#{txt_name}"
 		make_text "en/abilities/#{id}", [ "desc" ], "Rc10/data/MMH55-Texts-EN#{txt_desc}"
 	end
-	
+
 	############ create table with all spells and guilds
-	source_spells = 'Rc10/data/MMH55-Index/GameMechanics/Spell'
+	#source_spells = 'Rc10/data/MMH55-Index/GameMechanics/Spell'
+	source_spells = 'Rc10/data/MMH55-Index/GameMechanics/RefTables/UndividedSpells.xdb'
     db.execute "create table spells ( id string, spell_effect string, spell_increase string, mana int, tier int, guild string, resource_cost string );"
 	db.execute "create table guilds ( id string, app_order int );"
+	source = File.open(source_spells)  { |f| Nokogiri::XML(f) }
 	spell_dirs, guilds, spells = ["Combat_Spells", "Hero_Abilities/Barbarian", "Adventure_Spells" ], [], []
-
-	spell_dirs.each do |sc|
-		Dir.glob("#{source_spells}/#{sc}/**/*").reject{ |rj| File.directory?(rj) }.each do |f|
+	source.xpath("/Table_Spell_SpellID/objects/Item").each do |sp|
+		id = sp.xpath("ID").text
+		dr = sp.xpath("Obj/@href").text
+		dr.nil? ? next : nil
+		dr_source = "Rc10/data/MMH55-Index#{dr.split('#xpointer')[0]}"
+		if spell_dirs.any? { |x| dr.include?(x) } then
+			doc = File.open(dr_source) { |f| Nokogiri::XML(f) }
+			( ['SpellVisual','Mass_','Empowered'].any? { |word| dr.include?(word) } or doc.xpath("//NameFileRef/@href").text == '' ) ? next : nil
 			base, power, resource, predict = [], [], [], []
-			doc = File.open(f) { |d| Nokogiri::XML(d) }
-			
-			( ['SpellVisual','Mass_','Empowered'].any? { |word| f.include?(word) } or doc.xpath("//NameFileRef/@href").text == '' ) ? next : nil
-			id = f.split("/")[-1].split('.')[0]
 			school = doc.xpath("//MagicSchool").text
 			doc.xpath("//Base | //PerPower").each_with_index { |x, i| ( i.even? ? base : power ) << x.text }
 			[ "Wood", "Ore", "Mercury", "Crystal", "Sulfur", "Gem" ].each do |r|
 				doc.css("//#{r}").each { |t| t.text > '0' ? resource << "#{r} #{t.text}" : nil }	
 			end
-			
-			doc.xpath("//SpellBookPredictions/Item/@href").each { |p| predict << (check_dir p.text,f) }
-						
+			doc.xpath("//SpellBookPredictions/Item/@href").each { |p| predict << (check_dir p.text,dr_source) }
 			spells << Spell.new(id,
 				base.join(','),
 				power.join(','),
@@ -321,17 +322,16 @@ Shoes.app do
 				doc.xpath("//Level").text,
 				school,
 				resource.join(','),
-				(check_dir doc.xpath("//NameFileRef/@href").text, f),
-				(check_dir doc.xpath("//LongDescriptionFileRef/@href").text, f),
-				predict	
-			)
+				(check_dir doc.xpath("//NameFileRef/@href").text, dr_source),
+				(check_dir doc.xpath("//LongDescriptionFileRef/@href").text, dr_source),
+				predict )
 			db.execute "insert into spells values ( ?, ?, ?, ?, ?, ?, ? );", spells.last.stats
 			(guilds.include?(school) or school == '') ? nil : (guilds << school)
 			txt = spells.last.texts
 			make_text "en/spells/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN/#{txt[0]}" 
 			make_text "en/spells/#{id}", [ "desc", "additional" ], "Rc10/data/MMH55-Texts-EN/#{txt[1]}", 1;
 			txt[2].each do |p|
-				p = check_dir p, f
+				p = check_dir p, dr_source
 				p.include?('SpellBookPrediction.txt') ? ( make_text "en/spells/#{id}", [ "pred" ], "Rc10/data/MMH55-Texts-EN#{p}", 1 ) : nil
 				p.include?('SpellBookPrediction_Expert') ? ( make_text "en/spells/#{id}", [ "pred_expert" ], "Rc10/data/MMH55-Texts-EN#{p}", 1 ) : nil
 				p.include?('HealHPReduce.txt') ? ( make_text "en/spells/#{id}", [ "pred" ], "Rc10/data/MMH55-Texts-EN#{p}", 1 ) : nil
