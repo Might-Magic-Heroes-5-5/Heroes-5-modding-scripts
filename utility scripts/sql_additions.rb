@@ -108,8 +108,36 @@ class Artifact
 	def texts; return @txt_name, @txt_desc end
 end
 
+def popupate_skill_perks hero_id, new_skill, template_klass, db
+	source_perks = 'Rc10\data\MMH55-Index\GameMechanics\RefTables\Skills.xdb'
+	doc = File.open(source_perks) { |f| Nokogiri::XML(f) }
+	doc.xpath("//objects/Item").each_with_index do |n, i|
+		txt_name, txt_desc = [], []
+		(n.xpath("obj/NameFileRef/Item/@href").each { |s| txt_name << s.text })
+		(n.xpath("obj/DescriptionFileRef/Item/@href").each { |d| txt_desc << d.text })
+		s_id = n.xpath("ID").text
+		type = n.xpath("obj/SkillType").text
+		base = n.xpath("obj/BasicSkillID").text
+		if type == 'SKILLTYPE_SPECIAL_PERK' and base == "#{new_skill}" then
+			req_item = n.xpath("obj/SkillPrerequisites/Item")
+			req_item.each do |t|
+				req_skills = []
+				klas = t.xpath("Class").text
+				t.xpath("dependenciesIDs/Item").each { |p| req_skills << p.text }
+				if klas == "#{template_klass}" then
+					unless req_skills.empty? then
+						db.execute "insert into #{hero_id} values ( ?, ?, ?, ?);",s_id, req_skills.join(','), type, '99'
+						make_text "en/skills/#{s_id}", ["name"], "Rc10/data/MMH55-Texts-EN/#{txt_name[0]}"
+						make_text "en/skills/#{s_id}", ["desc"], "Rc10/data/MMH55-Texts-EN/#{txt_desc[0]}"
+					end
+				end
+			end
+		end
+	end
+end
 
 Shoes.app do
+
 	DB_NAME = 'skillwheel.db'
 	db = SQLite3::Database.new DB_NAME
 	
@@ -120,13 +148,15 @@ Shoes.app do
 	#db.execute "DROP TABLE #{id};"
 	db.execute "CREATE TABLE #{id} ( skill string, chance int, type string, app_order int );"
 	klas_entry = (db.execute "select * from classes WHERE id='HERO_CLASS_KNIGHT'")[0]
-	db.execute "INSERT into classes VALUES ( ?, ?, ?, ?, ?, ?);", id, klas_entry[1..-1]
+	db.execute "INSERT into classes VALUES ( ?, ?, ?, ?, ?, ?);", id, klas_entry[1..-1]		
+	make_text "en/classes/#{id}", ["name"], "additions/classes/#{id}.txt"
 	get_klas.each do |n|
-		n[0] == 'HERO_SKILL_LIGHT_MAGIC' ? n[0] = 'HERO_SKILL_SHATTER_LIGHT_MAGIC' : nil
+		n[0] == 'HERO_SKILL_SHATTER_DARK_MAGIC' ? n[0] = 'HERO_SKILL_DARK_MAGIC' : nil
 		db.execute "INSERT into #{id} VALUES ( ?, ?, ?, ?);",n
 	end
-	make_text "en/classes/#{id}", ["name"], "additions/classes/#{id}.txt"
-	##add heroes to Khan class
+	popupate_skill_perks id, "HERO_SKILL_DARK_MAGIC", "HERO_CLASS_KNIGHT", db
+	
+	##add heroes to Knight Renegade class
 	db.execute "UPDATE heroes SET classes='#{id}' WHERE id='RedHeavenHero01';"
 	db.execute "UPDATE heroes SET classes='#{id}' WHERE id='Mardigo';"
 	
@@ -140,6 +170,7 @@ Shoes.app do
 	db.execute "CREATE TABLE #{id} ( skill string, chance int, type string, app_order int );"
 	get_klas.each { |n| db.execute "INSERT into #{id} VALUES ( ?, ?, ?, ?);",n }
 	db.execute "INSERT into #{id} VALUES ( 'HERO_SKILL_VOICE', 12, 'SKILLTYPE_SKILL', 12);"
+	popupate_skill_perks id, "HERO_SKILL_VOICE", "HERO_CLASS_BARBARIAN", db
 	make_text "en/classes/#{id}", ["name"], "additions/classes/#{id}.txt"
 	
 	##add heroes to Khan class
@@ -157,6 +188,7 @@ Shoes.app do
 	db.execute "INSERT into classes VALUES ( ?, ?, ?, ?, ?, ?);", id, klas_entry[1..-1]
 	get_klas.each { |n| db.execute "INSERT into #{id} VALUES ( ?, ?, ?, ?);",n }
 	db.execute "INSERT into #{id} VALUES ( 'HERO_SKILL_BARBARIAN_LEARNING', 12, 'SKILLTYPE_SKILL', 12);"
+	popupate_skill_perks id, "HERO_SKILL_BARBARIAN_LEARNING", "HERO_CLASS_BARBARIAN", db
 	make_text "en/classes/#{id}", ["name"], "additions/classes/#{id}.txt"
 	
 	##add heroes to Veteran class 
@@ -164,10 +196,5 @@ Shoes.app do
 	db.execute "UPDATE heroes SET  classes='#{id}' WHERE id='Crag';"
 	db.execute "UPDATE heroes SET  classes='#{id}' WHERE id='Hero6';"
 	
-	
-	
 	para "GOOD!"
-
-
-
 end

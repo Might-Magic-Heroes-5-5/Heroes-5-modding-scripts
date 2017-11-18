@@ -114,7 +114,7 @@ Shoes.app do
 	source_defaultstats = 'Rc10/data/MMH55-Index/GameMechanics/RPGStats/DefaultStats.xdb'
 	DB_NAME = 'skillwheel.db'
 	db = SQLite3::Database.new 'skillwheel.db'
-
+=begin
 	############ create table with faction list and native spells
 	soruce_town = 'Rc10/data/MMH55-Index/GameMechanics/RefTables/TownTypesInfo.xdb'
 	doc = File.open(soruce_town) { |f| Nokogiri::XML(f) }
@@ -127,7 +127,7 @@ Shoes.app do
 			make_text "en/factions/#{n.text}", ["name"], "Rc10/data/MMH55-Texts-EN/#{texts[i].text}"
 		end
 	end
-#=end
+
 	############ create table with all in-game heroes and their starting primary and secondary stats
 	source_hero = 'RC10/data/MMH55-Index/MapObjects'
 	db.execute "create table heroes ( id string, atk int, def int, spp int, knw int, skills string, masteries string, perks string, spells string, classes string, faction string );"
@@ -216,7 +216,6 @@ Shoes.app do
 		
 		req_item = n.xpath("obj/SkillPrerequisites/Item")
 		
-		
 		case type
 		when "SKILLTYPE_SKILL" then
 			db.execute "insert into skills values ( ?, ?, ?, ? );", perks.last.stats, i
@@ -243,7 +242,7 @@ Shoes.app do
 			end
 		end
 	end
-
+	
 	############ create creature table 
 	source_creatures = 'RC10/data/MMH55-Index/GameMechanics/creature/creatures'
 	db.execute "create table creatures ( id string, at int, df int, shots int, min_d int, max_d int, spd int, init int, fly int, hp int, spells string, spell_mastery string, mana int, tier int, faction string, growth int, ability string );"
@@ -258,7 +257,9 @@ Shoes.app do
 		header = fn.split("GameMechanics")[0]
 		visuals = File.open("#{header.chop}#{doc.xpath("//Visual/@href").text.split('#xpointer')[0]}") { |f| Nokogiri::XML(f) }
 		doc.xpath("//KnownSpells/Item/Spell | //KnownSpells/Item/Mastery").each_with_index { |s, i|	( i.even? ? spells : masteries ) << s.text }
-		doc.xpath("//Abilities").each { |a| abilities << a.text }
+		doc.xpath("//CombatSize").text == '2' ? ( abilities << "ABILITY_LARGE_CREATURE" ) : nil
+		doc.xpath("//Range").text != '0' ? ( abilities << "ABILITY_SHOOTER" ) : nil
+		doc.xpath("//Abilities/Item").each { |a| abilities << a.text }
 		creatures << Creature.new(id,
 			doc.xpath("//AttackSkill").text,
 			doc.xpath("//DefenceSkill").text,
@@ -275,7 +276,7 @@ Shoes.app do
 			doc.xpath("//CreatureTier").text,
 			doc.xpath("//CreatureTown").text,
 			doc.xpath("//WeeklyGrowth").text,
-			abilities,
+			abilities.join(','),
 			visuals.xpath("/CreatureVisual/CreatureNameFileRef/@href")
 		)
 		make_text "en/creatures/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN#{creatures.last.texts}";
@@ -336,6 +337,7 @@ Shoes.app do
 				p.include?('SpellBookPrediction_Expert') ? ( make_text "en/spells/#{id}", [ "pred_expert" ], "Rc10/data/MMH55-Texts-EN#{p}", 1 ) : nil
 				p.include?('HealHPReduce.txt') ? ( make_text "en/spells/#{id}", [ "pred" ], "Rc10/data/MMH55-Texts-EN#{p}", 1 ) : nil
 			end
+			make_text "en/spells", [ "universal_prediction" ], "Rc10/data/MMH55-Texts-EN/Text/Game/Spells/SpellBookPredictions/DirectDamage.txt", 1
 		end		
 	end
 	txt_guilds =  { MAGIC_SCHOOL_DARK: 'SchoolDark',
@@ -351,7 +353,7 @@ Shoes.app do
 		db.execute "insert into guilds values (?, ?)", g, i
 		(make_text "en/guilds/#{g}", [ "name" ], "Rc10/data/MMH55-Texts-EN/Text/Tooltips/SpellBook/#{txt_guilds[:"#{g}"]}.txt")
 	end
-
+=end
 	############ make a list of all sets
 	source_sets = 'RC10\data\MMH55-Index\scripts\advmap-startup.lua'
 	flag, artif_set, artif = 0, {}, {}
@@ -383,18 +385,18 @@ Shoes.app do
 	############ create table with all artifacts and their set matches
 	source_artifacts = 'RC10\data\MMH55-Index\GameMechanics\RefTables\Artifacts.xdb'
 	doc = File.open(source_artifacts) { |f| Nokogiri::XML(f) }
-	db.execute "create table artifacts ( id string, slot string, cost int, type string, at int, df int, sp int, kn int, morale int, luck int, set_name string );"
+	db.execute "create table artifacts ( id string, slot string, cost int, type string, attack int, defence int, spellpower int, knowledge int, morale int, luck int, art_set string );"
 	is_set, artifacts = '', []
 	
 	doc.xpath("//objects/Item").each do |n|
 		( id = n.xpath("ID").text ) == ('ARTIFACT_NONE') ? next : nil
+		[ 'ARTIFACT_NONE', 'ARTIFACT_FREIDA', 'ARTIFACT_PRINCESS' ].any? { |a| id == a } ? next : nil
 		id.slice! 'ARTIFACT_'
 		@sets.each { |key, array| array.include?("#{artif[:"#{id}"]}") ? (  is_set = "#{key}".upcase; break; ) : is_set = 'NONE' }
-
 		artifacts << Artifact.new(id,
 			n.xpath("obj/Slot").text,
 			n.xpath("obj/CostOfGold").text,
-			n.xpath("obj/Type").text,
+			(n.xpath("obj/CanBeGeneratedToSell").text == 'false' ? 'ARTF_CLASS_GRAIL' : n.xpath("obj/Type").text),
 			n.xpath("obj/HeroStatsModif/Attack").text,
 			n.xpath("obj/HeroStatsModif/Defence").text,
 			n.xpath("obj/HeroStatsModif/SpellPower").text,
@@ -416,8 +418,8 @@ Shoes.app do
 	
 	Dir.glob("design/artifacts/filters/**/*").reject{ |rj| File.directory?(rj) }.each do |fl|
 		filter_name = fl.split("/")[-1].split('.')[0]
-		filter = (read_skills fl)
-		db.execute "insert into artifact_filter values ( ?, ?)", filter.join(","), filter_name
+		filter = filter_name == 'by_set' ? @sets.keys : (read_skills fl)
+		db.execute "insert into artifact_filter values ( ?, ?)", filter.join(",").upcase, filter_name
 	end	
 
 	para "Success"
@@ -430,4 +432,3 @@ Shoes.app do
 	doc.xpath("//BladeBarrier//Base").each do |n|
 		debug(n.text)
 	end
-=end
