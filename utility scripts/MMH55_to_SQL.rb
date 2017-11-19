@@ -20,17 +20,33 @@ def make_text dirr, target, source, mode=0
 	data_to_copy << input.read()
 	input.close()
 	case mode
-	when 1 then
+	when "hero" then
+		data_to_copy[0].gsub!(/<br><br>/, "\n")
 		data_to_copy[0].gsub!(/<br>/, "\n")
 		data_to_copy[0].gsub!(/<body_bright>/, '')
-		data_to_copy = data_to_copy[0].split('<color_default>').each { |m| m.gsub!(/<color_default>/, '') }
-	when 2 then
-		data_to_copy[0].gsub!(/<br>/, "\n")
+		data_to_copy = data_to_copy[0].split('<color_default>', target.count).each { |m| m.gsub!(/<color_default>/, '') }
+	when "artifact" then
 		data_to_copy[0].gsub!(/<color=.*?>/, '')
-	end 
+		data_to_copy = data_to_copy[0].split('<br><br>', target.count).each { |m| m.gsub!(/<br>/, "\n") }
+	when "spell" then
+		data_to_copy[0].gsub!(/<br>/,'')
+		data_to_copy[0].gsub!(/<body_bright>/, '')
+		data_to_copy = data_to_copy[0].split('<color_default>', target.count).each { |m| m.gsub!(/<color_default>/, '') }
+	when "skill" then
+		if data_to_copy[0].include?('<color=orange>') then
+			data_to_copy[0].gsub!(/<br><br>/, "")
+			data_to_copy[0].gsub!(/<br>/, "\n")
+			data_to_copy[0].gsub!(/<color_default>/, "")
+			data_to_copy = data_to_copy[0].split('<color=orange>', target.count ).each { |m| m.gsub!(/<color=orange>/, '') }
+		else
+			data_to_copy[0].gsub!(/<br>/, "\n")
+			data_to_copy = data_to_copy[0].split('<color_default>', target.count ).each { |m| m.gsub!(/<color_default>/, '') }
+		end
+	end
+	debug("#{dirr},#{target},#{mode}")
 	data_to_copy.each_with_index do |t, i|
 		@output = File.open("#{dirr + '/' + target[i]}.txt", 'w');
-		@output.write("#{t}")
+		@output.write("#{t.strip}")
 		@output.close()
 	end
 end
@@ -163,7 +179,7 @@ Shoes.app do
 		klas_2_faction[:"#{town}"].nil? ? klas_2_faction[:"#{town}"] = [] : nil
 		klas_2_faction[:"#{town}"].include?(klas) ? nil : klas_2_faction[:"#{town}"] += [klas]
 		make_text "en/heroes/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN#{heroes.last.texts[0]}"
-		make_text "en/heroes/#{id}", ["spec", "additional" ], "Rc10/data/MMH55-Texts-EN#{heroes.last.texts[1]}", 1
+		make_text "en/heroes/#{id}", ["spec", "additional" ], "Rc10/data/MMH55-Texts-EN#{heroes.last.texts[1]}", 'hero'
 	end
 
 
@@ -221,12 +237,12 @@ Shoes.app do
 			db.execute "insert into skills values ( ?, ?, ?, ? );", perks.last.stats, i
 			txt_name.each_with_index do |_, q|
 				make_text "en/skills/#{id}", ["name#{q+1}"], "Rc10/data/MMH55-Texts-EN/#{txt_name[q]}"
-				make_text "en/skills/#{id}", ["desc#{q+1}"], "Rc10/data/MMH55-Texts-EN/#{txt_desc[q]}"
+				make_text "en/skills/#{id}", ["desc#{q+1}", "additional#{q+1}"], "Rc10/data/MMH55-Texts-EN/#{txt_desc[q]}", 'skill'
 			end
 		when "SKILLTYPE_STANDART_PERK" then
 			db.execute "insert into skills values ( ?, ?, ?, ? );", perks.last.stats, i
 			make_text "en/skills/#{id}", ["name"], "Rc10/data/MMH55-Texts-EN/#{txt_name[0]}"
-			make_text "en/skills/#{id}", ["desc"], "Rc10/data/MMH55-Texts-EN/#{txt_desc[0]}"
+			make_text "en/skills/#{id}", ["desc", "additional" ], "Rc10/data/MMH55-Texts-EN/#{txt_desc[0]}", 'skill'
 		else
 			req_item.each do |t|
 				req_skills = []
@@ -236,13 +252,13 @@ Shoes.app do
 					unless req_skills.empty? then
 						db.execute "insert into #{klas} values ( ?, ?, ?, ?);",id, req_skills.join(','), type, '99'
 						make_text "en/skills/#{id}", ["name"], "Rc10/data/MMH55-Texts-EN/#{txt_name[0]}"
-						make_text "en/skills/#{id}", ["desc"], "Rc10/data/MMH55-Texts-EN/#{txt_desc[0]}"
+						make_text "en/skills/#{id}", ["desc", "additional"], "Rc10/data/MMH55-Texts-EN/#{txt_desc[0]}", 'skill'
 					end
 				end
 			end
 		end
 	end
-	
+
 	############ create creature table 
 	source_creatures = 'RC10/data/MMH55-Index/GameMechanics/creature/creatures'
 	db.execute "create table creatures ( id string, at int, df int, shots int, min_d int, max_d int, spd int, init int, fly int, hp int, spells string, spell_mastery string, mana int, tier int, faction string, growth int, ability string );"
@@ -330,14 +346,14 @@ Shoes.app do
 			(guilds.include?(school) or school == '') ? nil : (guilds << school)
 			txt = spells.last.texts
 			make_text "en/spells/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN/#{txt[0]}" 
-			make_text "en/spells/#{id}", [ "desc", "additional" ], "Rc10/data/MMH55-Texts-EN/#{txt[1]}", 1;
+			make_text "en/spells/#{id}", [ "desc", "additional" ], "Rc10/data/MMH55-Texts-EN/#{txt[1]}", 'spell';
 			txt[2].each do |p|
 				p = check_dir p, dr_source
-				p.include?('SpellBookPrediction.txt') ? ( make_text "en/spells/#{id}", [ "pred" ], "Rc10/data/MMH55-Texts-EN#{p}", 1 ) : nil
-				p.include?('SpellBookPrediction_Expert') ? ( make_text "en/spells/#{id}", [ "pred_expert" ], "Rc10/data/MMH55-Texts-EN#{p}", 1 ) : nil
+				p.include?('SpellBookPrediction.txt') ? ( make_text "en/spells/#{id}", [ "pred" ], "Rc10/data/MMH55-Texts-EN#{p}", 'spell' ) : nil
+				p.include?('SpellBookPrediction_Expert') ? ( make_text "en/spells/#{id}", [ "pred_expert" ], "Rc10/data/MMH55-Texts-EN#{p}", 'spell' ) : nil
 				p.include?('HealHPReduce.txt') ? ( make_text "en/spells/#{id}", [ "pred" ], "Rc10/data/MMH55-Texts-EN#{p}", 1 ) : nil
 			end
-			make_text "en/spells", [ "universal_prediction" ], "Rc10/data/MMH55-Texts-EN/Text/Game/Spells/SpellBookPredictions/DirectDamage.txt", 1
+			make_text "en/spells", [ "universal_prediction" ], "Rc10/data/MMH55-Texts-EN/Text/Game/Spells/SpellBookPredictions/DirectDamage.txt", 'spell'
 		end		
 	end
 	txt_guilds =  { MAGIC_SCHOOL_DARK: 'SchoolDark',
@@ -408,7 +424,7 @@ Shoes.app do
 			n.xpath("obj/DescriptionFileRef/@href").text)
 		db.execute "insert into artifacts values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? );", artifacts.last.stats
 		make_text "en/artifacts/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN#{artifacts.last.texts[0]}";
-		make_text "en/artifacts/#{id}", [ "desc" ], "Rc10/data/MMH55-Texts-EN#{artifacts.last.texts[1]}", 2;
+		make_text "en/artifacts/#{id}", [ "desc", "additional" ], "Rc10/data/MMH55-Texts-EN#{artifacts.last.texts[1]}", 'artifact';
 	end
 
 	######## SKILLWHEEL MANUALLY CREATED TABLES START HERE #############################	
@@ -432,3 +448,4 @@ Shoes.app do
 	doc.xpath("//BladeBarrier//Base").each do |n|
 		debug(n.text)
 	end
+=end

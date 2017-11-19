@@ -19,17 +19,33 @@ def make_text dirr, target, source, mode=0
 	data_to_copy << input.read()
 	input.close()
 	case mode
-	when 1 then
+	when "hero" then
+		data_to_copy[0].gsub!(/<br><br>/, "\n")
 		data_to_copy[0].gsub!(/<br>/, "\n")
 		data_to_copy[0].gsub!(/<body_bright>/, '')
 		data_to_copy = data_to_copy[0].split('<color_default>').each { |m| m.gsub!(/<color_default>/, '') }
-	when 2 then
-		data_to_copy[0].gsub!(/<br>/, "\n")
+	when "artifact" then
 		data_to_copy[0].gsub!(/<color=.*?>/, '')
-	end 
+		data_to_copy = data_to_copy[0].split('<br><br>').each { |m| m.gsub!(/<br>/, "\n") }
+	when "spell" then
+		data_to_copy[0].gsub!(/<br>/,'')
+		data_to_copy[0].gsub!(/<body_bright>/, '')
+		data_to_copy = data_to_copy[0].split('<color_default>').each { |m| m.gsub!(/<color_default>/, '') }
+	when "skill" then
+		if data_to_copy[0].include?('<color=orange>') then
+			data_to_copy[0].gsub!(/<br><br>/, "")
+			data_to_copy[0].gsub!(/<br>/, "\n")
+			data_to_copy[0].gsub!(/<color_default>/, "")
+			data_to_copy = data_to_copy[0].split('<color=orange>').each { |m| m.gsub!(/<color=orange>/, '') }
+		else
+			data_to_copy[0].gsub!(/<br>/, "\n")
+			data_to_copy = data_to_copy[0].split('<color_default>' ).each { |m| m.gsub!(/<color_default>/, '') }
+		end
+	end
+	debug("#{dirr},#{target},#{mode},")
 	data_to_copy.each_with_index do |t, i|
 		@output = File.open("#{dirr + '/' + target[i]}.txt", 'w');
-		@output.write("#{t}")
+		@output.write("#{t.strip}")
 		@output.close()
 	end
 end
@@ -127,8 +143,8 @@ def popupate_skill_perks hero_id, new_skill, template_klass, db
 				if klas == "#{template_klass}" then
 					unless req_skills.empty? then
 						db.execute "insert into #{hero_id} values ( ?, ?, ?, ?);",s_id, req_skills.join(','), type, '99'
-						make_text "en/skills/#{s_id}", ["name"], "Rc10/data/MMH55-Texts-EN/#{txt_name[0]}"
-						make_text "en/skills/#{s_id}", ["desc"], "Rc10/data/MMH55-Texts-EN/#{txt_desc[0]}"
+						make_text "en/skills/#{s_id}", ["name"], "Rc10/data/MMH55-Texts-EN/#{txt_name[0]}", 'skill'
+						make_text "en/skills/#{s_id}", ["desc", "additional" ], "Rc10/data/MMH55-Texts-EN/#{txt_desc[0]}", 'skill'
 					end
 				end
 			end
@@ -196,5 +212,10 @@ Shoes.app do
 	db.execute "UPDATE heroes SET  classes='#{id}' WHERE id='Crag';"
 	db.execute "UPDATE heroes SET  classes='#{id}' WHERE id='Hero6';"
 	
+	
+	
 	para "GOOD!"
+
+
+
 end
