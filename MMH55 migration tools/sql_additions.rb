@@ -157,6 +157,14 @@ Shoes.app do
 	DB_NAME = 'skillwheel.db'
 	db = SQLite3::Database.new DB_NAME
 	
+	############ create table with all artifact filters
+	db.execute "create table artifact_filter ( name string, filter string );"
+	
+	Dir.glob("design/artifacts/filters/**/*").reject{ |rj| File.directory?(rj) }.each do |fl|
+		filter_name = fl.split("/")[-1].split('.')[0]
+		filter = filter_name == 'by_set' ? @sets.keys : (read_skills fl)
+		db.execute "insert into artifact_filter values ( ?, ?)", filter.join(",").upcase, filter_name
+	end	
 	###########add Haven Renegade class
 	id = 'HERO_CLASS_KNIGHT_RENEGADE'
 	get_klas = db.execute "select * from HERO_CLASS_KNIGHT"

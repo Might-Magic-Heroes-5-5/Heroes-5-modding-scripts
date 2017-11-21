@@ -128,12 +128,13 @@ end
 Shoes.app do
 	
 	source_defaultstats = 'Rc10/data/MMH55-Index/GameMechanics/RPGStats/DefaultStats.xdb'
+	dfstats = File.open(source_defaultstats) { |f| Nokogiri::XML(f) }
 	DB_NAME = 'skillwheel.db'
 	db = SQLite3::Database.new 'skillwheel.db'
 =begin
 	############ create table with faction list and native spells
-	soruce_town = 'Rc10/data/MMH55-Index/GameMechanics/RefTables/TownTypesInfo.xdb'
-	doc = File.open(soruce_town) { |f| Nokogiri::XML(f) }
+	source_town = 'Rc10/data/MMH55-Index/GameMechanics/RefTables/TownTypesInfo.xdb'
+	doc = File.open(source_town) { |f| Nokogiri::XML(f) }
 	db.execute "create table factions ( name string );"
 	
 	texts = doc.xpath("//obj/textType/@href")
@@ -309,11 +310,12 @@ Shoes.app do
 		make_text "en/abilities/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN#{txt_name}"
 		make_text "en/abilities/#{id}", [ "desc" ], "Rc10/data/MMH55-Texts-EN#{txt_desc}"
 	end
-
+=end
 	############ create table with all spells and guilds
 	#source_spells = 'Rc10/data/MMH55-Index/GameMechanics/Spell'
 	source_spells = 'Rc10/data/MMH55-Index/GameMechanics/RefTables/UndividedSpells.xdb'
     db.execute "create table spells ( id string, spell_effect string, spell_increase string, mana int, tier int, guild string, resource_cost string );"
+	db.execute "create table spells_specials ( id string, base string, perpwer string );"
 	db.execute "create table guilds ( id string, app_order int );"
 	source = File.open(source_spells)  { |f| Nokogiri::XML(f) }
 	spell_dirs, guilds, spells = ["Combat_Spells", "Hero_Abilities/Barbarian", "Adventure_Spells" ], [], []
@@ -328,6 +330,22 @@ Shoes.app do
 			base, power, resource, predict = [], [], [], []
 			school = doc.xpath("//MagicSchool").text
 			doc.xpath("//Base | //PerPower").each_with_index { |x, i| ( i.even? ? base : power ) << x.text }
+			case id
+			when "SPELL_BLADE_BARRIER" then
+				b_effect, p_effect = [],[]
+				dfstats.xpath("/RPGStats/combat/Spells/BladeBarrier/Health/Item").each_with_index |d, i|
+					b_effect << d.xpath("Base").text
+					p_effect << d.xpath("PerPower").text
+				end
+				db.execute "insert spells_specials values ( ?, ?, ? );", id, b_effect.join(','), p_effect.join(',')
+			when "SPELL_DEEP_FREEZE" then
+				b_effect, p_effect = [],[]
+				dfstats.xpath("/RPGStats/combat/Spells/DeepFreeze/DamageMultiplier/Item").each_with_index |d, i|
+					b_effect << d.xpath("Base").text
+					p_effect << d.xpath("PerPower").text
+				end
+				db.execute "insert spells_specials values ( ?, ?, ? );", id, b_effect.join(','), p_effect.join(',')
+			end
 			[ "Wood", "Ore", "Mercury", "Crystal", "Sulfur", "Gem" ].each do |r|
 				doc.css("//#{r}").each { |t| t.text > '0' ? resource << "#{r} #{t.text}" : nil }	
 			end
@@ -341,7 +359,8 @@ Shoes.app do
 				resource.join(','),
 				(check_dir doc.xpath("//NameFileRef/@href").text, dr_source),
 				(check_dir doc.xpath("//LongDescriptionFileRef/@href").text, dr_source),
-				predict )
+				predict )	
+				
 			db.execute "insert into spells values ( ?, ?, ?, ?, ?, ?, ? );", spells.last.stats
 			(guilds.include?(school) or school == '') ? nil : (guilds << school)
 			txt = spells.last.texts
@@ -369,7 +388,7 @@ Shoes.app do
 		db.execute "insert into guilds values (?, ?)", g, i
 		(make_text "en/guilds/#{g}", [ "name" ], "Rc10/data/MMH55-Texts-EN/Text/Tooltips/SpellBook/#{txt_guilds[:"#{g}"]}.txt")
 	end
-=end
+
 	############ make a list of all sets
 	source_sets = 'RC10\data\MMH55-Index\scripts\advmap-startup.lua'
 	flag, artif_set, artif = 0, {}, {}
@@ -381,7 +400,7 @@ Shoes.app do
 		when 1 then line.include?('	ARTIFACT_') ? ( artif[:"#{sort_line line, 'ARTIFACT_', ' ='}"] = line.split(" = ")[1].to_i ) : nil				
 		end
 	end
-	
+=begin
 	############ make matches between artifacts and sets	
 	source_matches = 'RC10\data\MMH55-Index\scripts\H55-Core.lua'
 	@sets, @curr_set, flag = {}, "", 0
@@ -426,24 +445,12 @@ Shoes.app do
 		make_text "en/artifacts/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN#{artifacts.last.texts[0]}";
 		make_text "en/artifacts/#{id}", [ "desc", "additional" ], "Rc10/data/MMH55-Texts-EN#{artifacts.last.texts[1]}", 'artifact';
 	end
-
-	######## SKILLWHEEL MANUALLY CREATED TABLES START HERE #############################	
-
-	############ create table with all artifact filters
-	db.execute "create table artifact_filter ( name string, filter string );"
-	
-	Dir.glob("design/artifacts/filters/**/*").reject{ |rj| File.directory?(rj) }.each do |fl|
-		filter_name = fl.split("/")[-1].split('.')[0]
-		filter = filter_name == 'by_set' ? @sets.keys : (read_skills fl)
-		db.execute "insert into artifact_filter values ( ?, ?)", filter.join(",").upcase, filter_name
-	end	
-
+=end
 	para "Success"
 end
 
 =begin
 Shoes.app do
-	source_defaultstats = 'Rc10/data/MMH55-Index/GameMechanics/RPGStats/DefaultStats.xdb'
 	doc = File.open(source_defaultstats) { |f| Nokogiri::XML(f) }
 	doc.xpath("//BladeBarrier//Base").each do |n|
 		debug(n.text)
