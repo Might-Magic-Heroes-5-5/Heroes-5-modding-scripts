@@ -42,8 +42,12 @@ def make_text dirr, target, source, mode=0
 			data_to_copy[0].gsub!(/<br>/, "\n")
 			data_to_copy = data_to_copy[0].split('<color_default>', target.count ).each { |m| m.gsub!(/<color_default>/, '') }
 		end
+	when "pred"
+		debug(data_to_copy[0])
+		data_to_copy[0].gsub!(/<br>/, "\n")
+		debug(data_to_copy[0])
 	end
-	debug("#{dirr},#{target},#{mode}")
+	#debug("#{dirr},#{target},#{mode}")
 	data_to_copy.each_with_index do |t, i|
 		@output = File.open("#{dirr + '/' + target[i]}.txt", 'w');
 		@output.write("#{t.strip}")
@@ -312,10 +316,9 @@ Shoes.app do
 	end
 =end
 	############ create table with all spells and guilds
-	#source_spells = 'Rc10/data/MMH55-Index/GameMechanics/Spell'
 	source_spells = 'Rc10/data/MMH55-Index/GameMechanics/RefTables/UndividedSpells.xdb'
     db.execute "create table spells ( id string, spell_effect string, spell_increase string, mana int, tier int, guild string, resource_cost string );"
-	db.execute "create table spells_specials ( id string, base string, perpwer string );"
+	db.execute "create table spells_specials ( id string, base string, perpower string );"
 	db.execute "create table guilds ( id string, app_order int );"
 	source = File.open(source_spells)  { |f| Nokogiri::XML(f) }
 	spell_dirs, guilds, spells = ["Combat_Spells", "Hero_Abilities/Barbarian", "Adventure_Spells" ], [], []
@@ -333,18 +336,32 @@ Shoes.app do
 			case id
 			when "SPELL_BLADE_BARRIER" then
 				b_effect, p_effect = [],[]
-				dfstats.xpath("/RPGStats/combat/Spells/BladeBarrier/Health/Item").each_with_index |d, i|
+				dfstats.xpath("/RPGStats/combat/Spells/BladeBarrier/Health/Item").each_with_index do |d, i|
 					b_effect << d.xpath("Base").text
 					p_effect << d.xpath("PerPower").text
 				end
-				db.execute "insert spells_specials values ( ?, ?, ? );", id, b_effect.join(','), p_effect.join(',')
+				db.execute "insert into spells_specials values ( ?, ?, ? );", id, b_effect.join(','), p_effect.join(',')
+			when "SPELL_ARCANE_CRYSTAL" then
+				b_effect, p_effect = [],[]
+				b_effect << dfstats.xpath("/RPGStats/combat/Spells/ArcaneCrystal/Health").text
+				p_effect << dfstats.xpath("/RPGStats/combat/Spells/ArcaneCrystal/Defence").text
+				db.execute "insert into spells_specials values ( ?, ?, ? );", id, b_effect.join(','), p_effect.join(',')
 			when "SPELL_DEEP_FREEZE" then
 				b_effect, p_effect = [],[]
-				dfstats.xpath("/RPGStats/combat/Spells/DeepFreeze/DamageMultiplier/Item").each_with_index |d, i|
+				dfstats.xpath("/RPGStats/combat/Spells/DeepFreeze/DamageMultiplier/Item").each_with_index do |d, i|
 					b_effect << d.xpath("Base").text
 					p_effect << d.xpath("PerPower").text
 				end
-				db.execute "insert spells_specials values ( ?, ?, ? );", id, b_effect.join(','), p_effect.join(',')
+				db.execute "insert into spells_specials values ( ?, ?, ? );", id, b_effect.join(','), p_effect.join(',')
+			when "SPELL_SUMMON_HIVE" then
+				b_effect, p_effect = [],[]
+				dfstats.xpath("/RPGStats/combat/Spells/SummonHive/Initiative/Item | /RPGStats/combat/Spells/SummonHive/Health/Item").each_with_index do |d, i|
+					b_effect << d.xpath("Base").text
+					p_effect << d.xpath("PerPower").text
+				end
+				b_effect << dfstats.xpath("/RPGStats/combat/Spells/SummonHive/DefenseBase").text
+				p_effect << dfstats.xpath("/RPGStats/combat/Spells/SummonHive/DefensePerCasterLevel").text
+				db.execute "insert into spells_specials values ( ?, ?, ? );", id, b_effect.join(','), p_effect.join(',')
 			end
 			[ "Wood", "Ore", "Mercury", "Crystal", "Sulfur", "Gem" ].each do |r|
 				doc.css("//#{r}").each { |t| t.text > '0' ? resource << "#{r} #{t.text}" : nil }	
@@ -368,11 +385,11 @@ Shoes.app do
 			make_text "en/spells/#{id}", [ "desc", "additional" ], "Rc10/data/MMH55-Texts-EN/#{txt[1]}", 'spell';
 			txt[2].each do |p|
 				p = check_dir p, dr_source
-				p.include?('SpellBookPrediction.txt') ? ( make_text "en/spells/#{id}", [ "pred" ], "Rc10/data/MMH55-Texts-EN#{p}", 'spell' ) : nil
-				p.include?('SpellBookPrediction_Expert') ? ( make_text "en/spells/#{id}", [ "pred_expert" ], "Rc10/data/MMH55-Texts-EN#{p}", 'spell' ) : nil
-				p.include?('HealHPReduce.txt') ? ( make_text "en/spells/#{id}", [ "pred" ], "Rc10/data/MMH55-Texts-EN#{p}", 1 ) : nil
+				p.include?('SpellBookPrediction.txt') ? ( make_text "en/spells/#{id}", [ "pred" ], "Rc10/data/MMH55-Texts-EN#{p}", 'pred' ) : nil
+				p.include?('SpellBookPrediction_Expert') ? ( make_text "en/spells/#{id}", [ "pred_expert" ], "Rc10/data/MMH55-Texts-EN#{p}", 'pred' ) : nil
+				p.include?('HealHPReduce.txt') ? ( make_text "en/spells/#{id}", [ "pred" ], "Rc10/data/MMH55-Texts-EN#{p}", 'pred' ) : nil
 			end
-			make_text "en/spells", [ "universal_prediction" ], "Rc10/data/MMH55-Texts-EN/Text/Game/Spells/SpellBookPredictions/DirectDamage.txt", 'spell'
+			make_text "en/spells", [ "universal_prediction" ], "Rc10/data/MMH55-Texts-EN/Text/Game/Spells/SpellBookPredictions/DirectDamage.txt", 'pred'
 		end		
 	end
 	txt_guilds =  { MAGIC_SCHOOL_DARK: 'SchoolDark',
