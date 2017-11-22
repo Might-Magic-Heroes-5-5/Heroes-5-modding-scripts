@@ -1,139 +1,8 @@
 require 'fileutils'
 require 'sqlite3'
 require 'code/readskills'
+require 'code/methods'
 require 'nokogiri'
-
-
-def check_dir file, origin; return file.start_with?("/")? file : ((origin.split('MMH55-Index')[1].split('/'))[0...-1].join('/') + '/' + file ) end
-
-def calc num
-  result = num.to_f*100
-  result % 1 == 0 ? result = result.to_i : nil
-  return result
-end
-
-def sort_line line, first, second
-	if (line.chop[/#{first}(.*?)#{second}/m, 1]).nil? == false then
-		return (line)[/#{first}(.*?)#{second}/m, 1];
-	end
-end
-
-def make_text dirr, target, source, mode=0
-	script = $0
-	FileUtils.mkpath dirr
-	input = File.open(source)
-	data_to_copy = []
-	data_to_copy << input.read()
-	input.close()
-	case mode
-	when "hero" then
-		data_to_copy[0].gsub!(/<br><br>/, "\n")
-		data_to_copy[0].gsub!(/<br>/, "\n")
-		data_to_copy[0].gsub!(/<body_bright>/, '')
-		data_to_copy = data_to_copy[0].split('<color_default>', target.count).each { |m| m.gsub!(/<color_default>/, '') }
-	when "artifact" then
-		data_to_copy[0].gsub!(/<color=.*?>/, '')
-		data_to_copy = data_to_copy[0].split('<br><br>', target.count).each { |m| m.gsub!(/<br>/, "\n") }
-	when "spell" then
-		data_to_copy[0].gsub!(/<br>/,'')
-		data_to_copy[0].gsub!(/<body_bright>/, '')
-		data_to_copy = data_to_copy[0].split('<color_default>', target.count).each { |m| m.gsub!(/<color_default>/, '') }
-	when "skill" then
-		if data_to_copy[0].include?('<color=orange>') then
-			data_to_copy[0].gsub!(/<br><br>/, "")
-			data_to_copy[0].gsub!(/<br>/, "\n")
-			data_to_copy[0].gsub!(/<color_default>/, "")
-			data_to_copy = data_to_copy[0].split('<color=orange>', target.count ).each { |m| m.gsub!(/<color=orange>/, '') }
-		else
-			data_to_copy[0].gsub!(/<br>/, "\n")
-			data_to_copy = data_to_copy[0].split('<color_default>', target.count ).each { |m| m.gsub!(/<color_default>/, '') }
-		end
-	when "pred"
-		data_to_copy[0].gsub!(/<br>/, "\n")
-	end
-	#debug("#{dirr},#{target},#{mode}")
-	data_to_copy.each_with_index do |t, i|
-		@output = File.open("#{dirr + '/' + target[i]}.txt", 'w');
-		@output.write("#{t.strip}")
-		@output.close()
-	end
-end
-
-class Klass
-
-	def initialize( id, at, df, sp, kn, fac, txt_name )
-		@id,@at,@df,@sp,@kn,@faction = id, at, df, sp, kn, fac, txt_name ##Get klas vars
-		@txt_name = txt_name											 ##Get text vars
-	end
-
-	def get_skills(source, filter)
-		@secondary_skills, @secondary_chance = [], []
-		source.xpath(filter).each_with_index do |s, i|		
-			(i.even? ? @secondary_skills : @secondary_chance) << s.text
-		end
-	end
-	
-	def stats; return @id,@at,@df,@sp,@kn,@faction end
-	def skills; return @secondary_skills, @secondary_chance end
-	def texts; return @txt_name end
-end
-
-class Hero
-	
-	def initialize(id,at,df,sp,kn,skill,mastery,perk,spell,clas,faction,txt_name,txt_s_name)
-		@id,@at,@df,@sp,@kn,@skill,@mastery,@perk,@spell,@clas,@faction = id,at,df,sp,kn,skill,mastery,perk,spell,clas,faction ###Get hero vars
-		@txt_name,@txt_s_name = txt_name,txt_s_name 					 					   					 			   ###Get text vars
-	end
-	
-	def stats; return @id, @at, @df, @sp, @kn, @skill ,@mastery ,@perk, @spell, @clas, @faction end
-	def texts; return @txt_name,@txt_s_name end	
-end
-
-class Perk
-	
-	def initialize(id,type,skill_tree,txt_name,txt_s_name)
-		@id,@type,@skill_tree = id,type,skill_tree	 ###Get perk vars
-		@txt_name,@txt_desc = txt_name,txt_s_name 	 ###Get text vars
-	end
-
-	def stats; return @id,@type,@skill_tree end
-	def texts; return @txt_name,@txt_desc end
-end
-
-class Creature
-	
-	def initialize(id, at, df, shots, min_d, max_d, spd, init, fly, hp, spell, masteries, mana, tier, faction, growth, ability, gold, wood, ore, mercury, crystal, sufur, gem, txt_name)
-		@id, @at, @df, @shots, @min_d, @max_d, @spd, @init, @fly, @hp, @spell, @masteries, @mana, @tier, @faction, @growth, @ability = id, at, df, shots, min_d, max_d, spd, init, fly, hp, spell, masteries, mana, tier, faction, growth, ability  ###Get creature vars
-		@gold, @wood, @ore, @mercury, @crystal, @sufur, @gem = gold, wood, ore, mercury, crystal, sufur, gem
-		@txt_name = txt_name 				 																																																		###Get text vars
-	end
-
-	def stats; return @id, @at, @df, @shots, @min_d, @max_d, @spd, @init, @fly, @hp, @spell, @masteries, @mana, @tier, @faction, @growth, @ability end
-	def price; return @gold, @wood, @ore, @mercury, @crystal, @sufur, @gem end
-	def texts; return @txt_name end
-end
-
-class Spell
-	
-	def initialize(id, spell_effect, spell_increase, mana, tier, guild, resource_cost, txt_name, txt_desc, txt_pred)
-		@id, @spell_effect, @spell_increase, @mana, @tier, @guild, @resource_cost = id, spell_effect, spell_increase, mana, tier, guild, resource_cost  ###Get spell vars
-		@txt_name, @txt_desc, @txt_pred = txt_name, txt_desc, txt_pred		 																			###Get text vars
-	end
-
-	def stats; return @id, @spell_effect, @spell_increase, @mana, @tier, @guild, @resource_cost end
-	def texts; return @txt_name, @txt_desc, @txt_pred end
-end
-
-class Artifact
-	
-	def initialize(id, slot, cost, type, at, df, sp, kn, moral, luck, set, txt_name, txt_desc)
-		@id, @slot, @cost, @type, @at, @df, @sp, @kn, @moral, @luck, @set = id, slot, cost, type, at, df, sp, kn, moral, luck, set  ###Get artifact vars
-		@txt_name, @txt_desc = txt_name, txt_desc			 																		###Get text vars
-	end
-
-	def stats; return @id, @slot, @cost, @type, @at, @df, @sp, @kn, @moral, @luck, @set end
-	def texts; return @txt_name, @txt_desc end
-end
 
 Shoes.app do
 	
@@ -141,7 +10,7 @@ Shoes.app do
 	dfstats = File.open(source_defaultstats) { |f| Nokogiri::XML(f) }
 	DB_NAME = 'skillwheel.db'
 	db = SQLite3::Database.new 'skillwheel.db'
-=begin
+
 	############ create table with faction list and native spells
 	source_town = 'Rc10/data/MMH55-Index/GameMechanics/RefTables/TownTypesInfo.xdb'
 	doc = File.open(source_town) { |f| Nokogiri::XML(f) }
@@ -157,7 +26,7 @@ Shoes.app do
 
 	############ create table with all in-game heroes and their starting primary and secondary stats
 	source_hero = 'RC10/data/MMH55-Index/MapObjects'
-	db.execute "create table heroes ( id string, atk int, def int, spp int, knw int, skills string, masteries string, perks string, spells string, classes string, faction string );"
+	db.execute "create table heroes ( id string, atk int, def int, spp int, knw int, skills string, masteries string, perks string, spells string, classes string, faction string, sequence int );"
 	heroes, klas_2_faction = [], {}
 	
 	Dir.glob("#{source_hero}/**/*").reject{ |rj| File.directory?(rj) }.each do |fn|
@@ -186,7 +55,7 @@ Shoes.app do
 			town,
 			(check_dir doc.xpath("//NameFileRef/@href").text, fn),
 			(check_dir doc.xpath("//SpecializationNameFileRef/@href").text, fn))
-		doc.xpath("//NameFileRef/@href").text == '' ? nil : (db.execute "insert into heroes values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )", heroes.last.stats)
+		doc.xpath("//NameFileRef/@href").text == '' ? nil : (db.execute "insert into heroes values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )", heroes.last.stats, 0)
 		klas_2_faction[:"#{town}"].nil? ? klas_2_faction[:"#{town}"] = [] : nil
 		klas_2_faction[:"#{town}"].include?(klas) ? nil : klas_2_faction[:"#{town}"] += [klas]
 		make_text "en/heroes/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN#{heroes.last.texts[0]}"
@@ -195,12 +64,13 @@ Shoes.app do
 
 	############ create table with classes list, primary stats chances and secondary skills; match classes to factions
 	source_class = 'Rc10/data/MMH55-Index/GameMechanics/RefTables/HeroClass.xdb'
-	db.execute "create table classes ( id string, atk_c int, def_c int, spp_c int, knw_c int, faction string );"
+	db.execute "create table classes ( id string, atk_c int, def_c int, spp_c int, knw_c int, faction string, sequence int );"
 	doc = File.open(source_class) { |f| Nokogiri::XML(f) }
 	classes = []
 	
 	doc.xpath("/Table_HeroClassDesc_HeroClass/objects/Item" ).each do |n|
 		id = n.xpath("ID").text
+		id == 'HERO_CLASS_NONE' ? next : nil
 		classes << Klass.new(id,
 			n.xpath("obj/AttributeProbs/OffenceProb").text,
 			n.xpath("obj/AttributeProbs/DefenceProb").text,
@@ -211,9 +81,9 @@ Shoes.app do
 			end.keys.first.to_s),
 			n.xpath("obj/NameFileRef/@href").text)
 			
-		db.execute "insert into classes values ( ?, ?, ?, ?, ?, ? )", classes.last.stats
+		db.execute "insert into classes values ( ?, ?, ?, ?, ?, ?, ? )", classes.last.stats, 1
 		classes.last.get_skills n, "obj/SkillsProbs/Item/SkillID | obj/SkillsProbs/Item/Prob"
-		db.execute "create table #{id} (skill string, chance int, type string, app_order int);"
+		db.execute "create table #{id} (skill string, chance int, type string, sequence int);"
 		skills_name, skills_chance = classes.last.skills
 		skills_name.each_with_index do |_,i|
 			db.execute "insert into #{id} values ( ?, ?, ?, ? );", skills_name[i], skills_chance[i], 'SKILLTYPE_SKILL', i
@@ -223,7 +93,7 @@ Shoes.app do
 
 	############ create perk-to-skill match table, includes ordering required for the skillwheel
 	source_perks = 'Rc10\data\MMH55-Index\GameMechanics\RefTables\Skills.xdb'
-	db.execute "create table skills (name string, type string, tree string, app_order int);"
+	db.execute "create table skills (name string, type string, tree string, sequence int);"
 	doc = File.open(source_perks) { |f| Nokogiri::XML(f) }
 	perks = []
 
@@ -268,12 +138,12 @@ Shoes.app do
 			end
 		end
 	end
-=end
+
 	############ create creature table 
 	source_creatures = 'RC10/data/MMH55-Index/GameMechanics/creature/creatures'
 	db.execute "create table creatures ( id string, at int, df int, shots int, min_d int, max_d int, spd int, init int,
 	fly int, hp int, spells string, spell_mastery string, mana int, tier int, faction string, growth int, ability string,
-	gold int, wood int, ore int, mercury int, crystal int, Sulfur int, gem int );"
+	gold int, wood int, ore int, mercury int, crystal int, Sulfur int, gem int, sequence int );"
 	creatures = []
 	
 	Dir.glob("#{source_creatures}/**/*").reject{ |rj| File.directory?(rj) }.each do |fn|
@@ -315,9 +185,9 @@ Shoes.app do
 			visuals.xpath("/CreatureVisual/CreatureNameFileRef/@href")
 		)
 		make_text "en/creatures/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN#{creatures.last.texts}";
-		db.execute "insert into creatures values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?, ?, ? );", creatures.last.stats, creatures.last.price
+		db.execute "insert into creatures values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?, ?, ?, ? );", creatures.last.stats, creatures.last.price, 0
 	end
-=begin
+
 	############ create text files for creature abilities ##########
 	source_abilities = 'Rc10\data\MMH55-Index\GameMechanics\RefTables\CombatAbilities.xdb'
 	doc = File.open(source_abilities) { |f| Nokogiri::XML(f) }
@@ -333,7 +203,7 @@ Shoes.app do
 	source_spells = 'Rc10/data/MMH55-Index/GameMechanics/RefTables/UndividedSpells.xdb'
     db.execute "create table spells ( id string, spell_effect string, spell_increase string, mana int, tier int, guild string, resource_cost string );"
 	db.execute "create table spells_specials ( id string, base string, perpower string );"
-	db.execute "create table guilds ( id string, app_order int );"
+	db.execute "create table guilds ( id string, sequence int );"
 	source = File.open(source_spells)  { |f| Nokogiri::XML(f) }
 	spell_dirs, guilds, spells = ["Combat_Spells", "Hero_Abilities/Barbarian", "Adventure_Spells" ], [], []
 	source.xpath("/Table_Spell_SpellID/objects/Item").each do |sp|
@@ -435,7 +305,7 @@ Shoes.app do
 		db.execute "insert into guilds values (?, ?)", g, i
 		(make_text "en/guilds/#{g}", [ "name" ], "Rc10/data/MMH55-Texts-EN/Text/Tooltips/SpellBook/#{txt_guilds[:"#{g}"]}.txt")
 	end
-=begin
+
 	############ make a list of all sets
 	source_sets = 'RC10\data\MMH55-Index\scripts\advmap-startup.lua'
 	flag, artif_set, artif = 0, {}, {}
@@ -492,14 +362,15 @@ Shoes.app do
 		make_text "en/artifacts/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN#{artifacts.last.texts[0]}";
 		make_text "en/artifacts/#{id}", [ "desc", "additional" ], "Rc10/data/MMH55-Texts-EN#{artifacts.last.texts[1]}", 'artifact';
 	end
-=end
+
+	############ create table with all artifact filters
+	db.execute "create table artifact_filter ( name string, filter string );"
+	
+	Dir.glob("design/artifacts/filters/**/*").reject{ |rj| File.directory?(rj) }.each do |fl|
+		filter_name = fl.split("/")[-1].split('.')[0]
+		filter = filter_name == 'by_set' ? @sets.keys : (read_skills fl)
+		db.execute "insert into artifact_filter values ( ?, ?)", filter.join(",").upcase, filter_name
+	end	
+
 	para "Success"
 end
-
-=begin
-Shoes.app do
-	doc = File.open(source_defaultstats) { |f| Nokogiri::XML(f) }
-	doc.xpath("//BladeBarrier//Base").each do |n|
-		debug(n.text)
-	end
-=end
