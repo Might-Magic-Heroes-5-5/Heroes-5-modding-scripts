@@ -1,0 +1,2 @@
+Increases Morale by 1 and an additional 1 after level 20.
+Rises army rage by 20.

@@ -1,0 +1,2 @@
+Rises selected unit rage by 10 per hero level.
+Rises army rage by 20.

@@ -1,0 +1,1 @@
+Effective spellpower is 1/<value=damage> of the hero spellpower.

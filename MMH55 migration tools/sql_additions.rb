@@ -3,14 +3,6 @@ require 'sqlite3'
 require 'code/readskills'
 require 'nokogiri'
 
-def check_dir file, origin; return file.start_with?("/")? file : ((origin.split('MMH55-Index')[1].split('/'))[0...-1].join('/') + '/' + file ) end
-
-def sort_line line, first, second
-	if (line.chop[/#{first}(.*?)#{second}/m, 1]).nil? == false then
-		return (line)[/#{first}(.*?)#{second}/m, 1];
-	end
-end
-
 def make_text dirr, target, source, mode=0
 	script = $0
 	FileUtils.mkpath dirr
@@ -23,26 +15,28 @@ def make_text dirr, target, source, mode=0
 		data_to_copy[0].gsub!(/<br><br>/, "\n")
 		data_to_copy[0].gsub!(/<br>/, "\n")
 		data_to_copy[0].gsub!(/<body_bright>/, '')
-		data_to_copy = data_to_copy[0].split('<color_default>').each { |m| m.gsub!(/<color_default>/, '') }
+		data_to_copy = data_to_copy[0].split('<color_default>', target.count).each { |m| m.gsub!(/<color_default>/, '') }
 	when "artifact" then
 		data_to_copy[0].gsub!(/<color=.*?>/, '')
-		data_to_copy = data_to_copy[0].split('<br><br>').each { |m| m.gsub!(/<br>/, "\n") }
+		data_to_copy = data_to_copy[0].split('<br><br>', target.count).each { |m| m.gsub!(/<br>/, "\n") }
 	when "spell" then
 		data_to_copy[0].gsub!(/<br>/,'')
 		data_to_copy[0].gsub!(/<body_bright>/, '')
-		data_to_copy = data_to_copy[0].split('<color_default>').each { |m| m.gsub!(/<color_default>/, '') }
+		data_to_copy = data_to_copy[0].split('<color_default>', target.count).each { |m| m.gsub!(/<color_default>/, '') }
 	when "skill" then
 		if data_to_copy[0].include?('<color=orange>') then
 			data_to_copy[0].gsub!(/<br><br>/, "")
 			data_to_copy[0].gsub!(/<br>/, "\n")
 			data_to_copy[0].gsub!(/<color_default>/, "")
-			data_to_copy = data_to_copy[0].split('<color=orange>').each { |m| m.gsub!(/<color=orange>/, '') }
+			data_to_copy = data_to_copy[0].split('<color=orange>', target.count ).each { |m| m.gsub!(/<color=orange>/, '') }
 		else
 			data_to_copy[0].gsub!(/<br>/, "\n")
-			data_to_copy = data_to_copy[0].split('<color_default>' ).each { |m| m.gsub!(/<color_default>/, '') }
+			data_to_copy = data_to_copy[0].split('<color_default>', target.count ).each { |m| m.gsub!(/<color_default>/, '') }
 		end
+	when "pred"
+		data_to_copy[0].gsub!(/<br>/, "\n")
 	end
-	debug("#{dirr},#{target},#{mode},")
+	#debug("#{dirr},#{target},#{mode}")
 	data_to_copy.each_with_index do |t, i|
 		@output = File.open("#{dirr + '/' + target[i]}.txt", 'w');
 		@output.write("#{t.strip}")
@@ -158,7 +152,7 @@ Shoes.app do
 	db = SQLite3::Database.new DB_NAME
 	
 	############ create table with all artifact filters
-	db.execute "create table artifact_filter ( name string, filter string );"
+=begin	db.execute "create table artifact_filter ( name string, filter string );"
 	
 	Dir.glob("design/artifacts/filters/**/*").reject{ |rj| File.directory?(rj) }.each do |fl|
 		filter_name = fl.split("/")[-1].split('.')[0]
@@ -219,9 +213,21 @@ Shoes.app do
 	db.execute "UPDATE heroes SET  classes='#{id}' WHERE id='Azar';"
 	db.execute "UPDATE heroes SET  classes='#{id}' WHERE id='Crag';"
 	db.execute "UPDATE heroes SET  classes='#{id}' WHERE id='Hero6';"
-	
-	
-	
+=end	
+	###SPELLS
+	make_text "en/spells/SPELL_PHANTOM", [ "pred" ], "additions/spells/SPELL_PHANTOM/pred.txt", 'pred'
+	make_text "en/spells/SPELL_DISPEL", [ "pred" ], "additions/spells/SPELL_DISPEL/pred.txt", 'pred'
+	make_text "en/spells/SPELL_CONJURE_PHOENIX", [ "pred" ], "additions/spells/SPELL_CONJURE_PHOENIX/pred.txt", 'pred'
+	["SPELL_RUNE_OF_CHARGE", "SPELL_RUNE_OF_BERSERKING", "SPELL_RUNE_OF_MAGIC_CONTROL",
+	"SPELL_RUNE_OF_EXORCISM", "SPELL_RUNE_OF_ELEMENTAL_IMMUNITY", "SPELL_RUNE_OF_STUNNING",
+	"SPELL_RUNE_OF_BATTLERAGE",	"SPELL_RUNE_OF_ETHEREALNESS","SPELL_RUNE_OF_REVIVE", "SPELL_RUNE_OF_DRAGONFORM",
+	"SPELL_EFFECT_FINE_RUNE", "SPELL_EFFECT_STRONG_RUNE"].each_with_index do |r, i| 
+		make_text "en/spells/#{r}", [ "pred" ], "additions/spells/runes/pred.txt", 'pred'
+	end
+	["SPELL_WARCRY_RALLING_CRY", "SPELL_WARCRY_CALL_OF_BLOOD", "SPELL_WARCRY_WORD_OF_THE_CHIEF", "SPELL_WARCRY_FEAR_MY_ROAR",
+"SPELL_WARCRY_BATTLECRY", "SPELL_WARCRY_SHOUT_OF_MANY"].each_with_index do |r, i| 
+		make_text "en/spells/#{r}", [ "pred" ], "additions/spells/#{r}/pred.txt", 'pred'
+	end
 	para "GOOD!"
 
 

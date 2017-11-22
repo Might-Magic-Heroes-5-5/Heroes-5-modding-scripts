@@ -6,6 +6,12 @@ require 'nokogiri'
 
 def check_dir file, origin; return file.start_with?("/")? file : ((origin.split('MMH55-Index')[1].split('/'))[0...-1].join('/') + '/' + file ) end
 
+def calc num
+  result = num.to_f*100
+  result % 1 == 0 ? result = result.to_i : nil
+  return result
+end
+
 def sort_line line, first, second
 	if (line.chop[/#{first}(.*?)#{second}/m, 1]).nil? == false then
 		return (line)[/#{first}(.*?)#{second}/m, 1];
@@ -43,9 +49,7 @@ def make_text dirr, target, source, mode=0
 			data_to_copy = data_to_copy[0].split('<color_default>', target.count ).each { |m| m.gsub!(/<color_default>/, '') }
 		end
 	when "pred"
-		debug(data_to_copy[0])
 		data_to_copy[0].gsub!(/<br>/, "\n")
-		debug(data_to_copy[0])
 	end
 	#debug("#{dirr},#{target},#{mode}")
 	data_to_copy.each_with_index do |t, i|
@@ -98,12 +102,14 @@ end
 
 class Creature
 	
-	def initialize(id, at, df, shots, min_d, max_d, spd, init, fly, hp, spell, masteries, mana, tier, faction, growth, ability, txt_name)
+	def initialize(id, at, df, shots, min_d, max_d, spd, init, fly, hp, spell, masteries, mana, tier, faction, growth, ability, gold, wood, ore, mercury, crystal, sufur, gem, txt_name)
 		@id, @at, @df, @shots, @min_d, @max_d, @spd, @init, @fly, @hp, @spell, @masteries, @mana, @tier, @faction, @growth, @ability = id, at, df, shots, min_d, max_d, spd, init, fly, hp, spell, masteries, mana, tier, faction, growth, ability  ###Get creature vars
+		@gold, @wood, @ore, @mercury, @crystal, @sufur, @gem = gold, wood, ore, mercury, crystal, sufur, gem
 		@txt_name = txt_name 				 																																																		###Get text vars
 	end
 
 	def stats; return @id, @at, @df, @shots, @min_d, @max_d, @spd, @init, @fly, @hp, @spell, @masteries, @mana, @tier, @faction, @growth, @ability end
+	def price; return @gold, @wood, @ore, @mercury, @crystal, @sufur, @gem end
 	def texts; return @txt_name end
 end
 
@@ -187,7 +193,6 @@ Shoes.app do
 		make_text "en/heroes/#{id}", ["spec", "additional" ], "Rc10/data/MMH55-Texts-EN#{heroes.last.texts[1]}", 'hero'
 	end
 
-
 	############ create table with classes list, primary stats chances and secondary skills; match classes to factions
 	source_class = 'Rc10/data/MMH55-Index/GameMechanics/RefTables/HeroClass.xdb'
 	db.execute "create table classes ( id string, atk_c int, def_c int, spp_c int, knw_c int, faction string );"
@@ -263,10 +268,12 @@ Shoes.app do
 			end
 		end
 	end
-
+=end
 	############ create creature table 
 	source_creatures = 'RC10/data/MMH55-Index/GameMechanics/creature/creatures'
-	db.execute "create table creatures ( id string, at int, df int, shots int, min_d int, max_d int, spd int, init int, fly int, hp int, spells string, spell_mastery string, mana int, tier int, faction string, growth int, ability string );"
+	db.execute "create table creatures ( id string, at int, df int, shots int, min_d int, max_d int, spd int, init int,
+	fly int, hp int, spells string, spell_mastery string, mana int, tier int, faction string, growth int, ability string,
+	gold int, wood int, ore int, mercury int, crystal int, Sulfur int, gem int );"
 	creatures = []
 	
 	Dir.glob("#{source_creatures}/**/*").reject{ |rj| File.directory?(rj) }.each do |fn|
@@ -298,12 +305,19 @@ Shoes.app do
 			doc.xpath("//CreatureTown").text,
 			doc.xpath("//WeeklyGrowth").text,
 			abilities.join(','),
+			doc.xpath("//Cost/Gold").text,
+			doc.xpath("//Cost/Wood").text,
+			doc.xpath("//Cost/Ore").text,
+			doc.xpath("//Cost/Mercury").text,
+			doc.xpath("//Cost/Crystal").text,
+			doc.xpath("//Cost/Sulfur").text,
+			doc.xpath("//Cost/Gem").text,
 			visuals.xpath("/CreatureVisual/CreatureNameFileRef/@href")
 		)
 		make_text "en/creatures/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN#{creatures.last.texts}";
-		db.execute "insert into creatures values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? );", creatures.last.stats
+		db.execute "insert into creatures values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?, ?, ? );", creatures.last.stats, creatures.last.price
 	end
-
+=begin
 	############ create text files for creature abilities ##########
 	source_abilities = 'Rc10\data\MMH55-Index\GameMechanics\RefTables\CombatAbilities.xdb'
 	doc = File.open(source_abilities) { |f| Nokogiri::XML(f) }
@@ -314,7 +328,7 @@ Shoes.app do
 		make_text "en/abilities/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN#{txt_name}"
 		make_text "en/abilities/#{id}", [ "desc" ], "Rc10/data/MMH55-Texts-EN#{txt_desc}"
 	end
-=end
+
 	############ create table with all spells and guilds
 	source_spells = 'Rc10/data/MMH55-Index/GameMechanics/RefTables/UndividedSpells.xdb'
     db.execute "create table spells ( id string, spell_effect string, spell_increase string, mana int, tier int, guild string, resource_cost string );"
@@ -362,6 +376,22 @@ Shoes.app do
 				b_effect << dfstats.xpath("/RPGStats/combat/Spells/SummonHive/DefenseBase").text
 				p_effect << dfstats.xpath("/RPGStats/combat/Spells/SummonHive/DefensePerCasterLevel").text
 				db.execute "insert into spells_specials values ( ?, ?, ? );", id, b_effect.join(','), p_effect.join(',')
+			when "SPELL_WARCRY_WORD_OF_THE_CHIEF" then
+				stun = calc dfstats.xpath("/RPGStats/combat/Spells/Warcries/WordOfTheChief_ATBBonusBase").text
+				debug(stun)
+				stun_per = calc dfstats.xpath("/RPGStats/combat/Spells/Warcries/WordOfTheChief_ATBBonusPerCasterLevel").text
+				debug(stun_per)
+				bonus_rp = dfstats.xpath("/RPGStats/combat/Warcries/WordOfTheChief_RPBonus").text.to_i
+				base = Array.new(4, stun)
+				power = Array.new(4, stun_per)
+				base.fill(bonus_rp, base.size, 4)
+				power.fill(0, power.size, 4)
+			when "SPELL_CURSE", "SPELL_SLOW", "SPELL_FORGETFULNESS", "SPELL_BERSERK", "SPELL_HYPNOTIZE", "SPELL_BLESS", "SPELL_HASTE", "SPELL_DISPEL", "SPELL_DEFLECT_ARROWS", "SPELL_CELESTIAL_SHIELD" then
+				base[0..3] = base[0..3].map { |x| calc(x) }
+				power[0..3] = power[0..3].map { |x| calc(x) }
+			when "SPELL_ANIMATE_DEAD", "SPELL_RESURRECT" then
+				base[4..7] = base[4..7].map { |x| calc(x) }
+				power[4..7] = power[4..7].map { |x| calc(x) }
 			end
 			[ "Wood", "Ore", "Mercury", "Crystal", "Sulfur", "Gem" ].each do |r|
 				doc.css("//#{r}").each { |t| t.text > '0' ? resource << "#{r} #{t.text}" : nil }	
@@ -405,7 +435,7 @@ Shoes.app do
 		db.execute "insert into guilds values (?, ?)", g, i
 		(make_text "en/guilds/#{g}", [ "name" ], "Rc10/data/MMH55-Texts-EN/Text/Tooltips/SpellBook/#{txt_guilds[:"#{g}"]}.txt")
 	end
-
+=begin
 	############ make a list of all sets
 	source_sets = 'RC10\data\MMH55-Index\scripts\advmap-startup.lua'
 	flag, artif_set, artif = 0, {}, {}
@@ -417,7 +447,7 @@ Shoes.app do
 		when 1 then line.include?('	ARTIFACT_') ? ( artif[:"#{sort_line line, 'ARTIFACT_', ' ='}"] = line.split(" = ")[1].to_i ) : nil				
 		end
 	end
-=begin
+
 	############ make matches between artifacts and sets	
 	source_matches = 'RC10\data\MMH55-Index\scripts\H55-Core.lua'
 	@sets, @curr_set, flag = {}, "", 0
