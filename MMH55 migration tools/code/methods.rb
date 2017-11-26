@@ -24,6 +24,7 @@ def make_text dirr, target, source, mode=0
 		data_to_copy[0].gsub!(/<br><br>/, "\n")
 		data_to_copy[0].gsub!(/<br>/, "\n")
 		data_to_copy[0].gsub!(/<body_bright>/, '')
+		data_to_copy[0].gsub!(/<color=.*?>/, '')
 		data_to_copy = data_to_copy[0].split('<color_default>', target.count).each { |m| m.gsub!(/<color_default>/, '') }
 	when "artifact" then
 		data_to_copy[0].gsub!(/<color=.*?>/, '')

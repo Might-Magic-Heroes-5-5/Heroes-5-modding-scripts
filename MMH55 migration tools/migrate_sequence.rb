@@ -1,4 +1,4 @@
-require 'sqlite3'
+	require 'sqlite3'
 
 
 Shoes.app do
@@ -27,6 +27,12 @@ Shoes.app do
 	old_sequence = db_old.execute "select sequence from creatures"
 	creatures.each_with_index do |c, i|
 		db.execute "update creatures set sequence = '#{old_sequence[i][0]}' where id = '#{c[0]}';"
+	end
+	
+	heroes = db.execute "select id from spells"
+	old_sequence = db_old.execute "select sequence from heroes"
+	heroes.each_with_index do |p, i|
+		db.execute "update heroes set sequence = '#{old_sequence[i][0]}' where id = '#{p[0]}';"
 	end
 	
 	para "Migration Complete!"

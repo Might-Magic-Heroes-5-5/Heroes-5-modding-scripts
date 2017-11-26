@@ -1,0 +1,2 @@
+Formula is <koef>*F*(Spellpower+<flat>)
+F equals square root of creatures killed multiplied by their tier. Examples: Paladin is 6 frags, Devil is 7, Gremlin is 1 frag, etc.

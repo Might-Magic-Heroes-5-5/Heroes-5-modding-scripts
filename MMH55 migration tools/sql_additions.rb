@@ -98,6 +98,7 @@ Shoes.app do
 	make_text "en/spells/SPELL_PHANTOM", [ "pred" ], "additions/spells/SPELL_PHANTOM/pred.txt", 'pred'
 	make_text "en/spells/SPELL_DISPEL", [ "pred" ], "additions/spells/SPELL_DISPEL/pred.txt", 'pred'
 	make_text "en/spells/SPELL_CONJURE_PHOENIX", [ "pred" ], "additions/spells/SPELL_CONJURE_PHOENIX/pred.txt", 'pred'
+	make_text "en/spells/SPELL_DIVINE_VENGEANCE", [ "pred" ], "additions/spells/SPELL_DIVINE_VENGEANCE/pred.txt", 'pred'
 	["SPELL_RUNE_OF_CHARGE", "SPELL_RUNE_OF_BERSERKING", "SPELL_RUNE_OF_MAGIC_CONTROL",
 	"SPELL_RUNE_OF_EXORCISM", "SPELL_RUNE_OF_ELEMENTAL_IMMUNITY", "SPELL_RUNE_OF_STUNNING",
 	"SPELL_RUNE_OF_BATTLERAGE",	"SPELL_RUNE_OF_ETHEREALNESS","SPELL_RUNE_OF_REVIVE", "SPELL_RUNE_OF_DRAGONFORM",
