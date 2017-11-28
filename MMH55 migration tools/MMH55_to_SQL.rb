@@ -150,7 +150,7 @@ Shoes.app do
 		doc = File.open(fn) { |f| Nokogiri::XML(f) }
 		spells, masteries, abilities = [], [], []
 		id = fn.split("/")[-1].split('.')[0]
-		(doc.xpath("//AttackSkill").text == '' or id == 'None') ? next : nil
+		(doc.xpath("//AttackSkill").text == '' or id == 'None' or id == 'Black_Knight') ? next : nil
 		
 		header = fn.split("GameMechanics")[0]
 		visuals = File.open("#{header.chop}#{doc.xpath("//Visual/@href").text.split('#xpointer')[0]}") { |f| Nokogiri::XML(f) }
@@ -348,7 +348,7 @@ Shoes.app do
 		artifacts << Artifact.new(id,
 			n.xpath("obj/Slot").text,
 			n.xpath("obj/CostOfGold").text,
-			(n.xpath("obj/CanBeGeneratedToSell").text == 'false' ? 'ARTF_CLASS_GRAIL' : n.xpath("obj/Type").text),
+			(n.xpath("obj/CanBeGeneratedToSell").text == 'false' ? ( id == 'MASK_OF_DOPPELGANGER' ? 'ARTF_CLASS_RELIC' : 'ARTF_CLASS_GRAIL' ) : n.xpath("obj/Type").text),
 			n.xpath("obj/HeroStatsModif/Attack").text,
 			n.xpath("obj/HeroStatsModif/Defence").text,
 			n.xpath("obj/HeroStatsModif/SpellPower").text,
