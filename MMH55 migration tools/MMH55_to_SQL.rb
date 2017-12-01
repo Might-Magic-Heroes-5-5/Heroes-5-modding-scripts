@@ -372,5 +372,41 @@ Shoes.app do
 		db.execute "insert into artifact_filter values ( ?, ?)", filter.join(",").upcase, filter_name
 	end	
 
+	########## create table with all creature artifacts
+	source_micro_effect = 'RC10\data\MMH55-Index\GameMechanics\RefTables\MicroArtifactEffects.xdb'
+	source_micro_shell = 'RC10\data\MMH55-Index\GameMechanics\RefTables\MicroArtifactShells.xdb'
+	db.execute "create micro_artifact_effect spells ( id string, effect int, gold int, wood int, ore int, mercury int, crystal int, Sulfur int, gem int  );"
+	db.execute "create micro_artifact_shell spells ( id string );"
+	micro_artif, micro_shells = [], []
+	doc_effect = File.open(source_micro_effect) { |f| Nokogiri::XML(f) }
+	doc_shell = File.open(source_micro_shell) { |f| Nokogiri::XML(f) }
+	doc_effect.xpath("//objects/Item").each do |n|
+		id = n.xpath("ID")
+		micro_artif << Micro_artifact.new(id,
+		n.xpath("Obj/MicroArtifactEffect/Cost/Gold"),
+		n.xpath("Obj/MicroArtifactEffect/Cost/Wood"),
+		n.xpath("Obj/MicroArtifactEffect/Cost/Ore"),
+		n.xpath("Obj/MicroArtifactEffect/Cost/Mercury"),
+		n.xpath("Obj/MicroArtifactEffect/Cost/Crystal"),
+		n.xpath("Obj/MicroArtifactEffect/Cost/Sulfur"),
+		n.xpath("Obj/MicroArtifactEffect/Cost/Gem"),
+		n.xpath("Obj/MicroArtifactEffect/Name"),
+		n.xpath("Obj/MicroArtifactEffect/OfName"),
+		n.xpath("Obj/MicroArtifactEffect/Description")
+		db.execute "insert into micro_artifact_effect values ( ?, ?, ?, ?, ?, ?, ?, ?, ? );", micro_artif.last.stats, micro_artif.last.price
+		make_text "en/micro_artifacts/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN#{artifacts.last.texts[0]}";
+		make_text "en/micro_artifacts/#{id}", [ "suffix" ], "Rc10/data/MMH55-Texts-EN#{artifacts.last.texts[1]}";
+		make_text "en/micro_artifacts/#{id}", [ "desc" ], "Rc10/data/MMH55-Texts-EN#{artifacts.last.texts[2]}";
+	end
+	doc_shell.xpath("//objects/Item").each do |n|
+		id = n.xpath("ID")
+		micro_shells << Micro_artifact.new(id,
+		n.xpath("Obj/MicroArtifactShell/Name/@href"),
+		n.xpath("Obj/MicroArtifactShell/Description/@href")
+		db.execute "insert into micro_artifact_shell values ( ? );", micro_artif.last.stats
+		make_text "en/micro_artifacts/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN#{artifacts.last.texts[0]}";
+		make_text "en/micro_artifacts/#{id}", [ "desc" ], "Rc10/data/MMH55-Texts-EN#{artifacts.last.texts[1]}";
+	end
+	
 	para "Success"
 end

@@ -129,3 +129,27 @@ class Artifact
 	def stats; return @id, @slot, @cost, @type, @at, @df, @sp, @kn, @moral, @luck, @set end
 	def texts; return @txt_name, @txt_desc end
 end
+
+class Micro_artifact
+	
+	def initialize(id, effect, gold, wood, ore, mercury, crystal, sufur, gem, txt_name, txt_suffix, txt_desc )
+		@id, @effect = id, effect  ###Get artifact vars
+		@gold, @wood, @ore, @mercury, @crystal, @sufur, @gem = gold, wood, ore, mercury, crystal, sufur, gem
+		@txt_name, @txt_suffix, @txt_desc = txt_name, txt_suffix, txt_desc			 																		###Get text vars
+	end
+
+	def stats; return @id, @effect end
+	def price; return @gold, @wood, @ore, @mercury, @crystal, @sufur, @gem end
+	def texts; return @txt_name, @txt_desc end
+end
+
+class Micro_shell
+	
+	def initialize(id, txt_name, txt_desc )
+		@id = id  ###Get artifact vars
+		@txt_name, @txt_desc = txt_name, txt_desc			 																		###Get text vars
+	end
+
+	def stats; return @id end
+	def texts; return @txt_name, @txt_desc end
+end
