@@ -10,7 +10,7 @@ Shoes.app do
 	dfstats = File.open(source_defaultstats) { |f| Nokogiri::XML(f) }
 	DB_NAME = 'skillwheel.db'
 	db = SQLite3::Database.new 'skillwheel.db'
-
+=begin
 	############ create table with faction list and native spells
 	source_town = 'Rc10/data/MMH55-Index/GameMechanics/RefTables/TownTypesInfo.xdb'
 	doc = File.open(source_town) { |f| Nokogiri::XML(f) }
@@ -371,41 +371,51 @@ Shoes.app do
 		filter = filter_name == 'by_set' ? @sets.keys : (read_skills fl)
 		db.execute "insert into artifact_filter values ( ?, ?)", filter.join(",").upcase, filter_name
 	end	
-
-	########## create table with all creature artifacts
+=end
+	########## create table with all creature artifacts and effects
 	source_micro_effect = 'RC10\data\MMH55-Index\GameMechanics\RefTables\MicroArtifactEffects.xdb'
-	source_micro_shell = 'RC10\data\MMH55-Index\GameMechanics\RefTables\MicroArtifactShells.xdb'
-	db.execute "create micro_artifact_effect spells ( id string, effect int, gold int, wood int, ore int, mercury int, crystal int, Sulfur int, gem int  );"
-	db.execute "create micro_artifact_shell spells ( id string );"
-	micro_artif, micro_shells = [], []
+	db.execute "create table micro_artifact_effect ( id string, effect int, gold int, wood int, ore int, mercury int, crystal int, Sulfur int, gem int  );"
+	micro_artif = []
 	doc_effect = File.open(source_micro_effect) { |f| Nokogiri::XML(f) }
-	doc_shell = File.open(source_micro_shell) { |f| Nokogiri::XML(f) }
 	doc_effect.xpath("//objects/Item").each do |n|
-		id = n.xpath("ID")
+		id = n.xpath("ID").text
 		micro_artif << Micro_artifact.new(id,
-		n.xpath("Obj/MicroArtifactEffect/Cost/Gold"),
-		n.xpath("Obj/MicroArtifactEffect/Cost/Wood"),
-		n.xpath("Obj/MicroArtifactEffect/Cost/Ore"),
-		n.xpath("Obj/MicroArtifactEffect/Cost/Mercury"),
-		n.xpath("Obj/MicroArtifactEffect/Cost/Crystal"),
-		n.xpath("Obj/MicroArtifactEffect/Cost/Sulfur"),
-		n.xpath("Obj/MicroArtifactEffect/Cost/Gem"),
-		n.xpath("Obj/MicroArtifactEffect/Name"),
-		n.xpath("Obj/MicroArtifactEffect/OfName"),
-		n.xpath("Obj/MicroArtifactEffect/Description")
+		0,
+		n.xpath("Obj/MicroArtifactEffect/Cost/Gold").text,
+		n.xpath("Obj/MicroArtifactEffect/Cost/Wood").text,
+		n.xpath("Obj/MicroArtifactEffect/Cost/Ore").text,
+		n.xpath("Obj/MicroArtifactEffect/Cost/Mercury").text,
+		n.xpath("Obj/MicroArtifactEffect/Cost/Crystal").text,
+		n.xpath("Obj/MicroArtifactEffect/Cost/Sulfur").text,
+		n.xpath("Obj/MicroArtifactEffect/Cost/Gem").text,
+		n.xpath("Obj/MicroArtifactEffect/Name/@href").text,
+		n.xpath("Obj/MicroArtifactEffect/OfName/@href").text,
+		n.xpath("Obj/MicroArtifactEffect/Description/@href").text)
 		db.execute "insert into micro_artifact_effect values ( ?, ?, ?, ?, ?, ?, ?, ?, ? );", micro_artif.last.stats, micro_artif.last.price
-		make_text "en/micro_artifacts/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN#{artifacts.last.texts[0]}";
-		make_text "en/micro_artifacts/#{id}", [ "suffix" ], "Rc10/data/MMH55-Texts-EN#{artifacts.last.texts[1]}";
-		make_text "en/micro_artifacts/#{id}", [ "desc" ], "Rc10/data/MMH55-Texts-EN#{artifacts.last.texts[2]}";
+		make_text "en/micro_artifacts/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN#{micro_artif.last.texts[0]}";
+		make_text "en/micro_artifacts/#{id}", [ "suffix" ], "Rc10/data/MMH55-Texts-EN#{micro_artif.last.texts[1]}";
+		make_text "en/micro_artifacts/#{id}", [ "desc" ], "Rc10/data/MMH55-Texts-EN#{micro_artif.last.texts[2]}";
 	end
+	
+	
+	########## create table with all creature artifacts shells
+	source_micro_shell = 'RC10\data\MMH55-Index\GameMechanics\RefTables\MicroArtifactShells.xdb'
+	db.execute "create table micro_artifact_shell  ( id string );"
+	micro_shells = []
+	doc_shell = File.open(source_micro_shell) { |f| Nokogiri::XML(f) }
 	doc_shell.xpath("//objects/Item").each do |n|
-		id = n.xpath("ID")
-		micro_shells << Micro_artifact.new(id,
-		n.xpath("Obj/MicroArtifactShell/Name/@href"),
-		n.xpath("Obj/MicroArtifactShell/Description/@href")
-		db.execute "insert into micro_artifact_shell values ( ? );", micro_artif.last.stats
-		make_text "en/micro_artifacts/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN#{artifacts.last.texts[0]}";
-		make_text "en/micro_artifacts/#{id}", [ "desc" ], "Rc10/data/MMH55-Texts-EN#{artifacts.last.texts[1]}";
+		id = n.xpath("ID").text
+		desc = n.xpath("Obj/MicroArtifactShell/Description/@href").text
+		micro_shells << Micro_shell.new(id,
+		n.xpath("Obj/MicroArtifactShell/Name/@href").text,
+		desc)
+		db.execute "insert into micro_artifact_shell values ( ? );", micro_shells.last.stats
+		make_text "en/micro_artifacts/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN#{micro_shells.last.texts[0]}";
+		if desc == "" then
+			make_text "en/micro_artifacts/#{id}", [ "desc" ], "Additions/None.txt";
+		else
+			make_text "en/micro_artifacts/#{id}", [ "desc" ], "Rc10/data/MMH55-Texts-EN#{micro_shells.last.texts[1]}";
+		end
 	end
 	
 	para "Success"
