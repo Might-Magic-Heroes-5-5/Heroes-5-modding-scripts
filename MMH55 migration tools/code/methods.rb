@@ -140,7 +140,7 @@ class Micro_artifact
 
 	def stats; return @id, @effect end
 	def price; return @gold, @wood, @ore, @mercury, @crystal, @sufur, @gem end
-	def texts; return @txt_name, @txt_desc end
+	def texts; return @txt_name, @txt_suffix, @txt_desc end
 end
 
 class Micro_shell
