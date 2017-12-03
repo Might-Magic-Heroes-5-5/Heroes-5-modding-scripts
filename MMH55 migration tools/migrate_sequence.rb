@@ -6,7 +6,7 @@ Shoes.app do
 	db = SQLite3::Database.new 'skillwheel_new.db'
 	db_old = SQLite3::Database.new 'skillwheel.db'
 	klasses = db.execute "select id from classes"
-=begin
+
 	klasses.each do |k|
 		k[0] == 'HERO_CLASS_NONE' ? next : nil
 		perks = db.execute "select skill from #{k[0]}"
@@ -21,7 +21,7 @@ Shoes.app do
 	skills.each_with_index do |s, i|
 		db.execute "update skills set sequence = '#{old_sequence[i][0]}' where name = '#{s[0]}';"
 	end
-=end	
+	
 
 	creatures = db.execute "select id from creatures"
 	old_sequence = db_old.execute "select sequence from creatures"
