@@ -1,0 +1,6 @@
+Attack
+Defence
+SpellPower
+Knowledge
+Morale
+Luck

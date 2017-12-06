@@ -35,10 +35,10 @@ end
 
 Shoes.app do
 
-	DB_NAME = 'skillwheel.db'
+	DB_NAME = 'skillwheel_art.db'
 	db = SQLite3::Database.new DB_NAME
 	
-	
+=begin	
 	###########add Haven Renegade class
 	id = 'HERO_CLASS_KNIGHT_RENEGADE'
 	get_klas = db.execute "select * from HERO_CLASS_KNIGHT"
@@ -109,8 +109,17 @@ Shoes.app do
 "SPELL_WARCRY_BATTLECRY", "SPELL_WARCRY_SHOUT_OF_MANY"].each_with_index do |r, i| 
 		make_text "en/spells/#{r}", [ "pred" ], "additions/spells/#{r}/pred.txt", 'pred'
 	end
-	para "GOOD!"
+=end
+	##ARTIFACTS
 
-
-
+	db.execute("UPDATE artifacts SET type='ARTF_CLASS_GRAIL' WHERE sell='false';") 
+	db.execute("UPDATE artifacts SET type='ARTF_CLASS_RELIC' WHERE id='MASK_OF_DOPPELGANGER';") 
+	db.execute("UPDATE artifacts SET art_set='LEGION' WHERE id='ENDLESS_BAG_OF_GOLD';") 
+	list = db.execute "SELECT id from artifacts;"
+	list.each do |x|
+		x[0].include?('RES_') ? ( db.execute("UPDATE artifacts SET art_set='CORNUCOPIA' WHERE id='#{x[0]}';")) : nil
+		x[0].include?('LEGION_T') ? db.execute("UPDATE artifacts SET art_set='LEGION' WHERE id='#{x[0]}';") : nil
+	end
+	set_list = (db.execute "select name from artifact_filter where filter='by_set';")[0][0]
+	db.execute "UPDATE artifact_filter SET name='#{set_list + ',CORNUCOPIA,LEGION'}' WHERE filter='by_set'"
 end

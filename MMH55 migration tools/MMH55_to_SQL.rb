@@ -8,8 +8,8 @@ Shoes.app do
 	
 	source_defaultstats = 'Rc10/data/MMH55-Index/GameMechanics/RPGStats/DefaultStats.xdb'
 	dfstats = File.open(source_defaultstats) { |f| Nokogiri::XML(f) }
-	#DB_NAME = 'skillwheel.db'
-	#db = SQLite3::Database.new 'skillwheel.db'
+	DB_NAME = 'skillwheel_art.db'
+	db = SQLite3::Database.new DB_NAME
 =begin
 	############ create table with faction list and native spells
 	source_town = 'Rc10/data/MMH55-Index/GameMechanics/RefTables/TownTypesInfo.xdb'
@@ -305,7 +305,7 @@ Shoes.app do
 		db.execute "insert into guilds values (?, ?)", g, i
 		(make_text "en/guilds/#{g}", [ "name" ], "Rc10/data/MMH55-Texts-EN/Text/Tooltips/SpellBook/#{txt_guilds[:"#{g}"]}.txt")
 	end
-
+=end
 	############ make a list of all sets
 	source_sets = 'RC10\data\MMH55-Index\scripts\advmap-startup.lua'
 	flag, artif_set, artif = 0, {}, {}
@@ -337,7 +337,7 @@ Shoes.app do
 	############ create table with all artifacts and their set matches
 	source_artifacts = 'RC10\data\MMH55-Index\GameMechanics\RefTables\Artifacts.xdb'
 	doc = File.open(source_artifacts) { |f| Nokogiri::XML(f) }
-	db.execute "create table artifacts ( id string, slot string, cost int, type string, attack int, defence int, spellpower int, knowledge int, morale int, luck int, art_set string );"
+	db.execute "create table artifacts ( id string, slot string, cost int, type string, attack int, defence int, spellpower int, knowledge int, morale int, luck int, art_set string, sell string );"
 	is_set, artifacts = '', []
 	
 	doc.xpath("//objects/Item").each do |n|
@@ -348,7 +348,8 @@ Shoes.app do
 		artifacts << Artifact.new(id,
 			n.xpath("obj/Slot").text,
 			n.xpath("obj/CostOfGold").text,
-			(n.xpath("obj/CanBeGeneratedToSell").text == 'false' ? ( id == 'MASK_OF_DOPPELGANGER' ? 'ARTF_CLASS_RELIC' : 'ARTF_CLASS_GRAIL' ) : n.xpath("obj/Type").text),
+			#(n.xpath("obj/CanBeGeneratedToSell").text == 'false' ? ( id == 'MASK_OF_DOPPELGANGER' ? 'ARTF_CLASS_RELIC' : 'ARTF_CLASS_GRAIL' ) : n.xpath("obj/Type").text),
+			n.xpath("obj/Type").text,
 			n.xpath("obj/HeroStatsModif/Attack").text,
 			n.xpath("obj/HeroStatsModif/Defence").text,
 			n.xpath("obj/HeroStatsModif/SpellPower").text,
@@ -356,9 +357,10 @@ Shoes.app do
 			n.xpath("obj/HeroStatsModif/Morale").text,
 			n.xpath("obj/HeroStatsModif/Luck").text,
 			is_set,
+			n.xpath("obj/CanBeGeneratedToSell").text,
 			n.xpath("obj/NameFileRef/@href").text,
 			n.xpath("obj/DescriptionFileRef/@href").text)
-		db.execute "insert into artifacts values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? );", artifacts.last.stats
+		db.execute "insert into artifacts values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? );", artifacts.last.stats
 		make_text "en/artifacts/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN#{artifacts.last.texts[0]}";
 		make_text "en/artifacts/#{id}", [ "desc", "additional" ], "Rc10/data/MMH55-Texts-EN#{artifacts.last.texts[1]}", 'artifact';
 	end
@@ -371,7 +373,7 @@ Shoes.app do
 		filter = filter_name == 'by_set' ? @sets.keys : (read_skills fl)
 		db.execute "insert into artifact_filter values ( ?, ?)", filter.join(",").upcase, filter_name
 	end	
-=end
+=begin
 	########## create table with all creature artifacts and effects
 	source = 'RC10\data\MMH55-Index\GameMechanics\RefTables\MicroArtifactEffects.xdb'
 	db.execute "create table micro_artifact_effect ( id string, effect int, gold int, wood int, ore int, mercury int, crystal int, Sulfur int, gem int  );"
@@ -408,7 +410,7 @@ Shoes.app do
 		make_text "en/micro_artifacts/#{id}", [ "f_#{i+1}" ], "Rc10/data/MMH55-Texts-EN#{txt}";
 	end
 	
-=begin	
+	
 	########## create table with all creature artifacts shells
 	source = 'RC10\data\MMH55-Index\GameMechanics\RefTables\MicroArtifactShells.xdb'
 	db.execute "create table micro_artifact_shell  ( id string );"
