@@ -6,7 +6,7 @@ require 'zip'
 Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, height: 600, resizable: false ) do
 
 	style Shoes::Para, font: "Bell MT", size: 10, align: "center"	
-	
+
 	####################### Defining menu colouring ###############################
 	colour_app = forestgreen..yellowgreen	## this is the frame colour
 	@colour_menu_default = white 			## Default colour for all subwindows
@@ -14,12 +14,11 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 	@colour_menu1 = silver					## submenu1 colour
 	@colour_menu2 = rgb(160,160,160) 		## submenu2 colour
 	@colour_menu3 = rgb(180,180,180) 		## submenu3 colour
-	
+
 	####################### Defining global variables ###########################
 	@server_url = "https://raw.githubusercontent.com/dredknight/NCF_Utility__production/master/package_list.txt" ###Packages store server
-	@submenu = 1 							## Defines which submenu is opened
 	@core_deployed = 0						## 0 - core is not deployed; 1 core is deployed
-	
+
 	def messages m, text=nil		        ####All alerts that pop in the application
 		alert(case m
 				when 0 then "Wait until download completes"
@@ -29,151 +28,20 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 				when 99 then text 
 			  end, title: nil)
 	end
-	
+
 	def filter_files path				## returns all files found in a specific path
 		return Dir.entries(path).reject { |rj| ['.','..'].include?(rj) }
 	end
-	
+
 	def letters?(string)				## makes all chars downcase
 		string.chars.any? { |char| ('a'..'z').include? char.downcase }
 	end
-	
+
 	def check_dl flag = 0				## Checks if any download is currently in progress
 		@pack_contain.nil? ? nil : ( @pack_contain.contents.each { |n| n.contents.count > 3 ? (flag = 1; break): nil } )
 		return flag
 	end
-	
-    def main_page						##defines the main drawing block and launches the starting pages
-		@main.clear do
-			@core = stack left: 5, top: 15, width: 440, height: 100
-			@pack = stack left: 5, top: 130, width: 440, height: 355
-			main_core_block
-			main_pack_block
-		end
-	end
-	
-	def main_core_block
-		@core.clear do
-			rect(left: 0, top: 0, curve: 10,  width: 435, height: 85, fill: @colour_menu_default)
-			caption "Install a core package", align: "center", top: 4
-			line 30,35,400,35
-			(filter_files "NCF_repository/core").each_with_index do | f, i |
-				if ((filter_files "NCF_repository/core/#{f}/data") & (File.directory?("../data") ? (filter_files "../data") : [] )).empty? then
-					button("#{f}", left: 35 + 120*i, top: 46, width: 100) { deploy_core f; }
-					@core_deployed = 0
-				else
-					@core.clear do
-						rect(left: 0, top: 0, curve: 10,  width: 435, height: 85, fill: @colour_menu_applied)
-						caption "#{f} core installed", align: "center", top: 4
-						line 30,35,400,35
-						button("Uninstall", left: 170, top: 46, width: 100 ) { [ "yes", "y", "Y", "YES" ].include?(ask("This will purge previous NCF installations. Are you sure(Y/N)?")) ? purge_core : nil }
-					end;
-					@core_deployed = 1
-					@submenu == 1 ? main_pack_block_offline : nil
-					break;
-				end
-			end
-		end
-	end
 
-	def main_pack_block
-		@pack.clear do
-			rect(left: 0, top: 0, curve: 10,  width: 435, height: 355, fill: @colour_menu_default)
-			caption "NCF packages", align: "center"
-			ofline = flow left: 0, top: 30, width: 144, height: 30 do
-				rect(left: 0, top: 0, curve: 10,  width: 143, height: 320, fill: @colour_menu1)
-				@off_text = para "Local Repository", align: "center"
-			end
-			online = flow left: 145, top: 30, width: 144, height: 30 do
-				rect(left: 0, top: 0, curve: 10,  width: 143, height: 320, fill: @colour_menu2)
-				para "Online store", align: "center"
-			end
-			about = flow left: 290, top: 30, width: 146, height: 30 do
-				rect(left: 0, top: 0, curve: 10,  width: 145, height: 320, fill: @colour_menu3)
-				para "About", align: "center"
-			end
-			ofline.click { check_dl == 0? main_pack_block_offline : (messages 0) }
-			online.click { check_dl == 0? main_pack_block_online : (messages 0) }
-			about.click  { check_dl == 0? main_pack_block_about : (messages 0) }
-			@show_packs = flow left: 0, top: 60, width: 435, height: 300;
-			main_pack_block_offline
-		end
-	end
-	
-	def main_pack_block_offline
-		@submenu = 1
-		stat = @core_deployed == 1 ? nil : "disabled"
-		@existing_packs = Array.new(10) { Array.new(2) }
-		@show_packs.clear do
-			rect(left: 0, top: -10, curve: 10, width: 435, height: 305, fill: @colour_menu1)
-			(filter_files "NCF_repository/packs").each_with_index do | f, i |
-				@existing_packs[i][0] = f
-				@existing_packs[i][1] = File.open("NCF_repository/packs/#{f}/list/creature_list.txt", &:readline).split(',')[1]
-				flow left: 15, top: 10 + i*40, width: 430, height: 40 do
-					para "#{i+1}. #{f} #{@existing_packs[i][1]}", size: 15, align: "left" 
-					button("Install",tooltip: "If this is greyed out deploy core first", left: 300, top: 0, state: stat) { deploy_pack f }
-				end
-			end
-			button "Purify", left: 175, top: 260, tooltip: "Removes any NCF installations", width: 100, height: 25 do
-				if [ "yes", "y", "Y", "YES" ].include?(ask("WARNING! This will remove any installed NCF creature packs along with installed NCF cores. Are you sure(Y/N)?")) then
-					purge_core; purge_pack;
-					messages 2
-				end
-			end
-		end
-	end
-
-	def main_pack_block_online
-		@submenu = 2
-		packs = []
-		@show_packs.clear do
-			rect(left: 0, top: -10, curve: 10, width: 435, height: 305, fill: @colour_menu2)
-			button("Update package list", left: 30, top: 10, width: 360, height: 20) do
-				check_dl == 0? nil : (messages 0; next)
-				@pack_contain.clear { spinner left: 113, top: 90, start: true, tooltip: "Waiting for something?" }
-				Thread.new do
-					repo_data = get_url @server_url
-					start do
-						repo_data.nil? ? ( messages 3 ) : ( File.open('NCF_repository/package_list.txt', "w") { |f| f.write repo_data } )
-						main_pack_block_online
-					end
-				end
-			end
-			@pack_contain = flow left: 0, top: 35, width: 431, height: 220 do
-				File.readlines("NCF_repository/package_list.txt").each_with_index do |pack, i |
-					packs[i] = flow left: 15, top: i*40, width: 430, height: 40 do
-						package = pack.split(',')
-						para "#{i+1}. #{package[0]} #{package[2]}", size: 15, align: "left" 
-						button("info", left: 240, top: 0) { messages 99, package[3] }
-						if @existing_packs.collect {|name| name[0]}.include?(package[0]) then 
-							@existing_packs.each_with_index do |p, i|
-								if p[0] == package[0] then
-									package[2] <= p[1] ? ( dl_button contents[0].parent, "Up to date", package[1], "#{package[0]}", "#{package[2]}", "disabled" ) : (  dl_button contents[0].parent, "Update", package[1], "#{package[0]}", "#{package[2]}" ); 
-									break;
-								end
-							end
-						else
-							dl_button contents[0].parent, "Download", package[1], "#{package[0]}", "#{package[2]}"
-						end
-					end
-				end
-			end
-		end
-	end
-	
-	def main_pack_block_about
-		@submenu = 3
-		@show_packs.clear do
-			rect(left: 0, top: -10, curve: 10, width: 435, height: 305, fill: @colour_menu3)
-			caption "Useful links", align: "center", top: 10
-			button("The NCF project on GitHub.", left: 30, top: 50, width: 360, height: 25) { system("start https://github.com/dredknight/Heroes-5-modding-scripts/tree/master/NCF_configuration_app") } 
-			button("Ask for help or provide feedback.", left: 30, top: 80, width: 360, height: 25) { system("start http://heroescommunity.com/viewthread.php3?TID=44287") } 
-			button("Might and Magic 5.5 official page", left: 30, top: 110, width: 360, height: 25) { system("start http://www.moddb.com/mods/might-magic-heroes-55") } 
-			button("Subscribe and rate us on Moddb!", left: 30, top: 140, width: 360, height: 25) { system("start http://www.moddb.com/mods/heroes-v-new-creature-framework/reviews") }
-			para "Created by Dredknight", allign: "right", top: 260
-		end
-	end
-	
 	def dl_button slot, text, url, name, ver, state = nil
 		q = button(text, left: 310, top: 0, width: 100, state: state) do
 			real_url = get_url url
@@ -194,7 +62,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 			end
 		end
 	end
-	
+
 	def get_url url
 		uri = URI.parse(url)
 		http = Net::HTTP.new(uri.host, uri.port)
@@ -222,7 +90,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 		debug("url is #{real_url}")
 		return real_url
 	end
-	
+
 	def extract_zip(file, destination)
 	  FileUtils.mkdir_p(destination)
 	  Zip::File.open(file) do |zip_file|
@@ -232,25 +100,47 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 		end
 	  end
 	end
-	
+
 	def deploy_core folder
 		if [ "yes", "y", "Y", "YES" ].include?(ask("Are you sure you want to deploy NCF core for #{folder}(Y/N)?\n")) then
 			FileUtils.copy_entry "NCF_repository/core/#{folder}/", ".."
 			FileUtils.mkdir_p '../Complete/Icons'
-			main_core_block
+			show_core
 		end
 	end
 	
+	def show_core
+		@core.clear do
+			(filter_files "NCF_repository/core").each_with_index do | f, i |
+				if ((filter_files "NCF_repository/core/#{f}/data") & (File.directory?("../data") ? (filter_files "../data") : [] )).empty? then
+					rect(left: 0, top: 0, curve: 10,  width: 435, height: 85, fill: @colour_menu_default)
+					caption "Install a core package", align: "center", top: 4
+					line 30,35,400,35
+					button("#{f}", left: 35 + 120*i, top: 46, width: 100) { deploy_core f; }
+					@core_deployed = 0
+				else
+					@core.clear;
+					rect(left: 0, top: 0, curve: 10,  width: 435, height: 85, fill: @colour_menu_applied)
+					caption "#{f} core installed", align: "center", top: 4
+					line 30,35,400,35
+					button("Uninstall", left: 170, top: 46, width: 100 ) { [ "yes", "y", "Y", "YES" ].include?(ask("This will purge previous NCF installations. Are you sure(Y/N)?")) ? purge_core : nil }
+					@core_deployed = 1
+					break
+				end
+			end
+			show_pack
+		end
+	end
+
 	def purge_core
 		Dir.glob("NCF_repository/core/**/*").reject{ |rj| File.directory?(rj) }.each do |fn|
 			file_name = fn.split("/")[3..-1].join("/")
 			File.delete("../#{file_name}") if File.exist?("../#{file_name}")
 		end
 		@core_deployed = 0
-		main_core_block
-		@submenu == 1 ? main_pack_block_offline : nil
+		show_core
 	end
-	
+
 	def list_all_creatures list
 		list.each_with_index do |line, i|
 			p = line.split(" ")
@@ -262,7 +152,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 			end
 		end
 	end
-	
+
 	def list_filtered_creatures list, state
 		base_arr, upg_arr, old_upgr, new_upgr = [], [], [], []
 		list.each do |line|
@@ -280,10 +170,11 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 			end
 		end
 	end
-	
+
 	def deploy_pack folder
 		@custom_ncf_package = []
-		@main.clear fill: rgb(100,244,40) do
+		@main.hide;
+		@main2.clear fill: rgb(100,244,40) do
 			rect(left: 5, top: 15, curve: 10,  width: 435, height: 470, fill: @colour_menu_default)
 			name_file = File.readlines("NCF_repository/packs/#{folder}/list/creature_list.txt")
 			caption "Legacy pack creatures", align: "center", top: 20
@@ -303,7 +194,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 			#	when n.items[2] then list_filtered_creatures name_file[2..-1], "old"
 			#	end
 			#end
-			back = button( "Back", left: 8, top: 490, width: 100 ) { main_page }
+			back = button( "Back", left: 8, top: 490, width: 100 ) { @main.show; @main2.hide }
 			deploy = button( "Deploy", left: 340, top: 490, width: 100 ) do                                											####### pressing the button installs checked creatures
 				if [ "yes", "y", "Y", "YES" ].include?( ask("Any previously installed NCF creatures will be removed. Are you sure(Y/N)?")) then
 					purge_pack																														####### clean currently installed creatures
@@ -322,17 +213,116 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 				end
 			end
 		end
+		@main2.show
 		start { @creature_table.scroll_top = 1 } ### this is a workaround for a scroll bug that comes with shoes
 	end
-	
+
+	def show_pack
+		@existing_packs = Array.new(10) { Array.new(2) }
+		stat = @core_deployed == 1 ? nil : "disabled"
+		(filter_files "NCF_repository/packs").each_with_index do | f, i |
+			@existing_packs[i][0] = f
+			@existing_packs[i][1] = File.open("NCF_repository/packs/#{f}/list/creature_list.txt", &:readline).split(',')[1]
+			@packs.clear do
+				flow left: 15, top: 10 + i*40, width: 430, height: 40 do
+					para "#{i+1}. #{f} #{@existing_packs[i][1]}", size: 15, align: "left" 
+					button("Install",tooltip: "If this is greyed out deploy core first", left: 300, top: 0, state: stat) { deploy_pack f }
+				end
+			end
+		end
+	end
+
 	def purge_pack   															### cleans currently installed NCF creatures, editor icons, and editor icon cache.
 		Dir.glob('../data/NCF_*.pak').each { |file| File.delete(file)} 			###  NCF creatures
 		Dir.glob('../Editor/IconCache/AdvMapObjectLink/MapObjects/_(AdvMapObjectLink)/Monsters/NCF/Creature*').each { |file| File.delete(file)} ###  Cleaning editor Icon cache
 		Dir.glob('../Complete/Icons/*.dds').each { |file| File.delete(file)}	###  Editor Icons
 	end
 	
+	def show_store
+		store_packs = []
+		@pack_contain.clear do
+			File.readlines("NCF_repository/package_list.txt").each_with_index do |pack, i |
+				store_packs[i] = flow left: 15, top: i*40, width: 430, height: 40 do
+					package = pack.split(',')
+					para "#{i+1}. #{package[0]} #{package[2]}", size: 15, align: "left" 
+					button("info", left: 240, top: 0) { messages 99, package[3] }
+					if @existing_packs.collect {|name| name[0]}.include?(package[0]) then 
+						@existing_packs.each_with_index do |p, i|
+							if p[0] == package[0] then
+								package[2] <= p[1] ? ( dl_button contents[0].parent, "Up to date", package[1], "#{package[0]}", "#{package[2]}", "disabled" ) : (  dl_button contents[0].parent, "Update", package[1], "#{package[0]}", "#{package[2]}" ); 
+								break;
+							end
+						end
+					else
+						dl_button contents[0].parent, "Download", package[1], "#{package[0]}", "#{package[2]}"
+					end
+				end
+			end
+		end
+	end
+
 	background colour_app
 	subtitle "NCF Configuration Utility", stroke: white, align: "center"
-	@main = stack left: 0.05, top: 0.1, width: 0.9, height: 0.9
-	main_page		
+	@main = stack left: 0.05, top: 0.1, width: 0.9, height: 0.9 do
+
+		@core = stack left: 5, top: 15, width: 440, height: 100;
+		stack left: 5, top: 130, width: 440, height: 355 do
+			rect(left: 0, top: 0, curve: 10,  width: 435, height: 355, fill: @colour_menu_default)
+			caption "NCF packages", align: "center"
+			ofline = flow left: 0, top: 30, width: 144, height: 30 do
+				rect(left: 0, top: 0, curve: 10, width: 143, height: 320, fill: @colour_menu1)
+				@off_text = para "Local Repository", align: "center"
+				click { @menu_offline.show; @menu_online.hide; @menu_about.hide }
+			end
+			online = flow left: 145, top: 30, width: 144, height: 30 do
+				rect(left: 0, top: 0, curve: 10, width: 143, height: 320, fill: @colour_menu2)
+				para "Online store", align: "center"
+				click { @menu_offline.hide; @menu_online.show; @menu_about.hide }
+			end
+			about = flow left: 290, top: 30, width: 146, height: 30 do
+				rect(left: 0, top: 0, curve: 10, width: 145, height: 320, fill: @colour_menu3)
+				para "About", align: "center"
+				click { @menu_offline.hide; @menu_online.hide; @menu_about.show }
+			end
+			
+			@menu_offline = flow left: 0, top: 60, width: 435, height: 300 do
+				rect(left: 0, top: -10, curve: 10, width: 435, height: 305, fill: @colour_menu1)
+				@packs = flow;
+				button "Purify", left: 175, top: 260, tooltip: "Removes any NCF installations", width: 100, height: 25 do
+					if [ "yes", "y", "Y", "YES" ].include?(ask("WARNING! This will remove any installed NCF creature packs along with installed NCF cores. Are you sure(Y/N)?")) then
+						purge_core; purge_pack;
+						messages 2
+					end
+				end
+			end
+			show_core
+			@menu_online = flow left: 0, top: 60, width: 435, height: 300, hidden: true do 
+				rect(left: 0, top: -10, curve: 10, width: 435, height: 305, fill: @colour_menu2)
+				button("Update package list", left: 30, top: 10, width: 360, height: 20) do
+					check_dl == 0? nil : (messages 0; next)
+					@pack_contain.clear { spinner left: 113, top: 90, start: true, tooltip: "Waiting for something?" }
+					Thread.new do
+						repo_data = get_url @server_url
+						start do
+							repo_data.nil? ? ( messages 3 ) : ( File.open('NCF_repository/package_list.txt', "w") { |f| f.write repo_data } )
+							show_store
+						end
+					end
+				end
+				@pack_contain = flow left: 0, top: 35, width: 431, height: 220;
+				show_store
+			end
+
+			@menu_about = flow left: 0, top: 60, width: 435, height: 300, hidden: true do
+				rect(left: 0, top: -10, curve: 10, width: 435, height: 305, fill: @colour_menu3)
+				caption "Useful links", align: "center", top: 10
+				button("The NCF project on GitHub.", left: 30, top: 50, width: 360, height: 25) { system("start https://github.com/dredknight/Heroes-5-modding-scripts/tree/master/NCF_configuration_app") } 
+				button("Ask for help or provide feedback.", left: 30, top: 80, width: 360, height: 25) { system("start http://heroescommunity.com/viewthread.php3?TID=44287") } 
+				button("Might and Magic 5.5 official page", left: 30, top: 110, width: 360, height: 25) { system("start http://www.moddb.com/mods/might-magic-heroes-55") } 
+				button("Subscribe and rate us on Moddb!", left: 30, top: 140, width: 360, height: 25) { system("start http://www.moddb.com/mods/heroes-v-new-creature-framework/reviews") }
+				para "Created by Dredknight", allign: "right", top: 260
+			end
+		end
+	end
+	@main2 = stack left: 0.05, top: 0.1, width: 0.9, height: 0.9
 end
