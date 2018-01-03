@@ -34,11 +34,11 @@ def popupate_skill_perks hero_id, new_skill, template_klass, db
 end
 
 Shoes.app do
-
-	DB_NAME = 'skillwheel_art.db'
+=begin
+	DB_NAME = 'skillwheel_new.db'
 	db = SQLite3::Database.new DB_NAME
 	
-=begin	
+
 	###########add Haven Renegade class
 	id = 'HERO_CLASS_KNIGHT_RENEGADE'
 	get_klas = db.execute "select * from HERO_CLASS_KNIGHT"
@@ -93,6 +93,11 @@ Shoes.app do
 	db.execute "UPDATE heroes SET  classes='#{id}' WHERE id='Azar';"
 	db.execute "UPDATE heroes SET  classes='#{id}' WHERE id='Crag';"
 	db.execute "UPDATE heroes SET  classes='#{id}' WHERE id='Hero6';"
+=end	
+	###GUILDS
+	copy_entry "design/guilds", "en/guilds"
+
+=begin	
 	
 	###SPELLS
 	make_text "en/spells/SPELL_PHANTOM", [ "pred" ], "additions/spells/SPELL_PHANTOM/pred.txt", 'pred'
@@ -109,7 +114,7 @@ Shoes.app do
 "SPELL_WARCRY_BATTLECRY", "SPELL_WARCRY_SHOUT_OF_MANY"].each_with_index do |r, i| 
 		make_text "en/spells/#{r}", [ "pred" ], "additions/spells/#{r}/pred.txt", 'pred'
 	end
-=end
+
 	##ARTIFACTS
 
 	db.execute("UPDATE artifacts SET type='ARTF_CLASS_GRAIL' WHERE sell='false';") 
@@ -122,4 +127,6 @@ Shoes.app do
 	end
 	set_list = (db.execute "select name from artifact_filter where filter='by_set';")[0][0]
 	db.execute "UPDATE artifact_filter SET name='#{set_list + ',CORNUCOPIA,LEGION'}' WHERE filter='by_set'"
+=end
+	para "Complete!"
 end

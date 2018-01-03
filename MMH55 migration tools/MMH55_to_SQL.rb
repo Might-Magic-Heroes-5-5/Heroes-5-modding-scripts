@@ -8,7 +8,7 @@ Shoes.app do
 	
 	source_defaultstats = 'Rc10/data/MMH55-Index/GameMechanics/RPGStats/DefaultStats.xdb'
 	dfstats = File.open(source_defaultstats) { |f| Nokogiri::XML(f) }
-	DB_NAME = 'skillwheel_art.db'
+	DB_NAME = 'skillwheel_alt.db'
 	db = SQLite3::Database.new DB_NAME
 =begin
 	############ create table with faction list and native spells
@@ -278,7 +278,6 @@ Shoes.app do
 				predict )	
 				
 			db.execute "insert into spells values ( ?, ?, ?, ?, ?, ?, ? );", spells.last.stats
-			(guilds.include?(school) or school == '') ? nil : (guilds << school)
 			txt = spells.last.texts
 			make_text "en/spells/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN/#{txt[0]}" 
 			make_text "en/spells/#{id}", [ "desc", "additional" ], "Rc10/data/MMH55-Texts-EN/#{txt[1]}", 'spell';
@@ -292,6 +291,14 @@ Shoes.app do
 		end		
 	end
 	make_text "en/spells", [ "universal_prediction" ], "Rc10/data/MMH55-Texts-EN/Text/Game/Spells/SpellBookPredictions/DirectDamage.txt", 'pred'
+	guilds = [ "MAGIC_SCHOOL_DESTRUCTIVE",
+				"MAGIC_SCHOOL_SUMMONING",
+				"MAGIC_SCHOOL_DARK",
+				"MAGIC_SCHOOL_LIGHT",
+				"MAGIC_SCHOOL_ADVENTURE",
+				"MAGIC_SCHOOL_SPECIAL",
+				"MAGIC_SCHOOL_RUNIC",
+				"MAGIC_SCHOOL_WARCRIES" ]
 	txt_guilds =  { MAGIC_SCHOOL_DARK: 'SchoolDark',
 					MAGIC_SCHOOL_SUMMONING: 'SchoolSummoning',
 					MAGIC_SCHOOL_DESTRUCTIVE: 'SchoolDestructive',
@@ -300,12 +307,13 @@ Shoes.app do
 					MAGIC_SCHOOL_RUNIC: 'SchoolSpecial', 
 					MAGIC_SCHOOL_WARCRIES: 'Warcries', 
 					MAGIC_SCHOOL_ADVENTURE: 'AdventureSpells' }
-					
+	
+	
 	guilds.each_with_index do |g, i|
-		db.execute "insert into guilds values (?, ?)", g, i
+		db.execute "insert into guilds values (?, ?//)", g, i
 		(make_text "en/guilds/#{g}", [ "name" ], "Rc10/data/MMH55-Texts-EN/Text/Tooltips/SpellBook/#{txt_guilds[:"#{g}"]}.txt")
 	end
-=end
+
 	############ make a list of all sets
 	source_sets = 'RC10\data\MMH55-Index\scripts\advmap-startup.lua'
 	flag, artif_set, artif = 0, {}, {}
@@ -373,7 +381,7 @@ Shoes.app do
 		filter = filter_name == 'by_set' ? @sets.keys : (read_skills fl)
 		db.execute "insert into artifact_filter values ( ?, ?)", filter.join(",").upcase, filter_name
 	end	
-=begin
+
 	########## create table with all creature artifacts and effects
 	source = 'RC10\data\MMH55-Index\GameMechanics\RefTables\MicroArtifactEffects.xdb'
 	db.execute "create table micro_artifact_effect ( id string, effect int, gold int, wood int, ore int, mercury int, crystal int, Sulfur int, gem int  );"
@@ -430,6 +438,19 @@ Shoes.app do
 			make_text "en/micro_artifacts/#{id}", [ "desc" ], "Rc10/data/MMH55-Texts-EN#{micro_shells.last.texts[1]}";
 		end
 	end
-=end	
+=end
+	db.execute "create table micro_protection ( id real );"
+	protection_coef = [
+0.073, 0.146, 0.219, 0.292, 0.347, 0.402, 0.457, 0.497, 0.537, 0.577,
+0.607, 0.637, 0.657, 0.677, 0.697, 0.717, 0.737, 0.757, 0.777, 0.787,
+0.797, 0.807, 0.817, 0.827, 0.837, 0.847, 0.857, 0.867, 0.877, 0.882,
+0.887, 0.892, 0.897, 0.902, 0.907, 0.912, 0.917, 0.922, 0.927, 0.932,
+0.937, 0.942, 0.947, 0.952, 0.957, 0.962, 0.967, 0.971, 0.975, 0.979,
+0.982, 0.985, 0.988, 0.991, 0.993, 0.995, 0.997, 0.998, 0.999, 1 ]
+
+	protection_coef.each do |p|
+		db.execute "insert into micro_protection values ( ? );", p
+	end
+
 	para "Success"
 end
