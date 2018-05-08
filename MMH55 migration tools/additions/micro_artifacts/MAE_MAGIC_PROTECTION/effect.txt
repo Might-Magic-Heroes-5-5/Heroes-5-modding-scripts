@@ -1,0 +1,1 @@
+Incoming magic damage is reduced by <value>%.

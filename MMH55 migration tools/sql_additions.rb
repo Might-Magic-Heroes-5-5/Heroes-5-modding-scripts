@@ -34,11 +34,11 @@ def popupate_skill_perks hero_id, new_skill, template_klass, db
 end
 
 Shoes.app do
-=begin
-	DB_NAME = 'skillwheel_new.db'
-	db = SQLite3::Database.new DB_NAME
-	
 
+	DB_NAME = 'skillwheel.db'
+	db = SQLite3::Database.new DB_NAME
+	source_phoenix_stats = 'Rc10/data/MMH55-Index/GameMechanics/RPGStats/ConjuredPhoenix.xdb'
+	
 	###########add Haven Renegade class
 	id = 'HERO_CLASS_KNIGHT_RENEGADE'
 	get_klas = db.execute "select * from HERO_CLASS_KNIGHT"
@@ -93,15 +93,45 @@ Shoes.app do
 	db.execute "UPDATE heroes SET  classes='#{id}' WHERE id='Azar';"
 	db.execute "UPDATE heroes SET  classes='#{id}' WHERE id='Crag';"
 	db.execute "UPDATE heroes SET  classes='#{id}' WHERE id='Hero6';"
-=end	
-	###GUILDS
-	copy_entry "design/guilds", "en/guilds"
-
-=begin	
 	
 	###SPELLS
 	make_text "en/spells/SPELL_PHANTOM", [ "pred" ], "additions/spells/SPELL_PHANTOM/pred.txt", 'pred'
 	make_text "en/spells/SPELL_DISPEL", [ "pred" ], "additions/spells/SPELL_DISPEL/pred.txt", 'pred'
+	make_text "en/spells/SPELL_BLESS", [ "pred" ], "additions/spells/SPELL_BLESS/pred.txt", 'pred'
+	make_text "en/spells/SPELL_CURSE", [ "pred" ], "additions/spells/SPELL_CURSE/pred.txt", 'pred'
+	make_text "en/spells/SPELL_BERSERK", [ "pred" ], "additions/spells/SPELL_BERSERK/pred.txt", 'pred'
+	phoenix_stats = File.open(source_phoenix_stats) { |f| Nokogiri::XML(f) }
+	hp_flat = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/Health").text
+	hp_sp = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/Health_PerPower").text
+	hp_lvl = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/Health_PerLevel").text
+	hp_kn = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/Health_PerKnowledge").text
+	d_min_flat = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/DamageMin").text
+	d_min_sp = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/DamageMin_PerPower").text
+	d_min_lvl = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/DamageMin_PerLevel").text
+	d_max_flat = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/DamageMax").text
+	d_max_sp = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/DamageMax_PerPower").text
+	d_max_lvl = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/DamageMax_PerLevel").text
+	offence_flat = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/Offence").text
+	offence_sp = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/Offence_PerPower").text
+	offence_lvl = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/Offence_PerLevel").text
+	defence_flat = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/Defence").text
+	defence_sp = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/Defence_PerPower").text
+	defence_lvl = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/Defence_PerLevel").text
+	init_flat = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/Initiative").text
+	init_sp = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/Initiative_PerPower").text
+	init_lvl = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/Initiative_PerLevel").text
+	speed_flat = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/Speed").text
+	speed_sp = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/Speed_PerPower").text
+	speed_lvl = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/Speed_PerLevel").text
+	ph_stats = "Health = #{hp_flat} + #{hp_sp}*SP + #{hp_lvl}*HERO_LVL + #{hp_kn}*KN
+Min damage = #{d_min_flat} + #{d_min_sp}*SP + #{d_min_lvl}*HERO_LVL
+Max damage = #{d_max_flat} + #{d_max_sp}*SP + #{d_max_lvl}*HERO_LVL
+Attack = #{offence_flat} + #{offence_sp}*SP + #{offence_lvl}*HERO_LVL
+Defense = #{defence_flat} + #{defence_sp}*SP + #{defence_lvl}*HERO_LVL
+Initiative = #{init_flat} + #{init_sp}*SP + #{init_lvl}*HERO_LVL
+Speed = #{speed_flat} + #{speed_sp}*SP + #{speed_lvl}*HERO_LVL"
+	File.open("additions/spells/SPELL_CONJURE_PHOENIX/additional.txt", 'w') { |file| file.write(ph_stats) }
+	make_text "en/spells/SPELL_CONJURE_PHOENIX", [ "additional" ], "additions/spells/SPELL_CONJURE_PHOENIX/additional.txt", 'skill'
 	make_text "en/spells/SPELL_CONJURE_PHOENIX", [ "pred" ], "additions/spells/SPELL_CONJURE_PHOENIX/pred.txt", 'pred'
 	make_text "en/spells/SPELL_DIVINE_VENGEANCE", [ "pred" ], "additions/spells/SPELL_DIVINE_VENGEANCE/pred.txt", 'pred'
 	["SPELL_RUNE_OF_CHARGE", "SPELL_RUNE_OF_BERSERKING", "SPELL_RUNE_OF_MAGIC_CONTROL",
@@ -114,19 +144,14 @@ Shoes.app do
 "SPELL_WARCRY_BATTLECRY", "SPELL_WARCRY_SHOUT_OF_MANY"].each_with_index do |r, i| 
 		make_text "en/spells/#{r}", [ "pred" ], "additions/spells/#{r}/pred.txt", 'pred'
 	end
-
-	##ARTIFACTS
-
-	db.execute("UPDATE artifacts SET type='ARTF_CLASS_GRAIL' WHERE sell='false';") 
-	db.execute("UPDATE artifacts SET type='ARTF_CLASS_RELIC' WHERE id='MASK_OF_DOPPELGANGER';") 
-	db.execute("UPDATE artifacts SET art_set='LEGION' WHERE id='ENDLESS_BAG_OF_GOLD';") 
-	list = db.execute "SELECT id from artifacts;"
-	list.each do |x|
-		x[0].include?('RES_') ? ( db.execute("UPDATE artifacts SET art_set='CORNUCOPIA' WHERE id='#{x[0]}';")) : nil
-		x[0].include?('LEGION_T') ? db.execute("UPDATE artifacts SET art_set='LEGION' WHERE id='#{x[0]}';") : nil
+	
+	###CREATURE ARTIFACTS
+	[ "MAE_ARMOR_CRUSHING", "MAE_DEFENCE", "MAE_HASTE", "MAE_HEALTH", "MAE_LUCK", "MAE_MAGIC_PROTECTION", "MAE_MORALE", "MAE_PIERCING", "MAE_SPEED" ].each do |micro|
+		make_text "en/micro_artifacts/#{micro}", [ "effect" ], "additions/micro_artifacts/#{micro}/effect.txt", 'pred'
 	end
-	set_list = (db.execute "select name from artifact_filter where filter='by_set';")[0][0]
-	db.execute "UPDATE artifact_filter SET name='#{set_list + ',CORNUCOPIA,LEGION'}' WHERE filter='by_set'"
-=end
-	para "Complete!"
+	
+	para "GOOD!"
+
+
+
 end

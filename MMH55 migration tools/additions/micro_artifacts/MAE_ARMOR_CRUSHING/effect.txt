@@ -1,0 +1,1 @@
+Every hit decreases enemy creature defense by <value>.

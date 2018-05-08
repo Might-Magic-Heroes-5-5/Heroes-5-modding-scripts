@@ -1,0 +1,28 @@
+0. town table
+### done with script 2  #### Runes - prediction text should be changed to "Cost: {cost from DB}"
+### done with script 2 ##### renegade knight,  khan , veteran klass - copied from original classes (knight, barbarian) and edited
+### done with script 1 ##### artifacts - egg rarity changed from ULTIMATE to RELIC
+### done with script 1 ##### black_knight creature ignored (not added to sql)
+### done with script 1 ##### Spell pane - remove special abilities and uber spells 
+
+
+1. Spells table & texts
+### done with script 2 ##### - Curse/pred.txt changed from "Duration: <value=duration> turns." to 
+"Creature max damage = min dmg + (max dmg - min dmg)*<value=damage>%. Duration: <value=duration> turns."
+
+### done with script 2 #####  - Berserk/pred.txt changed from "Spell duration: <value=duration> actions. Damage is modified by <value=enchant>%." to
+"Creature damage is modified by <value=enchant>%.
+Spell duration: <value=duration> actions."
+
+### done with script 2 #####- Bless/pred.txt changed from "Duration: <value=duration> turns." to
+"Creature min damage = min dmg + (max dmg - min dmg)*<value=damage>%.
+Duration: <value=duration> turns."
+
+- all warcry texts
+- 
+
+
+
+============
+_Expert.txt
+_Damage

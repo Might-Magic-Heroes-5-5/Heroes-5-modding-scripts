@@ -1,0 +1,1 @@
+Creature defense increased by <value>.

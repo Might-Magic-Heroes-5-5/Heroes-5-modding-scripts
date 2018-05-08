@@ -8,9 +8,9 @@ Shoes.app do
 	
 	source_defaultstats = 'Rc10/data/MMH55-Index/GameMechanics/RPGStats/DefaultStats.xdb'
 	dfstats = File.open(source_defaultstats) { |f| Nokogiri::XML(f) }
-	DB_NAME = 'skillwheel_alt.db'
-	db = SQLite3::Database.new DB_NAME
-=begin
+	DB_NAME = 'skillwheel.db'
+	db = SQLite3::Database.new 'skillwheel.db'
+
 	############ create table with faction list and native spells
 	source_town = 'Rc10/data/MMH55-Index/GameMechanics/RefTables/TownTypesInfo.xdb'
 	doc = File.open(source_town) { |f| Nokogiri::XML(f) }
@@ -216,6 +216,7 @@ Shoes.app do
 			doc = File.open(dr_source) { |f| Nokogiri::XML(f) }
 			( ['SpellVisual','Mass_','Empowered'].any? { |word| dr.include?(word) } or doc.xpath("//NameFileRef/@href").text == '' ) ? next : nil
 			school = doc.xpath("//MagicSchool").text
+			(guilds.include?(school) or school == '') ? nil : (guilds << school)
 			school == 'MAGIC_SCHOOL_SPECIAL' ? next : nil
 			doc.xpath("//Base | //PerPower").each_with_index { |x, i| ( i.even? ? base : power ) << x.text }
 			case id
@@ -250,7 +251,7 @@ Shoes.app do
 			when "SPELL_WARCRY_WORD_OF_THE_CHIEF" then
 				stun = calc dfstats.xpath("/RPGStats/combat/Spells/Warcries/WordOfTheChief_ATBBonusBase").text
 				stun_per = calc dfstats.xpath("/RPGStats/combat/Spells/Warcries/WordOfTheChief_ATBBonusPerCasterLevel").text
-				bonus_rp = dfstats.xpath("/RPGStats/combat/Warcries/WordOfTheChief_RPBonus").text.to_i
+				bonus_rp = dfstats.xpath("/RPGStats/combat/Spells/Warcries/WordOfTheChief_RPBonus").text.to_i
 				base = Array.new(4, stun)
 				power = Array.new(4, stun_per)
 				base.fill(bonus_rp, base.size, 4)
@@ -262,6 +263,7 @@ Shoes.app do
 				base[4..7] = base[4..7].map { |x| calc(x) }
 				power[4..7] = power[4..7].map { |x| calc(x) }
 			end
+			
 			[ "Wood", "Ore", "Mercury", "Crystal", "Sulfur", "Gem" ].each do |r|
 				doc.css("//#{r}").each { |t| t.text > '0' ? resource << "#{r} #{t.text}" : nil }	
 			end
@@ -276,9 +278,9 @@ Shoes.app do
 				(check_dir doc.xpath("//NameFileRef/@href").text, dr_source),
 				(check_dir doc.xpath("//LongDescriptionFileRef/@href").text, dr_source),
 				predict )	
-				
 			db.execute "insert into spells values ( ?, ?, ?, ?, ?, ?, ? );", spells.last.stats
 			txt = spells.last.texts
+			debug(txt)
 			make_text "en/spells/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN/#{txt[0]}" 
 			make_text "en/spells/#{id}", [ "desc", "additional" ], "Rc10/data/MMH55-Texts-EN/#{txt[1]}", 'spell';
 			txt[2].each do |p|
@@ -291,14 +293,6 @@ Shoes.app do
 		end		
 	end
 	make_text "en/spells", [ "universal_prediction" ], "Rc10/data/MMH55-Texts-EN/Text/Game/Spells/SpellBookPredictions/DirectDamage.txt", 'pred'
-	guilds = [ "MAGIC_SCHOOL_DESTRUCTIVE",
-				"MAGIC_SCHOOL_SUMMONING",
-				"MAGIC_SCHOOL_DARK",
-				"MAGIC_SCHOOL_LIGHT",
-				"MAGIC_SCHOOL_ADVENTURE",
-				"MAGIC_SCHOOL_SPECIAL",
-				"MAGIC_SCHOOL_RUNIC",
-				"MAGIC_SCHOOL_WARCRIES" ]
 	txt_guilds =  { MAGIC_SCHOOL_DARK: 'SchoolDark',
 					MAGIC_SCHOOL_SUMMONING: 'SchoolSummoning',
 					MAGIC_SCHOOL_DESTRUCTIVE: 'SchoolDestructive',
@@ -307,10 +301,9 @@ Shoes.app do
 					MAGIC_SCHOOL_RUNIC: 'SchoolSpecial', 
 					MAGIC_SCHOOL_WARCRIES: 'Warcries', 
 					MAGIC_SCHOOL_ADVENTURE: 'AdventureSpells' }
-	
-	
+					
 	guilds.each_with_index do |g, i|
-		db.execute "insert into guilds values (?, ?//)", g, i
+		db.execute "insert into guilds values (?, ?)", g, i
 		(make_text "en/guilds/#{g}", [ "name" ], "Rc10/data/MMH55-Texts-EN/Text/Tooltips/SpellBook/#{txt_guilds[:"#{g}"]}.txt")
 	end
 
@@ -345,7 +338,7 @@ Shoes.app do
 	############ create table with all artifacts and their set matches
 	source_artifacts = 'RC10\data\MMH55-Index\GameMechanics\RefTables\Artifacts.xdb'
 	doc = File.open(source_artifacts) { |f| Nokogiri::XML(f) }
-	db.execute "create table artifacts ( id string, slot string, cost int, type string, attack int, defence int, spellpower int, knowledge int, morale int, luck int, art_set string, sell string );"
+	db.execute "create table artifacts ( id string, slot string, cost int, type string, attack int, defence int, spellpower int, knowledge int, morale int, luck int, art_set string );"
 	is_set, artifacts = '', []
 	
 	doc.xpath("//objects/Item").each do |n|
@@ -356,8 +349,7 @@ Shoes.app do
 		artifacts << Artifact.new(id,
 			n.xpath("obj/Slot").text,
 			n.xpath("obj/CostOfGold").text,
-			#(n.xpath("obj/CanBeGeneratedToSell").text == 'false' ? ( id == 'MASK_OF_DOPPELGANGER' ? 'ARTF_CLASS_RELIC' : 'ARTF_CLASS_GRAIL' ) : n.xpath("obj/Type").text),
-			n.xpath("obj/Type").text,
+			(n.xpath("obj/CanBeGeneratedToSell").text == 'false' ? ( id == 'MASK_OF_DOPPELGANGER' ? 'ARTF_CLASS_RELIC' : 'ARTF_CLASS_GRAIL' ) : n.xpath("obj/Type").text),
 			n.xpath("obj/HeroStatsModif/Attack").text,
 			n.xpath("obj/HeroStatsModif/Defence").text,
 			n.xpath("obj/HeroStatsModif/SpellPower").text,
@@ -365,10 +357,9 @@ Shoes.app do
 			n.xpath("obj/HeroStatsModif/Morale").text,
 			n.xpath("obj/HeroStatsModif/Luck").text,
 			is_set,
-			n.xpath("obj/CanBeGeneratedToSell").text,
 			n.xpath("obj/NameFileRef/@href").text,
 			n.xpath("obj/DescriptionFileRef/@href").text)
-		db.execute "insert into artifacts values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? );", artifacts.last.stats
+		db.execute "insert into artifacts values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? );", artifacts.last.stats
 		make_text "en/artifacts/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN#{artifacts.last.texts[0]}";
 		make_text "en/artifacts/#{id}", [ "desc", "additional" ], "Rc10/data/MMH55-Texts-EN#{artifacts.last.texts[1]}", 'artifact';
 	end
@@ -418,7 +409,7 @@ Shoes.app do
 		make_text "en/micro_artifacts/#{id}", [ "f_#{i+1}" ], "Rc10/data/MMH55-Texts-EN#{txt}";
 	end
 	
-	
+
 	########## create table with all creature artifacts shells
 	source = 'RC10\data\MMH55-Index\GameMechanics\RefTables\MicroArtifactShells.xdb'
 	db.execute "create table micro_artifact_shell  ( id string );"
@@ -437,19 +428,6 @@ Shoes.app do
 		else
 			make_text "en/micro_artifacts/#{id}", [ "desc" ], "Rc10/data/MMH55-Texts-EN#{micro_shells.last.texts[1]}";
 		end
-	end
-=end
-	db.execute "create table micro_protection ( id real );"
-	protection_coef = [
-0.073, 0.146, 0.219, 0.292, 0.347, 0.402, 0.457, 0.497, 0.537, 0.577,
-0.607, 0.637, 0.657, 0.677, 0.697, 0.717, 0.737, 0.757, 0.777, 0.787,
-0.797, 0.807, 0.817, 0.827, 0.837, 0.847, 0.857, 0.867, 0.877, 0.882,
-0.887, 0.892, 0.897, 0.902, 0.907, 0.912, 0.917, 0.922, 0.927, 0.932,
-0.937, 0.942, 0.947, 0.952, 0.957, 0.962, 0.967, 0.971, 0.975, 0.979,
-0.982, 0.985, 0.988, 0.991, 0.993, 0.995, 0.997, 0.998, 0.999, 1 ]
-
-	protection_coef.each do |p|
-		db.execute "insert into micro_protection values ( ? );", p
 	end
 
 	para "Success"

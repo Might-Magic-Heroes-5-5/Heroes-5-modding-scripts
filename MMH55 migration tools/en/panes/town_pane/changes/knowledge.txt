@@ -1,0 +1,3 @@
+"Knowledge" skill usefulness is improved by adding new components that depend on it:
+a) New artifacts based on knowledge - free creatures and resources per week, ressurects % of killed creatures for Mana. Refer to the "Artifact Index".
+b) Spells and Warcries - Mana is more important as average demand is increased.

@@ -1,0 +1,10 @@
+Spell properties
+Spell level
+None
+Basic
+Advanced
+Expert
+Mastery Level
+Mana cost
+Spellpower
+Left and right click to increase.

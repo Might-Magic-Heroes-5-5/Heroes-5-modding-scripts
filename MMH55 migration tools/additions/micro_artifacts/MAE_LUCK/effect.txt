@@ -1,0 +1,1 @@
+Creature luck increased by <value>.

@@ -1,0 +1,2 @@
+The Advanced Random Map Generator introduces larger (up to XXXXL size), adventure rich map templates never seen before in the world of heroes V.
+You can find more information in the ARMG manual in your mod folder or just click here!

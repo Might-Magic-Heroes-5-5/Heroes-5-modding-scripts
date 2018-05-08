@@ -1,0 +1,1 @@
+Creature health increased by <value>.

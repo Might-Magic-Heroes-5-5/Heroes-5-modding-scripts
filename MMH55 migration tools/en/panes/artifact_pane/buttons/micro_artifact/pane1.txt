@@ -1,0 +1,10 @@
+Description
+Knowledge
+Left and right click to increase.
+Item
+Effects
+Cost multiplier
+Forge
+No item or effect selected
+Inventory
+Clean Inventory

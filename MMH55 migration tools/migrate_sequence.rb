@@ -1,4 +1,4 @@
-require 'sqlite3'
+	require 'sqlite3'
 
 
 Shoes.app do
@@ -17,17 +17,12 @@ Shoes.app do
 	end
 
 	skills = db.execute "select name from skills"
-	old_sequence = db_old.execute "select sequence from skills"
+	old_sequence = db_old.execute "select app_order from skills"
 	skills.each_with_index do |s, i|
 		db.execute "update skills set sequence = '#{old_sequence[i][0]}' where name = '#{s[0]}';"
 	end
-
-
-	old_sequence = db_old.execute "select sequence from classes"
-	klasses.each_with_index do |s, i|
-		db.execute "update classes set sequence = '#{old_sequence[i][0]}' where id = '#{s[0]}';"
-	end
 	
+
 	creatures = db.execute "select id from creatures"
 	old_sequence = db_old.execute "select sequence from creatures"
 	creatures.each_with_index do |c, i|

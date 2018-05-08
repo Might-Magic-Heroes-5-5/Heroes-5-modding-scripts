@@ -1,0 +1,1 @@
+In MMH55, undead creatures are raised by this formula: T1 -> T1, T2 -> T2 and etc; upgraded -> upgraded, unupgraded -> unupgraded. Necromancy raise percentages changed to 10%/15%/20% per mastery (down from 20%/30%/40%). Base Dark energy: from 200 to 150. Amplifier energy bonus: from 10% to 5% and from 150 to 100 points. Amulet of necromancy: from 10% to 20% energy cost discount.
