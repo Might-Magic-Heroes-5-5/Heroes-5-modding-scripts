@@ -3,8 +3,8 @@
 
 Shoes.app do
 
-	db = SQLite3::Database.new 'skillwheel_new.db'
-	db_old = SQLite3::Database.new 'skillwheel.db'
+	db = SQLite3::Database.new 'skillwheel.db'
+	db_old = SQLite3::Database.new 'skillwheel_working.db'
 	klasses = db.execute "select id from classes"
 
 	klasses.each do |k|
@@ -17,7 +17,7 @@ Shoes.app do
 	end
 
 	skills = db.execute "select name from skills"
-	old_sequence = db_old.execute "select app_order from skills"
+	old_sequence = db_old.execute "select sequence from skills"
 	skills.each_with_index do |s, i|
 		db.execute "update skills set sequence = '#{old_sequence[i][0]}' where name = '#{s[0]}';"
 	end
@@ -29,7 +29,7 @@ Shoes.app do
 		db.execute "update creatures set sequence = '#{old_sequence[i][0]}' where id = '#{c[0]}';"
 	end
 	
-	heroes = db.execute "select id from spells"
+	heroes = db.execute "select id from heroes"
 	old_sequence = db_old.execute "select sequence from heroes"
 	heroes.each_with_index do |p, i|
 		db.execute "update heroes set sequence = '#{old_sequence[i][0]}' where id = '#{p[0]}';"

@@ -338,7 +338,7 @@ Shoes.app do
 	############ create table with all artifacts and their set matches
 	source_artifacts = 'RC10\data\MMH55-Index\GameMechanics\RefTables\Artifacts.xdb'
 	doc = File.open(source_artifacts) { |f| Nokogiri::XML(f) }
-	db.execute "create table artifacts ( id string, slot string, cost int, type string, attack int, defence int, spellpower int, knowledge int, morale int, luck int, art_set string );"
+	db.execute "create table artifacts ( id string, slot string, cost int, type string, attack int, defence int, spellpower int, knowledge int, morale int, luck int, art_set string, sell string );"
 	is_set, artifacts = '', []
 	
 	doc.xpath("//objects/Item").each do |n|
@@ -357,9 +357,10 @@ Shoes.app do
 			n.xpath("obj/HeroStatsModif/Morale").text,
 			n.xpath("obj/HeroStatsModif/Luck").text,
 			is_set,
+			n.xpath("obj/CanBeGeneratedToSell").text,
 			n.xpath("obj/NameFileRef/@href").text,
 			n.xpath("obj/DescriptionFileRef/@href").text)
-		db.execute "insert into artifacts values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? );", artifacts.last.stats
+		db.execute "insert into artifacts values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? );", artifacts.last.stats
 		make_text "en/artifacts/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN#{artifacts.last.texts[0]}";
 		make_text "en/artifacts/#{id}", [ "desc", "additional" ], "Rc10/data/MMH55-Texts-EN#{artifacts.last.texts[1]}", 'artifact';
 	end

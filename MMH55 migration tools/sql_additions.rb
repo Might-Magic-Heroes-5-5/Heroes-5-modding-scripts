@@ -38,7 +38,7 @@ Shoes.app do
 	DB_NAME = 'skillwheel.db'
 	db = SQLite3::Database.new DB_NAME
 	source_phoenix_stats = 'Rc10/data/MMH55-Index/GameMechanics/RPGStats/ConjuredPhoenix.xdb'
-	
+
 	###########add Haven Renegade class
 	id = 'HERO_CLASS_KNIGHT_RENEGADE'
 	get_klas = db.execute "select * from HERO_CLASS_KNIGHT"
@@ -93,7 +93,12 @@ Shoes.app do
 	db.execute "UPDATE heroes SET  classes='#{id}' WHERE id='Azar';"
 	db.execute "UPDATE heroes SET  classes='#{id}' WHERE id='Crag';"
 	db.execute "UPDATE heroes SET  classes='#{id}' WHERE id='Hero6';"
-	
+
+	###ARTIFACTS
+		sets = db.execute "select name from artifact_filter WHERE filter='by_set'"
+		sets = sets[0][0] + ",CORNUCOPIA,LEGION"
+		db.execute "UPDATE artifact_filter SET name='#{sets}' WHERE filter='by_set';"
+		
 	###SPELLS
 	make_text "en/spells/SPELL_PHANTOM", [ "pred" ], "additions/spells/SPELL_PHANTOM/pred.txt", 'pred'
 	make_text "en/spells/SPELL_DISPEL", [ "pred" ], "additions/spells/SPELL_DISPEL/pred.txt", 'pred'
@@ -149,9 +154,25 @@ Speed = #{speed_flat} + #{speed_sp}*SP + #{speed_lvl}*HERO_LVL"
 	[ "MAE_ARMOR_CRUSHING", "MAE_DEFENCE", "MAE_HASTE", "MAE_HEALTH", "MAE_LUCK", "MAE_MAGIC_PROTECTION", "MAE_MORALE", "MAE_PIERCING", "MAE_SPEED" ].each do |micro|
 		make_text "en/micro_artifacts/#{micro}", [ "effect" ], "additions/micro_artifacts/#{micro}/effect.txt", 'pred'
 	end
-	
+
+	db.execute "CREATE TABLE micro_protection ( id int )"
+	db.execute "INSERT into micro_protection VALUES ('0.073'), ('0.146'), ('0.219'), ('0.292'), ('0.347'), ('0.402'), ('0.457'), ('0.497'), ('0.537'), ('0.577'),
+('0.607'), ('0.637'), ('0.657'), ('0.677'), ('0.697'), ('0.717'), ('0.737'), ('0.757'), ('0.777'), ('0.787'), ('0.797'), ('0.807'), ('0.817'),
+('0.827'), ('0.837'), ('0.847'), ('0.857'), ('0.867'), ('0.877'), ('0.882'), ('0.887'), ('0.892'), ('0.897'), ('0.902'), ('0.907'), ('0.912'),
+('0.917'), ('0.922'), ('0.927'), ('0.932'), ('0.937'), ('0.942'), ('0.947'), ('0.952'), ('0.957'), ('0.962'), ('0.967'), ('0.971'), ('0.975'),
+('0.979'), ('0.982'), ('0.985'), ('0.988'), ('0.991'), ('0.993'), ('0.995'), ('0.997'), ('0.998'), ('0.999'), ('1');"
+
+	db.execute "UPDATE micro_artifact_effect SET effect='0' WHERE id='MAE_NONE';"
+	db.execute "UPDATE micro_artifact_effect SET effect='0.25' WHERE id='MAE_PIERCING';"
+	db.execute "UPDATE micro_artifact_effect SET effect='0.0666667' WHERE id='MAE_ARMOR_CRUSHING';"
+	db.execute "UPDATE micro_artifact_effect SET effect='0.2' WHERE id='MAE_HEALTH';"
+	db.execute "UPDATE micro_artifact_effect SET effect='0.25' WHERE id='MAE_DEFENCE';"
+	db.execute "UPDATE micro_artifact_effect SET effect='55' WHERE id='MAE_MAGIC_PROTECTION';"
+	db.execute "UPDATE micro_artifact_effect SET effect='0.0833333333333333' WHERE id='MAE_LUCK';"
+	db.execute "UPDATE micro_artifact_effect SET effect='0.0833333333333333' WHERE id='MAE_MORALE';"
+	db.execute "UPDATE micro_artifact_effect SET effect='0.0666667' WHERE id='MAE_SPEED';"
+	db.execute "UPDATE micro_artifact_effect SET effect='0.75' WHERE id='MAE_HASTE';"
+
 	para "GOOD!"
-
-
 
 end
