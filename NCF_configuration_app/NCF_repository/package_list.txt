@@ -1,3 +1,3 @@
-Legacy pack,http://www.moddb.com/downloads/start/120358?referer=http%3A%2F%2Fwww.moddb.com%2Fmods%2Fheroes-v-new-creature-framework%2Fdownloads,1.1,Known also as "NCF Megapack".,
+Legacy pack,https://www.moddb.com/downloads/start/120358?referer=http%3A%2F%2Fwww.moddb.com%2Fmods%2Fheroes-v-new-creature-framework%2Fdownloads,1.1,Known also as "NCF Megapack".,
 Official pack,https://www.dropbox.com/s/0c5louft63xle0o/NCF_Units_Plus.pak?raw=1,2.0,Pack includes all currently released NCF creatures.,
 Test pack,https://www.dropbox.com/s/4o4ocb7ugtuis95/test%20pack.zip?raw=1,1.0, For testing purposes.,

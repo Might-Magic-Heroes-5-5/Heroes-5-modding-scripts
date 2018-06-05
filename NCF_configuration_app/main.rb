@@ -64,30 +64,23 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 	end
 
 	def get_url url
-		uri = URI.parse(url)
+		uri = URI(url)
 		http = Net::HTTP.new(uri.host, uri.port)
-		debug(http)
+		http.use_ssl = true
+		http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+		req = Net::HTTP::Get.new(uri.request_uri)
 		begin
 			case uri.host
 				when /.moddb./ then
-					request = Net::HTTP.get(uri.host,uri.request_uri)
-					url_redirect = request[/a href="(.*?)">/, 1]
-					real_url = "#{uri.scheme}://#{uri.host}#{url_redirect}"
-				when /.dropbox./ then
-					http.use_ssl = true
-					http.verify_mode = OpenSSL::SSL::VERIFY_NONE	
-					request = Net::HTTP::Get.new(uri.request_uri)	
-					real_url = http.request(request)['location']
-				when /.github./
-					http.use_ssl = true
-					http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-					request = Net::HTTP::Get.new(uri.request_uri)
-					real_url = http.request(request).body
+					res = http.request(req)
+					loc = res.body[/a href="(.*?)">/, 1]
+					real_url="https://"+"#{uri.host}#{loc}"
+				when /.dropbox./ then real_url = http.request(req)['location']
+				when /.github./ then real_url = http.request(req).body
 			end
 		rescue
 			return nil
 		end
-		debug("url is #{real_url}")
 		return real_url
 	end
 
@@ -318,8 +311,8 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 				caption "Useful links", align: "center", top: 10
 				button("The NCF project on GitHub.", left: 30, top: 50, width: 360, height: 25) { system("start https://github.com/dredknight/Heroes-5-modding-scripts/tree/master/NCF_configuration_app") } 
 				button("Ask for help or provide feedback.", left: 30, top: 80, width: 360, height: 25) { system("start http://heroescommunity.com/viewthread.php3?TID=44287") } 
-				button("Might and Magic 5.5 official page", left: 30, top: 110, width: 360, height: 25) { system("start http://www.moddb.com/mods/might-magic-heroes-55") } 
-				button("Subscribe and rate us on Moddb!", left: 30, top: 140, width: 360, height: 25) { system("start http://www.moddb.com/mods/heroes-v-new-creature-framework/reviews") }
+				button("Might and Magic 5.5 official page", left: 30, top: 110, width: 360, height: 25) { system("start https://www.moddb.com/mods/might-magic-heroes-55") } 
+				button("Subscribe and rate us on Moddb!", left: 30, top: 140, width: 360, height: 25) { system("start https://www.moddb.com/mods/heroes-v-new-creature-framework/reviews") }
 				para "Created by Dredknight", allign: "right", top: 260
 			end
 		end
