@@ -14,7 +14,6 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 	@colour_menu1 = silver					## submenu1 colour
 	@colour_menu2 = rgb(160,160,160) 		## submenu2 colour
 	@colour_menu3 = rgb(180,180,180) 		## submenu3 colour
-
 	
 	####################### Defining global variables ###########################
 	@server_url = "https://raw.githubusercontent.com/dredknight/NCF_Utility__production/master/package_list.txt" ###Packages store server
