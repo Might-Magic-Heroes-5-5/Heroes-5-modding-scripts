@@ -15,8 +15,10 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 	@colour_menu2 = rgb(160,160,160) 		## submenu2 colour
 	@colour_menu3 = rgb(180,180,180) 		## submenu3 colour
 
+	
 	####################### Defining global variables ###########################
 	@server_url = "https://raw.githubusercontent.com/dredknight/NCF_Utility__production/master/package_list.txt" ###Packages store server
+	@package_list = "NCF_repository/package_list.txt"
 	@core_deployed = 0						## 0 - core is not deployed; 1 core is deployed
 
 	def messages m, text=nil		        ####All alerts that pop in the application
@@ -213,7 +215,9 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 	def show_pack
 		@existing_packs = Array.new(10) { Array.new(2) }
 		stat = @core_deployed == 1 ? nil : "disabled"
-		(filter_files "NCF_repository/packs").each_with_index do | f, i |
+		installed_packs = (filter_files "NCF_repository/packs")
+		installed_packs[0].nil? ? ( @packs.clear { para "No creature packs available. Download some from the \"Online Store\" tab", size: 15, align: "center" } ) : nil
+		installed_packs.each_with_index do | f, i |
 			@existing_packs[i][0] = f
 			@existing_packs[i][1] = File.open("NCF_repository/packs/#{f}/list/creature_list.txt", &:readline).split(',')[1]
 			@packs.clear do
@@ -234,20 +238,22 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 	def show_store
 		store_packs = []
 		@pack_contain.clear do
-			File.readlines("NCF_repository/package_list.txt").each_with_index do |pack, i |
-				store_packs[i] = flow left: 15, top: i*40, width: 430, height: 40 do
-					package = pack.split(',')
-					para "#{i+1}. #{package[0]} #{package[2]}", size: 15, align: "left" 
-					button("info", left: 240, top: 0) { messages 99, package[3] }
-					if @existing_packs.collect {|name| name[0]}.include?(package[0]) then 
-						@existing_packs.each_with_index do |p, i|
-							if p[0] == package[0] then
-								package[2] <= p[1] ? ( dl_button contents[0].parent, "Up to date", package[1], "#{package[0]}", "#{package[2]}", "disabled" ) : (  dl_button contents[0].parent, "Update", package[1], "#{package[0]}", "#{package[2]}" ); 
-								break;
+			if File.file?(@package_list) then
+				File.readlines(@package_list).each_with_index do |pack, i |
+					store_packs[i] = flow left: 15, top: i*40, width: 430, height: 40 do
+						package = pack.split(',')
+						para "#{i+1}. #{package[0]} #{package[2]}", size: 15, align: "left" 
+						button("info", left: 240, top: 0) { messages 99, package[3] }
+						if @existing_packs.collect {|name| name[0]}.include?(package[0]) then 
+							@existing_packs.each_with_index do |p, i|
+								if p[0] == package[0] then
+									package[2] <= p[1] ? ( dl_button contents[0].parent, "Up to date", package[1], "#{package[0]}", "#{package[2]}", "disabled" ) : (  dl_button contents[0].parent, "Update", package[1], "#{package[0]}", "#{package[2]}" ); 
+									break;
+								end
 							end
+						else
+							dl_button contents[0].parent, "Download", package[1], "#{package[0]}", "#{package[2]}"
 						end
-					else
-						dl_button contents[0].parent, "Download", package[1], "#{package[0]}", "#{package[2]}"
 					end
 				end
 			end
@@ -297,7 +303,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 					Thread.new do
 						repo_data = get_url @server_url
 						start do
-							repo_data.nil? ? ( messages 3 ) : ( File.open('NCF_repository/package_list.txt', "w") { |f| f.write repo_data } )
+							repo_data.nil? ? ( messages 3 ) : ( File.open(@package_list, "w") { |f| f.write repo_data } )
 							show_store
 						end
 					end
