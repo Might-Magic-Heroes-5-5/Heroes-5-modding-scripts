@@ -78,6 +78,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 					real_url="https://"+"#{uri.host}#{loc}"
 				when /.dropbox./ then real_url = http.request(req)['location']
 				when /.github./ then real_url = http.request(req).body
+				else real_url = http.request(req).body
 			end
 		rescue
 			return nil
@@ -211,15 +212,16 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 		start { @creature_table.scroll_top = 1 } ### this is a workaround for a scroll bug that comes with shoes
 	end
 
+
 	def show_pack
-		@existing_packs = Array.new(10) { Array.new(2) }
-		stat = @core_deployed == 1 ? nil : "disabled"
-		installed_packs = (filter_files "NCF_repository/packs")
-		installed_packs[0].nil? ? ( @packs.clear { para "No creature packs available. Download some from the \"Online Store\" tab", size: 15, align: "center" } ) : nil
-		installed_packs.each_with_index do | f, i |
-			@existing_packs[i][0] = f
-			@existing_packs[i][1] = File.open("NCF_repository/packs/#{f}/list/creature_list.txt", &:readline).split(',')[1]
-			@packs.clear do
+		@packs.clear do
+			@existing_packs = Array.new(10) { Array.new(2) }
+			stat = @core_deployed == 1 ? nil : "disabled"
+			installed_packs = (filter_files "NCF_repository/packs")
+			installed_packs[0].nil? ? ( para "No creature packs available. Download some from the \"Online Store\" tab", size: 15, align: "center" ) : nil
+			installed_packs.each_with_index do | f, i |
+				@existing_packs[i][0] = f
+				@existing_packs[i][1] = File.open("NCF_repository/packs/#{f}/list/creature_list.txt", &:readline).split(',')[1]
 				flow left: 15, top: 10 + i*40, width: 430, height: 40 do
 					para "#{i+1}. #{f} #{@existing_packs[i][1]}", size: 15, align: "left" 
 					button("Install",tooltip: "If this is greyed out deploy core first", left: 300, top: 0, state: stat) { deploy_pack f }
@@ -270,7 +272,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 			ofline = flow left: 0, top: 30, width: 144, height: 30 do
 				rect(left: 0, top: 0, curve: 10, width: 143, height: 320, fill: @colour_menu1)
 				@off_text = para "Local Repository", align: "center"
-				click { @menu_offline.show; @menu_online.hide; @menu_about.hide }
+				click { @menu_offline.show; @menu_online.hide; @menu_about.hide; show_pack }
 			end
 			online = flow left: 145, top: 30, width: 144, height: 30 do
 				rect(left: 0, top: 0, curve: 10, width: 143, height: 320, fill: @colour_menu2)
