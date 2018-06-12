@@ -220,11 +220,18 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 			installed_packs = (filter_files "NCF_repository/packs")
 			installed_packs[0].nil? ? ( para "No creature packs available. Download some from the \"Online Store\" tab", size: 15, align: "center" ) : nil
 			installed_packs.each_with_index do | f, i |
-				@existing_packs[i][0] = f
-				@existing_packs[i][1] = File.open("NCF_repository/packs/#{f}/list/creature_list.txt", &:readline).split(',')[1]
-				flow left: 15, top: 10 + i*40, width: 430, height: 40 do
-					para "#{i+1}. #{f} #{@existing_packs[i][1]}", size: 15, align: "left" 
-					button("Install",tooltip: "If this is greyed out deploy core first", left: 300, top: 0, state: stat) { deploy_pack f }
+				if File.file?("NCF_repository/packs/#{f}/list/creature_list.txt") then
+					@existing_packs[i][0] = f
+					@existing_packs[i][1] = File.open("NCF_repository/packs/#{f}/list/creature_list.txt", &:readline).split(',')[1]
+					flow left: 15, top: 10 + i*40, width: 430, height: 40 do
+						para "#{i+1}. #{f} #{@existing_packs[i][1]}", size: 15, align: "left" 
+						button("Install",tooltip: "If this is greyed out deploy core first", left: 300, top: 0, state: stat) { deploy_pack f }
+					end
+				else
+					flow left: 15, top: 10 + i*40, width: 430, height: 40 do
+						para "#{i+1}. #{f} is broken", size: 15, align: "left" 
+						button("Install",tooltip: "Please deploy the package again", left: 300, top: 0, state: "disabled") { deploy_pack f }
+					end
 				end
 			end
 		end
