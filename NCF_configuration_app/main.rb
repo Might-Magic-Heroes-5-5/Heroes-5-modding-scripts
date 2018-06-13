@@ -175,7 +175,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 		@main2.clear fill: rgb(100,244,40) do
 			rect(left: 5, top: 15, curve: 10,  width: 435, height: 470, fill: @colour_menu_default)
 			name_file = File.readlines("NCF_repository/packs/#{folder}/list/creature_list.txt")
-			caption "Legacy pack creatures", align: "center", top: 20
+			caption "#{folder} creatures", align: "center", top: 20
 			line 20, 55, 420, 55, strokewidth: 2
 			line 150, 75, 150, 465, strokewidth: 1
 			check_global = check(left: 25, top: 74, checked: false) { |c| @creature_table.contents.each { |f| f.contents[0].checked = c.checked? ? true : false}; }
@@ -236,7 +236,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 				@existing_packs.each_with_index do | f, i |
 					flow left: 15, top: 10 + i*40, width: 430, height: 40 do
 						para "#{i+1}. #{f[0]} #{f[1]}", size: 15, align: "left" 
-						button("Install",tooltip: "If this is greyed out deploy core first, if broken deploy package again", left: 300, top: 0, state: stat) { deploy_pack f }
+						button("Install",tooltip: "If this is greyed out deploy core first, if broken deploy package again", left: 300, top: 0, state: stat) { deploy_pack f[0] }
 					end
 				end
 			end
