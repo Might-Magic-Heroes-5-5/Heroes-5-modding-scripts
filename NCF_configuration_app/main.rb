@@ -114,7 +114,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 					rect(left: 0, top: 0, curve: 10,  width: 435, height: 85, fill: @colour_menu_default)
 					caption "Install a core package", align: "center", top: 4
 					line 30,35,400,35
-					button("#{f}", left: 35 + 120*i, top: 46, width: 100) { deploy_core f; }
+					button("#{f}", left: 35 + 130*i, top: 46, width: 100) { deploy_core f; }
 					@core_deployed = 0
 				else
 					@core.clear;
@@ -236,7 +236,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 				@existing_packs.each_with_index do | f, i |
 					flow left: 15, top: 10 + i*40, width: 430, height: 40 do
 						para "#{i+1}. #{f[0]} #{f[1]}", size: 15, align: "left" 
-						button("Install",tooltip: "If this is greyed out deploy core first, if broken deploy package again", left: 300, top: 0, state: stat) { deploy_pack f }
+						button("Install",tooltip: "If this is greyed out deploy core first, if broken deploy package again", left: 300, top: 0, state: stat) { deploy_pack f[0] }
 					end
 				end
 			end
