@@ -338,7 +338,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 			end
 		end
 	end
-	
 	show_core
+	
 	@main2 = stack left: 0.05, top: 0.1, width: 0.9, height: 0.9
 end
