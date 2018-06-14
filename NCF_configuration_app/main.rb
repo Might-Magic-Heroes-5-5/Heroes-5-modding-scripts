@@ -19,7 +19,9 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 	@server_url = "https://raw.githubusercontent.com/dredknight/NCF_Utility__production/master/package_list.txt" ###Packages store server
 	@package_list = "NCF_repository/package_list.txt"
 	@core_deployed = 0						## 0 - core is not deployed; 1 core is deployed
-
+	File.file?("NCF_repository/packs")? nil : ( mkdir_p 'NCF_repository/packs' )
+	
+	
 	def messages m, text=nil		        ####All alerts that pop in the application
 		alert(case m
 				when 0 then "Wait until download completes"
@@ -51,6 +53,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 			else
 				q.state = "disabled"
 				File.file?("NCF_repository/downloads/#{name}_#{ver}.zip")? ( FileUtils.rm "NCF_repository/downloads/#{name}_#{ver}.zip") : nil
+				File.file?("NCF_repository/downloads")? nil : ( mkdir_p 'NCF_repository/downloads' )
 				slot.append { progress left: 313, top: 33, width: 92, height: 3 }
 				download real_url, save: "NCF_repository/downloads/#{name}_#{ver}.zip", progress: proc { |dl| slot.contents[3].fraction = dl.percent*0.9 } do
 					File.directory?("NCF_repository/packs/#{name}")? ( FileUtils.rm_r "NCF_repository/packs/#{name}" ) : nil
@@ -172,7 +175,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 		@main2.clear fill: rgb(100,244,40) do
 			rect(left: 5, top: 15, curve: 10,  width: 435, height: 470, fill: @colour_menu_default)
 			name_file = File.readlines("NCF_repository/packs/#{folder}/list/creature_list.txt")
-			caption "Legacy pack creatures", align: "center", top: 20
+			caption "#{folder} creatures", align: "center", top: 20
 			line 20, 55, 420, 55, strokewidth: 2
 			line 150, 75, 150, 465, strokewidth: 1
 			check_global = check(left: 25, top: 74, checked: false) { |c| @creature_table.contents.each { |f| f.contents[0].checked = c.checked? ? true : false}; }
@@ -212,19 +215,29 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 		start { @creature_table.scroll_top = 1 } ### this is a workaround for a scroll bug that comes with shoes
 	end
 
+	def check_packs
+		@existing_packs = Array.new(0) { Array.new(2) }
+		installed_packs = (filter_files "NCF_repository/packs")
+		installed_packs.each_with_index do | f, i |
+			if File.file?("NCF_repository/packs/#{f}/list/creature_list.txt") then
+				@existing_packs.push( [ f, File.open("NCF_repository/packs/#{f}/list/creature_list.txt", &:readline).split(',')[1] ] )
+			else
+				@existing_packs.push( [ f, "is broken" ] )
+			end
+		end
+	end
 
 	def show_pack
 		@packs.clear do
-			@existing_packs = Array.new(10) { Array.new(2) }
 			stat = @core_deployed == 1 ? nil : "disabled"
-			installed_packs = (filter_files "NCF_repository/packs")
-			installed_packs[0].nil? ? ( para "No creature packs available. Download some from the \"Online Store\" tab", size: 15, align: "center" ) : nil
-			installed_packs.each_with_index do | f, i |
-				@existing_packs[i][0] = f
-				@existing_packs[i][1] = File.open("NCF_repository/packs/#{f}/list/creature_list.txt", &:readline).split(',')[1]
-				flow left: 15, top: 10 + i*40, width: 430, height: 40 do
-					para "#{i+1}. #{f} #{@existing_packs[i][1]}", size: 15, align: "left" 
-					button("Install",tooltip: "If this is greyed out deploy core first", left: 300, top: 0, state: stat) { deploy_pack f }
+			if @existing_packs.empty? then 
+				para "No creature packs available. Download one from the \"Online Store\" tab", size: 15, align: "center"
+			else
+				@existing_packs.each_with_index do | f, i |
+					flow left: 15, top: 10 + i*40, width: 430, height: 40 do
+						para "#{i+1}. #{f[0]} #{f[1]}", size: 15, align: "left" 
+						button("Install",tooltip: "If this is greyed out deploy core first, if broken deploy package again", left: 300, top: 0, state: stat) { deploy_pack f }
+					end
 				end
 			end
 		end
@@ -260,11 +273,12 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 			end
 		end
 	end
-
+	
 	background colour_app
 	subtitle "NCF Configuration Utility", stroke: white, align: "center"
-	@main = stack left: 0.05, top: 0.1, width: 0.9, height: 0.9 do
-
+	check_packs
+	
+	@main = stack left: 0.05, top: 0.1, width: 0.9, height: 0.85 do
 		@core = stack left: 5, top: 15, width: 440, height: 100;
 		stack left: 5, top: 130, width: 440, height: 355 do
 			rect(left: 0, top: 0, curve: 10,  width: 435, height: 355, fill: @colour_menu_default)
@@ -272,12 +286,12 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 			ofline = flow left: 0, top: 30, width: 144, height: 30 do
 				rect(left: 0, top: 0, curve: 10, width: 143, height: 320, fill: @colour_menu1)
 				@off_text = para "Local Repository", align: "center"
-				click { @menu_offline.show; @menu_online.hide; @menu_about.hide; show_pack }
+				click { @menu_offline.show; @menu_online.hide; @menu_about.hide; check_packs; show_pack }
 			end
 			online = flow left: 145, top: 30, width: 144, height: 30 do
 				rect(left: 0, top: 0, curve: 10, width: 143, height: 320, fill: @colour_menu2)
 				para "Online store", align: "center"
-				click { @menu_offline.hide; @menu_online.show; @menu_about.hide }
+				click { @menu_offline.hide; @menu_online.show; @menu_about.hide; check_packs }
 			end
 			about = flow left: 290, top: 30, width: 146, height: 30 do
 				rect(left: 0, top: 0, curve: 10, width: 145, height: 320, fill: @colour_menu3)
@@ -295,7 +309,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 					end
 				end
 			end
-			show_core
+
 			@menu_online = flow left: 0, top: 60, width: 435, height: 300, hidden: true do 
 				rect(left: 0, top: -10, curve: 10, width: 435, height: 305, fill: @colour_menu2)
 				button("Update package list", left: 30, top: 10, width: 360, height: 20) do
@@ -312,7 +326,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 				@pack_contain = flow left: 0, top: 35, width: 431, height: 220;
 				show_store
 			end
-
+			
 			@menu_about = flow left: 0, top: 60, width: 435, height: 300, hidden: true do
 				rect(left: 0, top: -10, curve: 10, width: 435, height: 305, fill: @colour_menu3)
 				caption "Useful links", align: "center", top: 10
@@ -324,5 +338,7 @@ Shoes.app(title: " New Creature Framework: Configuration utility", width: 500, h
 			end
 		end
 	end
+	
+	show_core
 	@main2 = stack left: 0.05, top: 0.1, width: 0.9, height: 0.9
 end
