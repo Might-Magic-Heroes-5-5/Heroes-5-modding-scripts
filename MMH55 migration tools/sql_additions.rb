@@ -57,6 +57,7 @@ Shoes.app do
 	##add heroes to Knight Renegade class
 	db.execute "UPDATE heroes SET classes='#{id}' WHERE id='RedHeavenHero01';"
 	db.execute "UPDATE heroes SET classes='#{id}' WHERE id='Mardigo';"
+	db.execute "UPDATE heroes SET classes='#{id}' WHERE id='RedHeavenHero05';"	
 	
 	###########add Stronghold Khan class
 	id = 'HERO_CLASS_BARBARIAN_KHAN'
