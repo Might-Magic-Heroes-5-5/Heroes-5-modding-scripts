@@ -6,7 +6,7 @@ require 'nokogiri'
 
 
 def popupate_skill_perks hero_id, new_skill, template_klass, db
-	source_perks = 'Rc10\data\MMH55-Index\GameMechanics\RefTables\Skills.xdb'
+	source_perks = 'Rc11\MMH55-Index\GameMechanics\RefTables\Skills.xdb'
 	doc = File.open(source_perks) { |f| Nokogiri::XML(f) }
 	doc.xpath("//objects/Item").each_with_index do |n, i|
 		txt_name, txt_desc = [], []
@@ -24,8 +24,8 @@ def popupate_skill_perks hero_id, new_skill, template_klass, db
 				if klas == "#{template_klass}" then
 					unless req_skills.empty? then
 						db.execute "insert into #{hero_id} values ( ?, ?, ?, ?);",s_id, req_skills.join(','), type, '99'
-						make_text "en/skills/#{s_id}", ["name"], "Rc10/data/MMH55-Texts-EN/#{txt_name[0]}", 'skill'
-						make_text "en/skills/#{s_id}", ["desc", "additional" ], "Rc10/data/MMH55-Texts-EN/#{txt_desc[0]}", 'skill'
+						make_text "en/skills/#{s_id}", ["name"], "#{SOURCE_TXT}/#{txt_name[0]}", 'skill'
+						make_text "en/skills/#{s_id}", ["desc", "additional" ], "#{SOURCE_TXT}/#{txt_desc[0]}", 'skill'
 					end
 				end
 			end
@@ -36,8 +36,10 @@ end
 Shoes.app do
 
 	DB_NAME = 'skillwheel.db'
+	SOURCE_ADD = 'additions_ru'
+	SOURCE_TXT = 'Rc11/MMH55-Texts-RU'
 	db = SQLite3::Database.new DB_NAME
-	source_phoenix_stats = 'Rc10/data/MMH55-Index/GameMechanics/RPGStats/ConjuredPhoenix.xdb'
+	source_phoenix_stats = 'Rc11/MMH55-Index/GameMechanics/RPGStats/ConjuredPhoenix.xdb'
 
 	###########add Haven Renegade class
 	id = 'HERO_CLASS_KNIGHT_RENEGADE'
@@ -47,7 +49,7 @@ Shoes.app do
 	db.execute "CREATE TABLE #{id} ( skill string, chance int, type string, sequence int );"
 	klas_entry = (db.execute "select * from classes WHERE id='HERO_CLASS_KNIGHT'")[0]
 	db.execute "INSERT into classes VALUES ( ?, ?, ?, ?, ?, ?, ?);", id, klas_entry[1..-1]	
-	make_text "en/classes/#{id}", ["name"], "additions/classes/#{id}.txt"
+	make_text "en/classes/#{id}", ["name"], "#{SOURCE_ADD}/classes/#{id}.txt"
 	get_klas.each do |n|
 		n[0] == 'HERO_SKILL_SHATTER_DARK_MAGIC' ? n[0] = 'HERO_SKILL_DARK_MAGIC' : nil
 		db.execute "INSERT into #{id} VALUES ( ?, ?, ?, ?);",n
@@ -57,7 +59,7 @@ Shoes.app do
 	##add heroes to Knight Renegade class
 	db.execute "UPDATE heroes SET classes='#{id}' WHERE id='RedHeavenHero01';"
 	db.execute "UPDATE heroes SET classes='#{id}' WHERE id='Mardigo';"
-	db.execute "UPDATE heroes SET classes='#{id}' WHERE id='RedHeavenHero05';"	
+	db.execute "UPDATE heroes SET classes='#{id}' WHERE id='RedHeavenHero05';"
 	
 	###########add Stronghold Khan class
 	id = 'HERO_CLASS_BARBARIAN_KHAN'
@@ -70,7 +72,7 @@ Shoes.app do
 	get_klas.each { |n| db.execute "INSERT into #{id} VALUES ( ?, ?, ?, ?);",n }
 	db.execute "INSERT into #{id} VALUES ( 'HERO_SKILL_VOICE', 12, 'SKILLTYPE_SKILL', 12);"
 	popupate_skill_perks id, "HERO_SKILL_VOICE", "HERO_CLASS_BARBARIAN", db
-	make_text "en/classes/#{id}", ["name"], "additions/classes/#{id}.txt"
+	make_text "en/classes/#{id}", ["name"], "#{SOURCE_ADD}/classes/#{id}.txt"
 	
 	##add heroes to Khan class
 	db.execute "UPDATE heroes SET classes='#{id}' WHERE id='Gottai';"
@@ -88,7 +90,7 @@ Shoes.app do
 	get_klas.each { |n| db.execute "INSERT into #{id} VALUES ( ?, ?, ?, ?);",n }
 	db.execute "INSERT into #{id} VALUES ( 'HERO_SKILL_BARBARIAN_LEARNING', 12, 'SKILLTYPE_SKILL', 12);"
 	popupate_skill_perks id, "HERO_SKILL_BARBARIAN_LEARNING", "HERO_CLASS_BARBARIAN", db
-	make_text "en/classes/#{id}", ["name"], "additions/classes/#{id}.txt"
+	make_text "en/classes/#{id}", ["name"], "#{SOURCE_ADD}/classes/#{id}.txt"
 	
 	##add heroes to Veteran class 
 	db.execute "UPDATE heroes SET  classes='#{id}' WHERE id='Azar';"
@@ -101,11 +103,11 @@ Shoes.app do
 		db.execute "UPDATE artifact_filter SET name='#{sets}' WHERE filter='by_set';"
 		
 	###SPELLS
-	make_text "en/spells/SPELL_PHANTOM", [ "pred" ], "additions/spells/SPELL_PHANTOM/pred.txt", 'pred'
-	make_text "en/spells/SPELL_DISPEL", [ "pred" ], "additions/spells/SPELL_DISPEL/pred.txt", 'pred'
-	make_text "en/spells/SPELL_BLESS", [ "pred" ], "additions/spells/SPELL_BLESS/pred.txt", 'pred'
-	make_text "en/spells/SPELL_CURSE", [ "pred" ], "additions/spells/SPELL_CURSE/pred.txt", 'pred'
-	make_text "en/spells/SPELL_BERSERK", [ "pred" ], "additions/spells/SPELL_BERSERK/pred.txt", 'pred'
+	make_text "en/spells/SPELL_PHANTOM", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_PHANTOM/pred.txt", 'pred'
+	make_text "en/spells/SPELL_DISPEL", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_DISPEL/pred.txt", 'pred'
+	make_text "en/spells/SPELL_BLESS", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_BLESS/pred.txt", 'pred'
+	make_text "en/spells/SPELL_CURSE", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_CURSE/pred.txt", 'pred'
+	make_text "en/spells/SPELL_BERSERK", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_BERSERK/pred.txt", 'pred'
 	phoenix_stats = File.open(source_phoenix_stats) { |f| Nokogiri::XML(f) }
 	hp_flat = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/Health").text
 	hp_sp = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/Health_PerPower").text
@@ -136,24 +138,24 @@ Attack = #{offence_flat} + #{offence_sp}*SP + #{offence_lvl}*HERO_LVL
 Defense = #{defence_flat} + #{defence_sp}*SP + #{defence_lvl}*HERO_LVL
 Initiative = #{init_flat} + #{init_sp}*SP + #{init_lvl}*HERO_LVL
 Speed = #{speed_flat} + #{speed_sp}*SP + #{speed_lvl}*HERO_LVL"
-	File.open("additions/spells/SPELL_CONJURE_PHOENIX/additional.txt", 'w') { |file| file.write(ph_stats) }
-	make_text "en/spells/SPELL_CONJURE_PHOENIX", [ "additional" ], "additions/spells/SPELL_CONJURE_PHOENIX/additional.txt", 'skill'
-	make_text "en/spells/SPELL_CONJURE_PHOENIX", [ "pred" ], "additions/spells/SPELL_CONJURE_PHOENIX/pred.txt", 'pred'
-	make_text "en/spells/SPELL_DIVINE_VENGEANCE", [ "pred" ], "additions/spells/SPELL_DIVINE_VENGEANCE/pred.txt", 'pred'
+	File.open("#{SOURCE_ADD}/spells/SPELL_CONJURE_PHOENIX/additional.txt", 'w') { |file| file.write(ph_stats) }
+	make_text "en/spells/SPELL_CONJURE_PHOENIX", [ "additional" ], "#{SOURCE_ADD}/spells/SPELL_CONJURE_PHOENIX/additional.txt", 'skill'
+	make_text "en/spells/SPELL_CONJURE_PHOENIX", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_CONJURE_PHOENIX/pred.txt", 'pred'
+	make_text "en/spells/SPELL_DIVINE_VENGEANCE", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_DIVINE_VENGEANCE/pred.txt", 'pred'
 	["SPELL_RUNE_OF_CHARGE", "SPELL_RUNE_OF_BERSERKING", "SPELL_RUNE_OF_MAGIC_CONTROL",
 	"SPELL_RUNE_OF_EXORCISM", "SPELL_RUNE_OF_ELEMENTAL_IMMUNITY", "SPELL_RUNE_OF_STUNNING",
 	"SPELL_RUNE_OF_BATTLERAGE",	"SPELL_RUNE_OF_ETHEREALNESS","SPELL_RUNE_OF_REVIVE", "SPELL_RUNE_OF_DRAGONFORM",
 	"SPELL_EFFECT_FINE_RUNE", "SPELL_EFFECT_STRONG_RUNE"].each_with_index do |r, i| 
-		make_text "en/spells/#{r}", [ "pred" ], "additions/spells/runes/pred.txt", 'pred'
+		make_text "en/spells/#{r}", [ "pred" ], "#{SOURCE_ADD}/spells/runes/pred.txt", 'pred'
 	end
 	["SPELL_WARCRY_RALLING_CRY", "SPELL_WARCRY_CALL_OF_BLOOD", "SPELL_WARCRY_WORD_OF_THE_CHIEF", "SPELL_WARCRY_FEAR_MY_ROAR",
 "SPELL_WARCRY_BATTLECRY", "SPELL_WARCRY_SHOUT_OF_MANY"].each_with_index do |r, i| 
-		make_text "en/spells/#{r}", [ "pred" ], "additions/spells/#{r}/pred.txt", 'pred'
+		make_text "en/spells/#{r}", [ "pred" ], "#{SOURCE_ADD}/spells/#{r}/pred.txt", 'pred'
 	end
 	
 	###CREATURE ARTIFACTS
 	[ "MAE_ARMOR_CRUSHING", "MAE_DEFENCE", "MAE_HASTE", "MAE_HEALTH", "MAE_LUCK", "MAE_MAGIC_PROTECTION", "MAE_MORALE", "MAE_PIERCING", "MAE_SPEED" ].each do |micro|
-		make_text "en/micro_artifacts/#{micro}", [ "effect" ], "additions/micro_artifacts/#{micro}/effect.txt", 'pred'
+		make_text "en/micro_artifacts/#{micro}", [ "effect" ], "#{SOURCE_ADD}/micro_artifacts/#{micro}/effect.txt", 'pred'
 	end
 
 	db.execute "CREATE TABLE micro_protection ( id int )"

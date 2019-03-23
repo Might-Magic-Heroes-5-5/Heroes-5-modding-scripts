@@ -22,6 +22,11 @@ Shoes.app do
 		db.execute "update skills set sequence = '#{old_sequence[i][0]}' where name = '#{s[0]}';"
 	end
 	
+	klas_seq = db.execute "select id from classes"
+	old_sequence = db_old.execute "select sequence from classes"
+	klas_seq.each_with_index do |q, i|
+		db.execute "update classes set sequence = '#{old_sequence[i][0]}' where id = '#{q[0]}';"
+	end
 
 	creatures = db.execute "select id from creatures"
 	old_sequence = db_old.execute "select sequence from creatures"
