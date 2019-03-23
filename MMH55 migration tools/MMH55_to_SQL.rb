@@ -5,14 +5,17 @@ require 'code/methods'
 require 'nokogiri'
 
 Shoes.app do
-	
-	source_defaultstats = 'Rc10/data/MMH55-Index/GameMechanics/RPGStats/DefaultStats.xdb'
+
+	SOURCE_IDX = "Rc11/MMH55-Index"
+	SOURCE_TXT = "Rc11/MMH55-Texts-EN"
+	SOURCE_ADD = "additions_en"
+	source_defaultstats = "#{SOURCE_IDX}/GameMechanics/RPGStats/DefaultStats.xdb"
 	dfstats = File.open(source_defaultstats) { |f| Nokogiri::XML(f) }
 	DB_NAME = 'skillwheel.db'
 	db = SQLite3::Database.new 'skillwheel.db'
-
+	
 	############ create table with faction list and native spells
-	source_town = 'Rc10/data/MMH55-Index/GameMechanics/RefTables/TownTypesInfo.xdb'
+	source_town = "#{SOURCE_IDX}/GameMechanics/RefTables/TownTypesInfo.xdb"
 	doc = File.open(source_town) { |f| Nokogiri::XML(f) }
 	db.execute "create table factions ( name string );"
 	
@@ -20,12 +23,12 @@ Shoes.app do
 	doc.xpath("//ID").each_with_index do |n,i|
 		if texts[i].text != '' then
 			db.execute("INSERT INTO factions ( name ) VALUES ( '#{n.text}' )") 
-			make_text "en/factions/#{n.text}", ["name"], "Rc10/data/MMH55-Texts-EN/#{texts[i].text}"
+			make_text "en/factions/#{n.text}", ["name"], "#{SOURCE_TXT}/#{texts[i].text}"
 		end
 	end
-
+	
 	############ create table with all in-game heroes and their starting primary and secondary stats
-	source_hero = 'RC10/data/MMH55-Index/MapObjects'
+	source_hero = "#{SOURCE_IDX}/MapObjects"
 	db.execute "create table heroes ( id string, atk int, def int, spp int, knw int, skills string, masteries string, perks string, spells string, classes string, faction string, sequence int );"
 	heroes, klas_2_faction = [], {}
 	
@@ -58,12 +61,12 @@ Shoes.app do
 		doc.xpath("//NameFileRef/@href").text == '' ? nil : (db.execute "insert into heroes values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )", heroes.last.stats, 0)
 		klas_2_faction[:"#{town}"].nil? ? klas_2_faction[:"#{town}"] = [] : nil
 		klas_2_faction[:"#{town}"].include?(klas) ? nil : klas_2_faction[:"#{town}"] += [klas]
-		make_text "en/heroes/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN#{heroes.last.texts[0]}"
-		make_text "en/heroes/#{id}", ["spec", "additional" ], "Rc10/data/MMH55-Texts-EN#{heroes.last.texts[1]}", 'hero'
+		make_text "en/heroes/#{id}", [ "name" ], "#{SOURCE_TXT}#{heroes.last.texts[0]}"
+		make_text "en/heroes/#{id}", ["spec", "additional" ], "#{SOURCE_TXT}#{heroes.last.texts[1]}", 'hero'
 	end
 
 	############ create table with classes list, primary stats chances and secondary skills; match classes to factions
-	source_class = 'Rc10/data/MMH55-Index/GameMechanics/RefTables/HeroClass.xdb'
+	source_class = "#{SOURCE_IDX}/GameMechanics/RefTables/HeroClass.xdb"
 	db.execute "create table classes ( id string, atk_c int, def_c int, spp_c int, knw_c int, faction string, sequence int );"
 	doc = File.open(source_class) { |f| Nokogiri::XML(f) }
 	classes = []
@@ -88,11 +91,11 @@ Shoes.app do
 		skills_name.each_with_index do |_,i|
 			db.execute "insert into #{id} values ( ?, ?, ?, ? );", skills_name[i], skills_chance[i], 'SKILLTYPE_SKILL', i
 		end
-		make_text "en/classes/#{id}", ["name"], "Rc10/data/MMH55-Texts-EN/GameMechanics/RefTables/#{classes.last.texts}"
+		make_text "en/classes/#{id}", ["name"], "#{SOURCE_TXT}/GameMechanics/RefTables/#{classes.last.texts}"
 	end
 
 	############ create perk-to-skill match table, includes ordering required for the skillwheel
-	source_perks = 'Rc10\data\MMH55-Index\GameMechanics\RefTables\Skills.xdb'
+	source_perks = "#{SOURCE_IDX}/GameMechanics/RefTables/Skills.xdb"
 	db.execute "create table skills (name string, type string, tree string, sequence int);"
 	doc = File.open(source_perks) { |f| Nokogiri::XML(f) }
 	perks = []
@@ -116,13 +119,13 @@ Shoes.app do
 		when "SKILLTYPE_SKILL" then
 			db.execute "insert into skills values ( ?, ?, ?, ? );", perks.last.stats, i
 			txt_name.each_with_index do |_, q|
-				make_text "en/skills/#{id}", ["name#{q+1}"], "Rc10/data/MMH55-Texts-EN/#{txt_name[q]}"
-				make_text "en/skills/#{id}", ["desc#{q+1}", "additional#{q+1}"], "Rc10/data/MMH55-Texts-EN/#{txt_desc[q]}", 'skill'
+				make_text "en/skills/#{id}", ["name#{q+1}"], "#{SOURCE_TXT}/#{txt_name[q]}"
+				make_text "en/skills/#{id}", ["desc#{q+1}", "additional#{q+1}"], "#{SOURCE_TXT}/#{txt_desc[q]}", 'skill'
 			end
 		when "SKILLTYPE_STANDART_PERK" then
 			db.execute "insert into skills values ( ?, ?, ?, ? );", perks.last.stats, i
-			make_text "en/skills/#{id}", ["name"], "Rc10/data/MMH55-Texts-EN/#{txt_name[0]}"
-			make_text "en/skills/#{id}", ["desc", "additional" ], "Rc10/data/MMH55-Texts-EN/#{txt_desc[0]}", 'skill'
+			make_text "en/skills/#{id}", ["name"], "#{SOURCE_TXT}/#{txt_name[0]}"
+			make_text "en/skills/#{id}", ["desc", "additional" ], "#{SOURCE_TXT}/#{txt_desc[0]}", 'skill'
 		else
 			req_item.each do |t|
 				req_skills = []
@@ -131,8 +134,8 @@ Shoes.app do
 				if (db.execute "select skill from #{klas} where type='SKILLTYPE_SKILL'").join(",").include?(base) then
 					unless req_skills.empty? then
 						db.execute "insert into #{klas} values ( ?, ?, ?, ?);",id, req_skills.join(','), type, '99'
-						make_text "en/skills/#{id}", ["name"], "Rc10/data/MMH55-Texts-EN/#{txt_name[0]}"
-						make_text "en/skills/#{id}", ["desc", "additional"], "Rc10/data/MMH55-Texts-EN/#{txt_desc[0]}", 'skill'
+						make_text "en/skills/#{id}", ["name"], "#{SOURCE_TXT}/#{txt_name[0]}"
+						make_text "en/skills/#{id}", ["desc", "additional"], "#{SOURCE_TXT}/#{txt_desc[0]}", 'skill'
 					end
 				end
 			end
@@ -140,7 +143,7 @@ Shoes.app do
 	end
 
 	############ create creature table 
-	source_creatures = 'RC10/data/MMH55-Index/GameMechanics/creature/creatures'
+	source_creatures = "#{SOURCE_IDX}/GameMechanics/creature/creatures"
 	db.execute "create table creatures ( id string, at int, df int, shots int, min_d int, max_d int, spd int, init int,
 	fly int, hp int, spells string, spell_mastery string, mana int, tier int, faction string, growth int, ability string,
 	gold int, wood int, ore int, mercury int, crystal int, Sulfur int, gem int, sequence int );"
@@ -184,23 +187,23 @@ Shoes.app do
 			doc.xpath("//Cost/Gem").text,
 			visuals.xpath("/CreatureVisual/CreatureNameFileRef/@href")
 		)
-		make_text "en/creatures/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN#{creatures.last.texts}";
+		make_text "en/creatures/#{id}", [ "name" ], "#{SOURCE_TXT}#{creatures.last.texts}";
 		db.execute "insert into creatures values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?, ?, ?, ? );", creatures.last.stats, creatures.last.price, 0
 	end
 
 	############ create text files for creature abilities ##########
-	source_abilities = 'Rc10\data\MMH55-Index\GameMechanics\RefTables\CombatAbilities.xdb'
+	source_abilities = "#{SOURCE_IDX}/GameMechanics/RefTables/CombatAbilities.xdb"
 	doc = File.open(source_abilities) { |f| Nokogiri::XML(f) }
 	doc.xpath("//objects/Item").each do |n|
 		id = n.xpath("ID").text
 		(txt_name = n.xpath("obj/NameFileRef/@href").text) == '' ? next : nil
 		txt_desc = n.xpath("obj/DescriptionFileRef/@href").text
-		make_text "en/abilities/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN#{txt_name}"
-		make_text "en/abilities/#{id}", [ "desc" ], "Rc10/data/MMH55-Texts-EN#{txt_desc}"
+		make_text "en/abilities/#{id}", [ "name" ], "#{SOURCE_TXT}#{txt_name}"
+		make_text "en/abilities/#{id}", [ "desc" ], "#{SOURCE_TXT}#{txt_desc}"
 	end
 
 	############ create table with all spells and guilds
-	source_spells = 'Rc10/data/MMH55-Index/GameMechanics/RefTables/UndividedSpells.xdb'
+	source_spells = "#{SOURCE_IDX}/GameMechanics/RefTables/UndividedSpells.xdb"
     db.execute "create table spells ( id string, spell_effect string, spell_increase string, mana int, tier int, guild string, resource_cost string );"
 	db.execute "create table spells_specials ( id string, base string, perpower string );"
 	db.execute "create table guilds ( id string, sequence int );"
@@ -210,7 +213,7 @@ Shoes.app do
 		id = sp.xpath("ID").text
 		dr = sp.xpath("Obj/@href").text
 		dr.nil? ? next : nil
-		dr_source = "Rc10/data/MMH55-Index#{dr.split('#xpointer')[0]}"
+		dr_source = "#{SOURCE_IDX}#{dr.split('#xpointer')[0]}"
 		if spell_dirs.any? { |x| dr.include?(x) } then
 			base, power, resource, predict = [], [], [], []
 			doc = File.open(dr_source) { |f| Nokogiri::XML(f) }
@@ -265,7 +268,7 @@ Shoes.app do
 			end
 			
 			[ "Wood", "Ore", "Mercury", "Crystal", "Sulfur", "Gem" ].each do |r|
-				doc.css("//#{r}").each { |t| t.text > '0' ? resource << "#{r} #{t.text}" : nil }	
+				doc.css("//#{r}").each { |t| resource << "#{t.text}" }	
 			end
 			doc.xpath("//SpellBookPredictions/Item/@href").each { |p| predict << (check_dir p.text,dr_source) }
 			spells << Spell.new(id,
@@ -280,19 +283,18 @@ Shoes.app do
 				predict )	
 			db.execute "insert into spells values ( ?, ?, ?, ?, ?, ?, ? );", spells.last.stats
 			txt = spells.last.texts
-			debug(txt)
-			make_text "en/spells/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN/#{txt[0]}" 
-			make_text "en/spells/#{id}", [ "desc", "additional" ], "Rc10/data/MMH55-Texts-EN/#{txt[1]}", 'spell';
+			make_text "en/spells/#{id}", [ "name" ], "#{SOURCE_TXT}/#{txt[0]}" 
+			make_text "en/spells/#{id}", [ "desc", "additional" ], "#{SOURCE_TXT}/#{txt[1]}", 'spell';
 			txt[2].each do |p|
 				p = check_dir p, dr_source
-				p.include?('SpellBookPrediction.txt') ? ( make_text "en/spells/#{id}", [ "pred" ], "Rc10/data/MMH55-Texts-EN#{p}", 'pred' ) : nil
-				p.include?('SpellBookPrediction_Expert') ? ( make_text "en/spells/#{id}", [ "pred_expert" ], "Rc10/data/MMH55-Texts-EN#{p}", 'pred' ) : nil
-				p.include?('HealHPReduce.txt') ? ( make_text "en/spells/#{id}", [ "pred" ], "Rc10/data/MMH55-Texts-EN#{p}", 'pred' ) : nil
+				p.include?('SpellBookPrediction.txt') ? ( make_text "en/spells/#{id}", [ "pred" ], "#{SOURCE_TXT}#{p}", 'pred' ) : nil
+				p.include?('SpellBookPrediction_Expert') ? ( make_text "en/spells/#{id}", [ "pred_expert" ], "#{SOURCE_TXT}#{p}", 'pred' ) : nil
+				p.include?('HealHPReduce.txt') ? ( make_text "en/spells/#{id}", [ "pred" ], "#{SOURCE_TXT}#{p}", 'pred' ) : nil
 			end
-			school == 'MAGIC_SCHOOL_ADVENTURE' ? ( make_text "en/spells/#{id}", [ "pred" ], "additions/none.txt", 'pred' ) : nil
+			school == 'MAGIC_SCHOOL_ADVENTURE' ? ( make_text "en/spells/#{id}", [ "pred" ], "#{SOURCE_ADD}/none.txt", 'pred' ) : nil
 		end		
 	end
-	make_text "en/spells", [ "universal_prediction" ], "Rc10/data/MMH55-Texts-EN/Text/Game/Spells/SpellBookPredictions/DirectDamage.txt", 'pred'
+	make_text "en/spells", [ "universal_prediction" ], "#{SOURCE_TXT}/Text/Game/Spells/SpellBookPredictions/DirectDamage.txt", 'pred'
 	txt_guilds =  { MAGIC_SCHOOL_DARK: 'SchoolDark',
 					MAGIC_SCHOOL_SUMMONING: 'SchoolSummoning',
 					MAGIC_SCHOOL_DESTRUCTIVE: 'SchoolDestructive',
@@ -304,11 +306,11 @@ Shoes.app do
 					
 	guilds.each_with_index do |g, i|
 		db.execute "insert into guilds values (?, ?)", g, i
-		(make_text "en/guilds/#{g}", [ "name" ], "Rc10/data/MMH55-Texts-EN/Text/Tooltips/SpellBook/#{txt_guilds[:"#{g}"]}.txt")
+		(make_text "en/guilds/#{g}", [ "name" ], "#{SOURCE_TXT}/Text/Tooltips/SpellBook/#{txt_guilds[:"#{g}"]}.txt")
 	end
 
 	############ make a list of all sets
-	source_sets = 'RC10\data\MMH55-Index\scripts\advmap-startup.lua'
+	source_sets = "#{SOURCE_IDX}/scripts/advmap-startup.lua"
 	flag, artif_set, artif = 0, {}, {}
 	
 	File.read(source_sets).each_line do |line|
@@ -320,7 +322,7 @@ Shoes.app do
 	end
 
 	############ make matches between artifacts and sets	
-	source_matches = 'RC10\data\MMH55-Index\scripts\H55-Core.lua'
+	source_matches = "#{SOURCE_IDX}/scripts/H55-Core.lua"
 	@sets, @curr_set, flag = {}, "", 0
 	
 	File.read(source_matches).each_line do |line|
@@ -336,7 +338,7 @@ Shoes.app do
 	end
 
 	############ create table with all artifacts and their set matches
-	source_artifacts = 'RC10\data\MMH55-Index\GameMechanics\RefTables\Artifacts.xdb'
+	source_artifacts = "#{SOURCE_IDX}/GameMechanics/RefTables/Artifacts.xdb"
 	doc = File.open(source_artifacts) { |f| Nokogiri::XML(f) }
 	db.execute "create table artifacts ( id string, slot string, cost int, type string, attack int, defence int, spellpower int, knowledge int, morale int, luck int, art_set string, sell string );"
 	is_set, artifacts = '', []
@@ -361,8 +363,8 @@ Shoes.app do
 			n.xpath("obj/NameFileRef/@href").text,
 			n.xpath("obj/DescriptionFileRef/@href").text)
 		db.execute "insert into artifacts values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? );", artifacts.last.stats
-		make_text "en/artifacts/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN#{artifacts.last.texts[0]}";
-		make_text "en/artifacts/#{id}", [ "desc", "additional" ], "Rc10/data/MMH55-Texts-EN#{artifacts.last.texts[1]}", 'artifact';
+		make_text "en/artifacts/#{id}", [ "name" ], "#{SOURCE_TXT}#{artifacts.last.texts[0]}";
+		make_text "en/artifacts/#{id}", [ "desc", "additional" ], "#{SOURCE_TXT}#{artifacts.last.texts[1]}", 'artifact';
 	end
 
 	############ create table with all artifact filters
@@ -375,7 +377,7 @@ Shoes.app do
 	end	
 
 	########## create table with all creature artifacts and effects
-	source = 'RC10\data\MMH55-Index\GameMechanics\RefTables\MicroArtifactEffects.xdb'
+	source = "#{SOURCE_IDX}/GameMechanics/RefTables/MicroArtifactEffects.xdb"
 	db.execute "create table micro_artifact_effect ( id string, effect int, gold int, wood int, ore int, mercury int, crystal int, Sulfur int, gem int  );"
 	micro_artif = []
 	doc_effect = File.open(source) { |f| Nokogiri::XML(f) }
@@ -395,24 +397,23 @@ Shoes.app do
 		n.xpath("Obj/MicroArtifactEffect/OfName/@href").text,
 		n.xpath("Obj/MicroArtifactEffect/Description/@href").text)
 		db.execute "insert into micro_artifact_effect values ( ?, ?, ?, ?, ?, ?, ?, ?, ? );", micro_artif.last.stats, micro_artif.last.price
-		make_text "en/micro_artifacts/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN#{micro_artif.last.texts[0]}";
-		make_text "en/micro_artifacts/#{id}", [ "suffix" ], "Rc10/data/MMH55-Texts-EN#{micro_artif.last.texts[1]}";
-		make_text "en/micro_artifacts/#{id}", [ "desc" ], "Rc10/data/MMH55-Texts-EN#{micro_artif.last.texts[2]}";
+		make_text "en/micro_artifacts/#{id}", [ "name" ], "#{SOURCE_TXT}#{micro_artif.last.texts[0]}";
+		make_text "en/micro_artifacts/#{id}", [ "suffix" ], "#{SOURCE_TXT}#{micro_artif.last.texts[1]}";
+		make_text "en/micro_artifacts/#{id}", [ "desc" ], "#{SOURCE_TXT}#{micro_artif.last.texts[2]}";
 	end
 	
 	########## get flavour prefixes
-	source = 'RC10\data\MMH55-Index\GameMechanics\RefTables\MicroArtifactPrefixes.xdb'
+	source = "#{SOURCE_IDX}/GameMechanics/RefTables/MicroArtifactPrefixes.xdb"
 	doc = File.open(source) { |f| Nokogiri::XML(f) }
 	id = doc.xpath("//objects/Item/ID").text
 	doc.xpath("//objects/Item/Obj/MicroArtifactPrefixes/Prefixes/Item").each_with_index do |n,i|
 		txt = n.xpath("@href").text
-		debug(txt)
-		make_text "en/micro_artifacts/#{id}", [ "f_#{i+1}" ], "Rc10/data/MMH55-Texts-EN#{txt}";
+		make_text "en/micro_artifacts/#{id}", [ "f_#{i+1}" ], "#{SOURCE_TXT}#{txt}";
 	end
 	
 
 	########## create table with all creature artifacts shells
-	source = 'RC10\data\MMH55-Index\GameMechanics\RefTables\MicroArtifactShells.xdb'
+	source = "#{SOURCE_IDX}/GameMechanics/RefTables/MicroArtifactShells.xdb"
 	db.execute "create table micro_artifact_shell  ( id string );"
 	micro_shells = []
 	doc_shell = File.open(source) { |f| Nokogiri::XML(f) }
@@ -423,11 +424,11 @@ Shoes.app do
 		n.xpath("Obj/MicroArtifactShell/Name/@href").text,
 		desc)
 		db.execute "insert into micro_artifact_shell values ( ? );", micro_shells.last.stats
-		make_text "en/micro_artifacts/#{id}", [ "name" ], "Rc10/data/MMH55-Texts-EN#{micro_shells.last.texts[0]}";
+		make_text "en/micro_artifacts/#{id}", [ "name" ], "#{SOURCE_TXT}#{micro_shells.last.texts[0]}";
 		if desc == "" then
-			make_text "en/micro_artifacts/#{id}", [ "desc" ], "additions/none.txt";
+			make_text "en/micro_artifacts/#{id}", [ "desc" ], "#{SOURCE_ADD}/none.txt";
 		else
-			make_text "en/micro_artifacts/#{id}", [ "desc" ], "Rc10/data/MMH55-Texts-EN#{micro_shells.last.texts[1]}";
+			make_text "en/micro_artifacts/#{id}", [ "desc" ], "#{SOURCE_TXT}#{micro_shells.last.texts[1]}";
 		end
 	end
 
