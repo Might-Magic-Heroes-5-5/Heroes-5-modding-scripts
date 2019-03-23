@@ -36,8 +36,8 @@ end
 Shoes.app do
 
 	DB_NAME = 'skillwheel.db'
-	SOURCE_ADD = 'additions_ru'
-	SOURCE_TXT = 'Rc11/MMH55-Texts-RU'
+	SOURCE_ADD = 'additions_en'
+	SOURCE_TXT = 'Rc11/MMH55-Texts-EN'
 	db = SQLite3::Database.new DB_NAME
 	source_phoenix_stats = 'Rc11/MMH55-Index/GameMechanics/RPGStats/ConjuredPhoenix.xdb'
 
@@ -98,9 +98,14 @@ Shoes.app do
 	db.execute "UPDATE heroes SET  classes='#{id}' WHERE id='Hero6';"
 
 	###ARTIFACTS
-		sets = db.execute "select name from artifact_filter WHERE filter='by_set'"
-		sets = sets[0][0] + ",CORNUCOPIA,LEGION"
-		db.execute "UPDATE artifact_filter SET name='#{sets}' WHERE filter='by_set';"
+	sets = db.execute "select name from artifact_filter WHERE filter='by_set'"
+	sets = sets[0][0] + ",CORNUCOPIA,LEGION"
+	db.execute "UPDATE artifact_filter SET name='#{sets}' WHERE filter='by_set';"
+	cornucopia = [ "RES_CRYSTAL", "RES_GEM", "RES_MERCURY", "RES_ORE", "RES_SULPHUR", "RES_WOOD" ]
+	cornucopia.each { |c| debug(c); db.execute "UPDATE artifacts SET art_set='CORNUCOPIA' WHERE id='#{c}';" }
+
+	legion = [ "ENDLESS_BAG_OF_GOLD", "LEGION_T1", "LEGION_T2", "LEGION_T3", "LEGION_T4", "LEGION_T5", "LEGION_T6", "LEGION_T7" ]
+	legion.each { |l| db.execute "UPDATE artifacts SET art_set='LEGION' WHERE id='#{l}';" }
 		
 	###SPELLS
 	make_text "en/spells/SPELL_PHANTOM", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_PHANTOM/pred.txt", 'pred'
