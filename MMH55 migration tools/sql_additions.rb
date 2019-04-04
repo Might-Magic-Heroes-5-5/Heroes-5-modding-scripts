@@ -37,7 +37,7 @@ Shoes.app do
 
 	DB_NAME = 'skillwheel.db'
 	SOURCE_ADD = 'additions_en'
-	SOURCE_TXT = 'Rc11/MMH55-Texts-EN'
+	SOURCE_TXT = 'Rc11/MMH55-Texts-RU'
 	db = SQLite3::Database.new DB_NAME
 	source_phoenix_stats = 'Rc11/MMH55-Index/GameMechanics/RPGStats/ConjuredPhoenix.xdb'
 
@@ -158,6 +158,26 @@ Speed = #{speed_flat} + #{speed_sp}*SP + #{speed_lvl}*HERO_LVL"
 		make_text "en/spells/#{r}", [ "pred" ], "#{SOURCE_ADD}/spells/#{r}/pred.txt", 'pred'
 	end
 	
+	db.execute "insert into spells values ( ?, ?, ?, ?, ?, ?, ? );", "MANAGE_TOWN", "", "", "0", "0", "MAGIC_SCHOOL_SPECIAL", "0,0,0,0,0,0"
+	db.execute "insert into spells values ( ?, ?, ?, ?, ?, ?, ? );", "MANAGE_TOWN_GOVERNOR", "", "", "0", "0", "MAGIC_SCHOOL_SPECIAL", "0,0,0,0,0,0"
+	db.execute "insert into spells values ( ?, ?, ?, ?, ?, ?, ? );", "MANAGE_TOWN_GATE", "", "", "25", "0", "MAGIC_SCHOOL_SPECIAL", "0,0,0,0,0,0"
+	db.execute "insert into spells values ( ?, ?, ?, ?, ?, ?, ? );", "MANAGE_TOWN_CONVERSION", "", "", "0", "0", "MAGIC_SCHOOL_SPECIAL", "0,0,0,0,0,0"
+	
+	make_text "en/spells/SPELL_MANAGE_TOWN", [ "name" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN/name.txt"
+	make_text "en/spells/SPELL_MANAGE_TOWN", [ "desc" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN/desc.txt"
+	make_text "en/spells/SPELL_MANAGE_TOWN_GOVERNOR", [ "name" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GOVERNOR/name.txt"
+	make_text "en/spells/SPELL_MANAGE_TOWN_GOVERNOR", [ "desc" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GOVERNOR/desc.txt"
+	make_text "en/spells/SPELL_MANAGE_TOWN_GOVERNOR", [ "additional" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GOVERNOR/additional.txt"
+	make_text "en/spells/SPELL_MANAGE_TOWN_GOVERNOR", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GOVERNOR/pred.txt"
+	make_text "en/spells/SPELL_MANAGE_TOWN_GATE", [ "name" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GATE/name.txt"
+	make_text "en/spells/SPELL_MANAGE_TOWN_GATE", [ "desc" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GATE/desc.txt"
+	make_text "en/spells/SPELL_MANAGE_TOWN_GATE", [ "additional" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GATE/additional.txt"
+	make_text "en/spells/SPELL_MANAGE_TOWN_CONVERSION", [ "name" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_CONVERSION/name.txt"
+	make_text "en/spells/SPELL_MANAGE_TOWN_CONVERSION", [ "desc" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_CONVERSION/desc.txt"
+	make_text "en/spells/SPELL_MANAGE_TOWN_CONVERSION", [ "additional" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_CONVERSION/additional.txt"
+	make_text "en/spells/SPELL_MANAGE_TOWN_CONVERSION", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_CONVERSION/pred.txt"
+	
+
 	###CREATURE ARTIFACTS
 	[ "MAE_ARMOR_CRUSHING", "MAE_DEFENCE", "MAE_HASTE", "MAE_HEALTH", "MAE_LUCK", "MAE_MAGIC_PROTECTION", "MAE_MORALE", "MAE_PIERCING", "MAE_SPEED" ].each do |micro|
 		make_text "en/micro_artifacts/#{micro}", [ "effect" ], "#{SOURCE_ADD}/micro_artifacts/#{micro}/effect.txt", 'pred'

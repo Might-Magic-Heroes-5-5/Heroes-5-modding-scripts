@@ -18,7 +18,8 @@ Spell duration: <value=duration> actions."
 "Creature min damage = min dmg + (max dmg - min dmg)*<value=damage>%.
 Duration: <value=duration> turns."
 
-- all warcry texts
+### done with script 2 ##### mini artifacts - effect text for each of them
+### done with script 2 ##### all warcry texts
 - 
 
 
@@ -26,3 +27,7 @@ Duration: <value=duration> turns."
 ============
 _Expert.txt
 _Damage
+
+manually done:
+================
+en\guilds\MAGIC_SCHOOL_RUNIC\name.txt changed to "Rune Magic"

@@ -7,7 +7,7 @@ require 'nokogiri'
 Shoes.app do
 
 	SOURCE_IDX = "Rc11/MMH55-Index"
-	SOURCE_TXT = "Rc11/MMH55-Texts-EN"
+	SOURCE_TXT = "Rc11/MMH55-Texts-RU"
 	SOURCE_ADD = "additions_en"
 	source_defaultstats = "#{SOURCE_IDX}/GameMechanics/RPGStats/DefaultStats.xdb"
 	dfstats = File.open(source_defaultstats) { |f| Nokogiri::XML(f) }
