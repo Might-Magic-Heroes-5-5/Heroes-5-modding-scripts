@@ -36,7 +36,7 @@ end
 Shoes.app do
 
 	DB_NAME = 'skillwheel.db'
-	SOURCE_ADD = 'additions_en'
+	SOURCE_ADD = 'additions_ru'
 	SOURCE_TXT = 'Rc11/MMH55-Texts-RU'
 	db = SQLite3::Database.new DB_NAME
 	source_phoenix_stats = 'Rc11/MMH55-Index/GameMechanics/RPGStats/ConjuredPhoenix.xdb'

@@ -8,8 +8,12 @@ Shoes.app do
 
 	SOURCE_IDX = "Rc11/MMH55-Index"
 	SOURCE_TXT = "Rc11/MMH55-Texts-RU"
-	SOURCE_ADD = "additions_en"
+	SOURCE_ADD = "additions_ru"
+	source_core55 = "#{SOURCE_IDX}/scripts/H55-Core.lua"
 	source_defaultstats = "#{SOURCE_IDX}/GameMechanics/RPGStats/DefaultStats.xdb"
+	source_common = "#{SOURCE_IDX}/scripts/common.lua"
+	source_creatures = "#{SOURCE_IDX}/GameMechanics/creature/creatures"
+	source_spells = "#{SOURCE_IDX}/GameMechanics/RefTables/UndividedSpells.xdb"
 	dfstats = File.open(source_defaultstats) { |f| Nokogiri::XML(f) }
 	DB_NAME = 'skillwheel.db'
 	db = SQLite3::Database.new 'skillwheel.db'
@@ -18,10 +22,12 @@ Shoes.app do
 	source_town = "#{SOURCE_IDX}/GameMechanics/RefTables/TownTypesInfo.xdb"
 	doc = File.open(source_town) { |f| Nokogiri::XML(f) }
 	db.execute "create table factions ( name string );"
+	faction_name = {}
 	
 	texts = doc.xpath("//obj/textType/@href")
 	doc.xpath("//ID").each_with_index do |n,i|
 		if texts[i].text != '' then
+			faction_name[:"#{n.text}"] = File.read "#{SOURCE_TXT}/#{texts[i].text}"
 			db.execute("INSERT INTO factions ( name ) VALUES ( '#{n.text}' )") 
 			make_text "en/factions/#{n.text}", ["name"], "#{SOURCE_TXT}/#{texts[i].text}"
 		end
@@ -143,7 +149,7 @@ Shoes.app do
 	end
 
 	############ create creature table 
-	source_creatures = "#{SOURCE_IDX}/GameMechanics/creature/creatures"
+	
 	db.execute "create table creatures ( id string, at int, df int, shots int, min_d int, max_d int, spd int, init int,
 	fly int, hp int, spells string, spell_mastery string, mana int, tier int, faction string, growth int, ability string,
 	gold int, wood int, ore int, mercury int, crystal int, Sulfur int, gem int, sequence int );"
@@ -203,12 +209,14 @@ Shoes.app do
 	end
 
 	############ create table with all spells and guilds
-	source_spells = "#{SOURCE_IDX}/GameMechanics/RefTables/UndividedSpells.xdb"
+
     db.execute "create table spells ( id string, spell_effect string, spell_increase string, mana int, tier int, guild string, resource_cost string );"
 	db.execute "create table spells_specials ( id string, base string, perpower string );"
 	db.execute "create table guilds ( id string, sequence int );"
 	source = File.open(source_spells)  { |f| Nokogiri::XML(f) }
+
 	spell_dirs, guilds, spells = ["Combat_Spells", "Hero_Abilities/Barbarian", "Adventure_Spells" ], [], []
+
 	source.xpath("/Table_Spell_SpellID/objects/Item").each do |sp|
 		id = sp.xpath("ID").text
 		dr = sp.xpath("Obj/@href").text
@@ -308,6 +316,106 @@ Shoes.app do
 		db.execute "insert into guilds values (?, ?)", g, i
 		(make_text "en/guilds/#{g}", [ "name" ], "#{SOURCE_TXT}/Text/Tooltips/SpellBook/#{txt_guilds[:"#{g}"]}.txt")
 	end
+	
+
+	############ add magic guild creature summoning to spell database
+	flag, @num_2_element, num_2_faction, num_2_creature, dblood_const = 0, {}, {}, {}, {}
+
+	File.read(source_core55).each_line do |line|
+		case flag
+		when 0 then line.include?('function H55_GetTownRaceID') ? flag=1 : nil
+		when 1 then line.include?('townid')? ( num_2_faction[:"#{sort_line line, 'num == ', ' then'}"] = (sort_line line, 'townid = TOWN_', ' end') ) : nil
+			line.include?('return') ? flag=0 : nil
+		end
+	end
+	
+	File.read(source_core55).each_line do |line|
+		case flag
+		when 0 then line.include?('function H55_GetRaceElementalTypeID') ? (flag=1;) : nil
+		when 1 then if ( line.include?('cityrace') && line.include?('H55_DKSpecial[player]') ) then
+						@num_2_element[:"#{sort_line line, 'cityrace == ', ' and H5'}#{sort_line line, 'player] == ', ' then'}"] = (sort_line line, 'elemtype = ', ' end')
+					else
+						if line.include?('cityrace') then
+							@num_2_element[:"#{sort_line line, 'cityrace == ', ' then'}"] = (sort_line line, 'elemtype = ', ' end')
+						end
+					end
+					line.include?('return')? flag=2 : nil
+		end
+	end
+	 
+	flag=0
+	File.read(source_common).each_line do |line|
+		case flag
+		when 0 then line.include?('	-- Creatures IDs') ? flag=1 : nil
+		when 1 then line.include?('CREATURE_')? ( num_2_creature[:"#{line.split(' = ')[1].to_i.to_s}"] = (sort_line line, 'CREATURE_', ' = ') ) : nil
+			line.include?('War machines') ? flag=2 : nil
+		end
+	end
+	
+	flag = 0
+	File.read(source_core55).each_line do |line|
+		case flag
+		when 0 then line.include?('function H55_InfoElementals') ? flag=1 : nil
+		when 1 then if line.include?('local bloodcoef') then
+							dblood_const[:"0"] = line.split(' = ')[1].to_i.to_s
+							flag = 2
+					end
+		when 2 then if line.include?('bloodcoef') then
+						key = sort_line line, 'townrace == ', ' then'
+						key == nil ? key=41 : nil
+						dblood_const[:"#{key}"] = sort_line line, 'bloodcoef = ', ' end'
+					end
+					line.include?('townrace == 8')? flag=3 : nil
+		end
+	end
+
+	@num_2_element.each do |key, val|
+		desc_vars = []
+		text_guild = File.read("#{SOURCE_ADD}/spells/creature_summoning.txt")
+		text_guild.scan(Regexp.union(/<.*?>/,/<.*?>/)).each { |match| desc_vars << match }
+		this_town = num_2_faction[:"#{key[0]}"]
+		id = "#{num_2_creature[:"#{val}"]}"
+		id == "SNOW_APE"? id="SNOWAPE" : nil
+		this_dblood = dblood_const[:"#{dblood_const[:"#{key}"] == nil ? "0" : key}"]
+		
+		Dir.glob("#{source_creatures}/**/*#{id}.xdb").reject{ |rj| File.directory?(rj) }.each do |fn|
+			doc = File.open(fn) { |f| Nokogiri::XML(f) }
+			header = fn.split("GameMechanics")[0]
+			@visuals = File.open("#{header.chop}#{doc.xpath("//Visual/@href").text.split('#xpointer')[0]}") { |f| Nokogiri::XML(f) }
+			debug(@visuals.xpath("/CreatureVisual/CreatureNameFileRef/@href"))
+			@name = File.read("#{SOURCE_TXT}#{@visuals.xpath("/CreatureVisual/CreatureNameFileRef/@href")}")
+			debug(@name)
+		end
+
+		town_id = faction_name[:"TOWN_#{this_town}"]
+		subs = [ val=='90'? "If Xerxon is chosen as starting hero, any" : "Any", town_id , town_id, @name, this_dblood ]
+		desc_vars.each_with_index do |var, i|
+			text_guild.sub! var, "#{subs[i]}"
+		end
+	
+		FileUtils.mkpath "en/spells/GUILD_SUMMONING_#{id}"
+	
+		@output_name = File.open("en/spells/GUILD_SUMMONING_#{id}/name.txt", 'w');
+		@output_name.write("#{@name.strip}")
+		@output_name.close()
+		
+		@output_des = File.open("en/spells/GUILD_SUMMONING_#{id}/desc.txt", 'w');
+		@output_des.write("#{text_guild.strip}")
+		@output_des.close()
+		
+		spells << Spell.new("GUILD_SUMMONING_#{id}",
+				this_dblood,
+				"Any hero", #power.join
+				(val=='90'? "If Xerxon is chosen as starting hero, any" : "Any"),
+				0,
+				"MAGIC_SCHOOL_SPECIAL",
+				nil,
+				nil, #@visuals.xpath("/CreatureVisual/CreatureNameFileRef/@href"),
+				nil,
+				nil )
+		
+		db.execute "insert into spells values ( ?, ?, ?, ?, ?, ?, ? );", spells.last.stats
+	end
 
 	############ make a list of all sets
 	source_sets = "#{SOURCE_IDX}/scripts/advmap-startup.lua"
@@ -322,10 +430,10 @@ Shoes.app do
 	end
 
 	############ make matches between artifacts and sets	
-	source_matches = "#{SOURCE_IDX}/scripts/H55-Core.lua"
+	
 	@sets, @curr_set, flag = {}, "", 0
 	
-	File.read(source_matches).each_line do |line|
+	File.read(source_core55).each_line do |line|
 		case flag
 		when 0 then if line.include?('SetCount(hero)') && line.include?('function') then
 						@curr_set = sort_line line, 'H55_Get', 'SetCount[(]hero[)]'; 

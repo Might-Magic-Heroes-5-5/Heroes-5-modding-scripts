@@ -121,12 +121,12 @@ end
 
 class Artifact
 	
-	def initialize(id, slot, cost, type, at, df, sp, kn, moral, luck, set, txt_name, txt_desc)
-		@id, @slot, @cost, @type, @at, @df, @sp, @kn, @moral, @luck, @set = id, slot, cost, type, at, df, sp, kn, moral, luck, set  ###Get artifact vars
-		@txt_name, @txt_desc = txt_name, txt_desc			 																		###Get text vars
+	def initialize(id, slot, cost, type, at, df, sp, kn, moral, luck, set, sell, txt_name, txt_desc)
+		@id, @slot, @cost, @type, @at, @df, @sp, @kn, @moral, @luck, @set, @sell = id, slot, cost, type, at, df, sp, kn, moral, luck, set, sell  ###Get artifact vars
+		@txt_name, @txt_desc = txt_name, txt_desc			 																			  ###Get text vars
 	end
 
-	def stats; return @id, @slot, @cost, @type, @at, @df, @sp, @kn, @moral, @luck, @set end
+	def stats; return @id, @slot, @cost, @type, @at, @df, @sp, @kn, @moral, @luck, @set, @sell end
 	def texts; return @txt_name, @txt_desc end
 end
 
