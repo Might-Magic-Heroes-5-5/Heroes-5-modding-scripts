@@ -1,3 +1,0 @@
-Permanent Endless Simultaneous Turns is a feature allowing players take their turns at the same time when their heroes are close to each other.
-This feature is activated when "Simultaneous turns" are selected by the host when creating game.
-Click here to find more!

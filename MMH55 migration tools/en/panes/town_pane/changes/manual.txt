@@ -1,2 +1,0 @@
-MMH55 introduces a complete in-game manual where all new features and improvements are taken into account. The manual covers all hero clases, the complete set of 24 skills including their perk trees and a reference page for all in-game creatures and their abilities. Hero manual can opened by clicking a small colourful button on the right top side of the Hero pane. Creature manual is found on the side of the Hire pane in the castle.
-Click here for more information.

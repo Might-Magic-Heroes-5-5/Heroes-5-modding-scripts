@@ -1,1 +1,0 @@
-A fan mod that allows browsing Bloodrage levels for Stronghold units is integrated and improved. It can be found on screen during battle next to the chat log dropdown.

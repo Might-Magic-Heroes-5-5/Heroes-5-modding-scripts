@@ -1,1 +1,0 @@
-Combat map GUI is redesigned. Slot arrangement is meant to be more pragmatic and minimalistic so it covers smaller portion of the player's vision. Moreover some minor ATB design improvements were added.

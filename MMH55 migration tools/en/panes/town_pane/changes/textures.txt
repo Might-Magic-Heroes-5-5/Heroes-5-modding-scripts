@@ -1,1 +1,0 @@
-MMH55 features new and improved textures. Some of those eye pleasers are - terrains (snow, lava, dirt, grass, water, tundra, moss, dwarf stones etc.), resources (gems, crystals), adventure map sites (abandoned mines, sawmil, Archer tower etc.), fauna entities (flowers, stones, trees etc).

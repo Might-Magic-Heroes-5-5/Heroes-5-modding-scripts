@@ -1,3 +1,0 @@
-Save
-Enter save name
-Duplicate name. Do you want to overwrite?
