@@ -20,6 +20,9 @@ Duration: <value=duration> turns."
 
 ### done with script 2 ##### mini artifacts - effect text for each of them
 ### done with script 2 ##### all warcry texts
+### done with script 2 ##### en\guilds\MAGIC_SCHOOL_RUNIC\name.txt changed to "Rune Magic"
+### done with script 2 ##### en\guilds\MAGIC_SCHOOL_SPECIAL\name.txt changed to "Magic Guild Summoning", "Призыв магической гильдии"
+### done with script 2 ##### en\spells\empowered_prediction.txt - add line called  ",\n Усиленный урон: <value=damage2>" or ",\n Empowered damage: <value=damage2>"
 - 
 
 
@@ -30,4 +33,6 @@ _Damage
 
 manually done:
 ================
-en\guilds\MAGIC_SCHOOL_RUNIC\name.txt changed to "Rune Magic"
+
+
+

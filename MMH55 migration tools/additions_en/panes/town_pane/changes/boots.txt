@@ -1,0 +1,2 @@
+Any hero equipped with Water Walking boots will not benefit from Basic/Advanced/Expert Logistics skill bonus.
+Origin: ToE

@@ -1,0 +1,4 @@
+App settings
+Language:
+Size:
+Restart is required to make the change!

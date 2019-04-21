@@ -1,0 +1,1 @@
+If "Town Management" is used anywhere on the adventure map the hero can take advantage of "Town Gate" spell. This is an advanced version of "Town Portal" spell that allows the hero to teleport to any owned city with built Magic Guide level 5. The spell rotates all towns one by one.

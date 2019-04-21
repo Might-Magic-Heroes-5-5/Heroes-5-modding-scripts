@@ -1,0 +1,1 @@
+Hero primary skills "Attack" and "Defense" bonus reduced from 5% to 2.5% per skill point. This was done to reduce excessive fast pace of combat, equalize A&D against S&K and nerf generic dominance of shooters and focus game more on melee tactics.

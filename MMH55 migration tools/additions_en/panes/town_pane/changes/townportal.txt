@@ -1,0 +1,1 @@
+An optional feature is the Advanced Town Portal ability. Every town with a mage guild level 5 receives a 'town gate' and heroes can be teleported back to that town regardless of their level. Option is "On" by default and can be switch by editing <game_folder> /Data /MMH55-Settings.pak file.

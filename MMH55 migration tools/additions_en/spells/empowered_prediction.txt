@@ -1,0 +1,2 @@
+,
+Empowered Damage: <value=damage2>

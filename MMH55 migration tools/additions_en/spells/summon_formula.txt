@@ -1,0 +1,3 @@
+<value1> group of <value2> will be summoned.
+
+Formula = ((<value3>*<value4>)/<value5>)*(1 + <value6>)

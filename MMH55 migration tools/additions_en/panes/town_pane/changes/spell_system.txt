@@ -1,0 +1,2 @@
+In MMH5.5 the late game superiority of might heroes will be gone for good, no matter how long the game takes. The game uses much smarter algorithms to calculate the actual bonuses and turn times of light and dark magic spells. This will cause magic heroes to add more defense with endurance spell or give more initiative with the haste spell. Various summoning and destructive spells will also be finetuned to scale better into late game. 
+Click here to find more!

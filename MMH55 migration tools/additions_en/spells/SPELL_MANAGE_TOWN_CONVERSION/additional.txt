@@ -1,0 +1,1 @@
+Towns with a capitol cannot be converted. All buildings will be rebuild except special buildings, dwelling populations will be reduced to one week. Maximum amount for T1,T2 and T3 dwellings is 2 for each type. Maximum amount of T4-7 Military posts is 4.

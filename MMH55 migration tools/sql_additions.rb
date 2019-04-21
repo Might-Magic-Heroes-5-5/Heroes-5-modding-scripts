@@ -165,6 +165,7 @@ Speed = #{speed_flat} + #{speed_sp}*SP + #{speed_lvl}*HERO_LVL"
 	
 	make_text "en/spells/SPELL_MANAGE_TOWN", [ "name" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN/name.txt"
 	make_text "en/spells/SPELL_MANAGE_TOWN", [ "desc" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN/desc.txt"
+	make_text "en/spells/SPELL_MANAGE_TOWN", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN/pred.txt"
 	make_text "en/spells/SPELL_MANAGE_TOWN_GOVERNOR", [ "name" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GOVERNOR/name.txt"
 	make_text "en/spells/SPELL_MANAGE_TOWN_GOVERNOR", [ "desc" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GOVERNOR/desc.txt"
 	make_text "en/spells/SPELL_MANAGE_TOWN_GOVERNOR", [ "additional" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GOVERNOR/additional.txt"
@@ -172,10 +173,17 @@ Speed = #{speed_flat} + #{speed_sp}*SP + #{speed_lvl}*HERO_LVL"
 	make_text "en/spells/SPELL_MANAGE_TOWN_GATE", [ "name" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GATE/name.txt"
 	make_text "en/spells/SPELL_MANAGE_TOWN_GATE", [ "desc" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GATE/desc.txt"
 	make_text "en/spells/SPELL_MANAGE_TOWN_GATE", [ "additional" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GATE/additional.txt"
+	make_text "en/spells/SPELL_MANAGE_TOWN_GATE", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GATE/pred.txt"
 	make_text "en/spells/SPELL_MANAGE_TOWN_CONVERSION", [ "name" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_CONVERSION/name.txt"
 	make_text "en/spells/SPELL_MANAGE_TOWN_CONVERSION", [ "desc" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_CONVERSION/desc.txt"
 	make_text "en/spells/SPELL_MANAGE_TOWN_CONVERSION", [ "additional" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_CONVERSION/additional.txt"
 	make_text "en/spells/SPELL_MANAGE_TOWN_CONVERSION", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_CONVERSION/pred.txt"
+	make_text "en/spells", [ "empowered_prediction" ], "#{SOURCE_ADD}/spells/empowered_prediction.txt"
+	make_text "en/spells", [ "summon_formula" ], "#{SOURCE_ADD}/spells/summon_formula.txt"
+	
+	###GUILDS
+	make_text "en/guilds/MAGIC_SCHOOL_RUNIC", [ "name.txt" ], "#{SOURCE_ADD}/guilds/MAGIC_SCHOOL_RUNIC/name.txt"
+	make_text "en/guilds/MAGIC_SCHOOL_SPECIAL", [ "name.txt" ], "#{SOURCE_ADD}/guilds/MAGIC_SCHOOL_SPECIAL/name.txt"
 	
 
 	###CREATURE ARTIFACTS
@@ -201,6 +209,9 @@ Speed = #{speed_flat} + #{speed_sp}*SP + #{speed_lvl}*HERO_LVL"
 	db.execute "UPDATE micro_artifact_effect SET effect='0.0666667' WHERE id='MAE_SPEED';"
 	db.execute "UPDATE micro_artifact_effect SET effect='0.75' WHERE id='MAE_HASTE';"
 
+	FileUtils.copy_entry "#{SOURCE_ADD}/panes", "en/panes"
+	FileUtils.copy_entry "#{SOURCE_ADD}/properties", "en/properties"
+	
 	para "GOOD!"
 
 end

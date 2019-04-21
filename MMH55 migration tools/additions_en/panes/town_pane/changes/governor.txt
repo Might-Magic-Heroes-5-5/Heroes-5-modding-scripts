@@ -1,0 +1,2 @@
+The new optional governance feature, allows players to use secondary heroes to govern towns and gain experience points and skills. Governor heroes will also receive various special bonuses from the town buildings. In order to assign a governor hero should be inside the castle gates when activating the feature from within the spellbook. Assigned governors movement is reduced the further they go away from the city they govern. Governship is lost of hero goes through teleport or too far away from town.
+Click to find more!

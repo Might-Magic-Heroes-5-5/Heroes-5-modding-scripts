@@ -1,0 +1,6 @@
+Summon formula
+Left/right click to increase by 1/10. Middle click to reset.
+Left/right click to increase by 1. Middle click to reset.
+Hero level, left/right click to increase by 1/10. Middle click to reset.
+Amount of Dragonblood crystals
+Magic Guild level

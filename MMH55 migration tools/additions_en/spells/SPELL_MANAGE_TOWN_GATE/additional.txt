@@ -1,0 +1,1 @@
+Remove any hero or army from the target town inner garrison or the telporting hero will overlap them.

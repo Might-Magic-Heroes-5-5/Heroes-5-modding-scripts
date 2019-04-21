@@ -1,0 +1,11 @@
+Description
+Knowledge
+Left/right click to increase knowledge by 1/10. Middle click to reset.
+Item
+Effects
+Cost multiplier
+Forge
+No item or effect selected
+Inventory
+Clean Inventory
+Cost

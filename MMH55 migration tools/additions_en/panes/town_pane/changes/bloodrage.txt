@@ -1,0 +1,5 @@
+Bloodrage
+
+Stronghold creatures has the ability to gain bloodrage when attacking. Gaining rage levels benefit the creatures with unique temporary abilities. Rage can be lost if the creature is: in defensive stance; idle; affected by negative mind spell effect; taking damage in which case the incoming damage is reduced by 20%/25%/30% depending on the hero Bloodrage skill level.
+
+In MMH5.5 the system is heavily reworked as it the original settings made the skill overpowered.

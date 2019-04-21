@@ -1,0 +1,2 @@
+If Imperial Griffin or Griffin stack, with active "Chain Attack" ability, attacks using "Battle Dive" ability the game will crash.
+Origin: ToE

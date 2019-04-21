@@ -1,0 +1,13 @@
+Stats
+Attack
+Defense
+Damage
+Initiative
+Speed
+Hit Points
+Mana pool
+Shots
+Weekly Growth
+Cost
+Tier level
+Abilities:

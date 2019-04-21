@@ -1,0 +1,3 @@
+<value1> из <value2> будет призвано.
+
+Формула = ((<value3>*<value4>)/<value5>)*(1 + <value6>)
