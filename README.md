@@ -6,4 +6,6 @@ Files description:
 2. NCF archive creatures.rb - Script archive a single creature into its own .pak archive.
 
 
-MMH55 migration tools
+MMH55 migration tools - scripts that are used to migrate Heroes V data to a SQLite database.
+The order of running the scripts is as follows:
+1. MMH55_to
