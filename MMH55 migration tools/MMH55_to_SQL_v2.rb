@@ -5,21 +5,30 @@ require 'code/methods'
 require 'nokogiri'
 
 Shoes.app do
-
-	SOURCE_IDX = "Rc11/MMH55-Index"
+	
+	OUTPUT = "output"
+	SOURCE_IDX = "data"
 	SOURCE_TXT = "Rc11/MMH55-Texts-EN"
-	SOURCE_ADD = "additions_ru"
+	SOURCE_ADD = "additions_en"
+	GUILD_TEXT = { MAGIC_SCHOOL_DARK: 'SchoolDark',
+					MAGIC_SCHOOL_SUMMONING: 'SchoolSummoning',
+					MAGIC_SCHOOL_DESTRUCTIVE: 'SchoolDestructive',
+					MAGIC_SCHOOL_SPECIAL: 'SchoolSpecial',
+					MAGIC_SCHOOL_LIGHT: 'SchoolLight', 
+					MAGIC_SCHOOL_RUNIC: 'SchoolSpecial', 
+					MAGIC_SCHOOL_WARCRIES: 'Warcries', 
+					MAGIC_SCHOOL_ADVENTURE: 'AdventureSpells' }
 	source_core55 = "#{SOURCE_IDX}/scripts/H55-Core.lua"
-	source_defaultstats = "#{SOURCE_IDX}/GameMechanics/RPGStats/DefaultStats.xdb"
 	source_common = "#{SOURCE_IDX}/scripts/common.lua"
 	source_creatures = "#{SOURCE_IDX}/GameMechanics/creature/creatures"
 	source_spells = "#{SOURCE_IDX}/GameMechanics/RefTables/UndividedSpells.xdb"
-	dfstats = File.open(source_defaultstats) { |f| Nokogiri::XML(f) }
-	DB_NAME = 'skillwheel.db'
-	db = Manage_db.new(DB_NAME, 1)
+	dfstats = File.open("#{SOURCE_IDX}/GameMechanics/RPGStats/DefaultStats.xdb") { |f| Nokogiri::XML(f) }
+	db = Manage_db.new('skillwheel.db', 1)
 	create_text = Manage_texts.new(nil, 1)
-	texts_enabled = 1
 	
+	
+					
+
 	############ create table with faction list
 	towns = []
 	town_src = "#{SOURCE_IDX}/GameMechanics/RefTables/TownTypesInfo.xdb"
@@ -69,7 +78,7 @@ Shoes.app do
 		hero_id = doc.xpath("//InternalName").text
 		hero_name = (check_dir doc.xpath("//NameFileRef/@href").text, fn)
 		hero_campaign = doc.xpath("//ScenarioHero").text
-		next if hero_name == '' || hero_id == '' || hero_campaign == 'true'
+		next if hero_id == '' or hero_campaign == 'true' or hero_name == ''
 		hero_attack = doc.xpath("//Editable/Offence").text
 		hero_defense = doc.xpath("//Editable/Defence").text
 		hero_spellpower = doc.xpath("//Editable/Spellpower").text
@@ -150,7 +159,7 @@ Shoes.app do
 		unit_doc.xpath("//CombatSize").text == '2' ? ( abilities << "ABILITY_LARGE_CREATURE" ) : nil
 		unit_doc.xpath("//Range").text != '0' ? ( abilities << "ABILITY_SHOOTER" ) : nil
 		unit_doc.xpath("//Abilities/Item").each { |a| abilities << a.text }
-		units << Creature.new(unit_id,
+		units << Creature.new( unit_id,
 			unit_doc.xpath("//AttackSkill").text,
 			unit_doc.xpath("//DefenceSkill").text,
 			unit_doc.xpath("//Shots").text,
@@ -174,8 +183,7 @@ Shoes.app do
 			unit_doc.xpath("//Cost/Crystal").text,
 			unit_doc.xpath("//Cost/Sulfur").text,
 			unit_doc.xpath("//Cost/Gem").text,
-			visuals.xpath("/CreatureVisual/CreatureNameFileRef/@href")
-		)
+			visuals.xpath("/CreatureVisual/CreatureNameFileRef/@href") )
 	end
 	db.unit_update(units)
 	create_text.unit_update(units)
@@ -192,10 +200,10 @@ Shoes.app do
 	end
 	create_text.ability_update(abilities)
 
-	############ create table with all spells and guilds
+	############ create table with all spells 
 
 	spell_src = File.open(source_spells)  { |f| Nokogiri::XML(f) }
-	spell_dirs, guilds, spells = ["Combat_Spells", "Hero_Abilities/Barbarian", "Adventure_Spells" ], [], []
+	spell_dirs, spells, spells_spec = ["Combat_Spells", "Hero_Abilities/Barbarian", "Adventure_Spells" ], [], []
 	spell_src.xpath("/Table_Spell_SpellID/objects/Item").each do |sp|
 		spell_id = sp.xpath("ID").text
 		dr = sp.xpath("Obj/@href").text
@@ -204,10 +212,8 @@ Shoes.app do
 		if spell_dirs.any? { |x| dr.include?(x) } then
 			base, power, resource, predict = [], [], [], []
 			doc = File.open(dr_source) { |f| Nokogiri::XML(f) }
-			next if ( ['SpellVisual','Mass_','Empowered'].any? { |word| dr.include?(word) } or doc.xpath("//NameFileRef/@href").text == '' )
 			school_id = doc.xpath("//MagicSchool").text
-			(guilds.include?(school_id) or school_id == '') ? nil : (guilds << school_id)
-			school_id == 'MAGIC_SCHOOL_SPECIAL' ? next : nil
+			next if ['SpellVisual','Mass_','Empowered'].any? { |word| dr.include?(word) } or doc.xpath("//NameFileRef/@href").text == '' or school_id == 'MAGIC_SCHOOL_SPECIAL'
 			doc.xpath("//Base | //PerPower").each_with_index { |x, i| ( i.even? ? base : power ) << x.text }
 			case spell_id
 			when "SPELL_BLADE_BARRIER" then
@@ -216,19 +222,19 @@ Shoes.app do
 					b_effect << d.xpath("Base").text
 					p_effect << d.xpath("PerPower").text
 				end
-				db.execute "insert into spells_specials values ( ?, ?, ? );", spell_id, b_effect.join(','), p_effect.join(',')
+				spells_spec << [ spell_id, b_effect.join(','), p_effect.join(',') ]
 			when "SPELL_ARCANE_CRYSTAL" then
 				b_effect, p_effect = [],[]
 				b_effect << dfstats.xpath("/RPGStats/combat/Spells/ArcaneCrystal/Health").text
 				p_effect << dfstats.xpath("/RPGStats/combat/Spells/ArcaneCrystal/Defence").text
-				db.execute "insert into spells_specials values ( ?, ?, ? );", spell_id, b_effect.join(','), p_effect.join(',')
+				spells_spec << [ spell_id, b_effect.join(','), p_effect.join(',') ]
 			when "SPELL_DEEP_FREEZE" then
 				b_effect, p_effect = [],[]
 				dfstats.xpath("/RPGStats/combat/Spells/DeepFreeze/DamageMultiplier/Item").each_with_index do |d, i|
 					b_effect << d.xpath("Base").text
 					p_effect << d.xpath("PerPower").text
 				end
-				db.execute "insert into spells_specials values ( ?, ?, ? );", spell_id, b_effect.join(','), p_effect.join(',')
+				spells_spec << [ spell_id, b_effect.join(','), p_effect.join(',') ]
 			when "SPELL_SUMMON_HIVE" then
 				b_effect, p_effect = [],[]
 				dfstats.xpath("/RPGStats/combat/Spells/SummonHive/Initiative/Item | /RPGStats/combat/Spells/SummonHive/Health/Item").each_with_index do |d, i|
@@ -237,7 +243,7 @@ Shoes.app do
 				end
 				b_effect << dfstats.xpath("/RPGStats/combat/Spells/SummonHive/DefenseBase").text
 				p_effect << dfstats.xpath("/RPGStats/combat/Spells/SummonHive/DefensePerCasterLevel").text
-				db.execute "insert into spells_specials values ( ?, ?, ? );", spell_id, b_effect.join(','), p_effect.join(',')
+				spells_spec << [ spell_id, b_effect.join(','), p_effect.join(',') ]
 			when "SPELL_WARCRY_WORD_OF_THE_CHIEF" then
 				stun = calc dfstats.xpath("/RPGStats/combat/Spells/Warcries/WordOfTheChief_ATBBonusBase").text
 				stun_per = calc dfstats.xpath("/RPGStats/combat/Spells/Warcries/WordOfTheChief_ATBBonusPerCasterLevel").text
@@ -254,9 +260,7 @@ Shoes.app do
 				power[4..7] = power[4..7].map { |x| calc(x) }
 			end
 			
-			[ "Wood", "Ore", "Mercury", "Crystal", "Sulfur", "Gem" ].each do |r|
-				doc.css("//#{r}").each { |t| resource << "#{t.text}" }	
-			end
+			[ "Wood", "Ore", "Mercury", "Crystal", "Sulfur", "Gem" ].each { |r| doc.css("//#{r}").each { |t| resource << "#{t.text}" } }
 			doc.xpath("//SpellBookPredictions/Item/@href").each { |p| predict << (check_dir p.text,dr_source) }
 			spells << Spell.new(spell_id,
 				base.join(','),
@@ -268,136 +272,115 @@ Shoes.app do
 				(check_dir doc.xpath("//NameFileRef/@href").text, dr_source),
 				(check_dir doc.xpath("//LongDescriptionFileRef/@href").text, dr_source),
 				predict )	
-			#db.execute "insert into spells values ( ?, ?, ?, ?, ?, ?, ? );", spells.last.stats
-			txt = spells.last.texts
-			#make_text "en/spells/#{spell_id}", [ "name" ], "#{SOURCE_TXT}/#{txt[0]}" 
-			#make_text "en/spells/#{spell_id}", [ "desc", "additional" ], "#{SOURCE_TXT}/#{txt[1]}", 'spell';
-			txt[2].each do |p|
-				p = check_dir p, dr_source
-				p.include?('SpellBookPrediction.txt') ? ( make_text "en/spells/#{spell_id}", [ "pred" ], "#{SOURCE_TXT}#{p}", 'pred' ) : nil
-				p.include?('SpellBookPrediction_Expert') ? ( make_text "en/spells/#{spell_id}", [ "pred_expert" ], "#{SOURCE_TXT}#{p}", 'pred' ) : nil
-				p.include?('HealHPReduce.txt') ? ( make_text "en/spells/#{spell_id}", [ "pred" ], "#{SOURCE_TXT}#{p}", 'pred' ) : nil
-			end
-			school_id == 'MAGIC_SCHOOL_ADVENTURE' ? ( make_text "en/spells/#{spell_id}", [ "pred" ], "#{SOURCE_ADD}/none.txt", 'pred' ) : nil
 		end		
 	end
 	db.spell_update(spells)
 	create_text.spell_update(spells)
-	make_text "en/spells", [ "universal_prediction" ], "#{SOURCE_TXT}/Text/Game/Spells/SpellBookPredictions/DirectDamage.txt", 'pred'
-	txt_guilds =  { MAGIC_SCHOOL_DARK: 'SchoolDark',
-					MAGIC_SCHOOL_SUMMONING: 'SchoolSummoning',
-					MAGIC_SCHOOL_DESTRUCTIVE: 'SchoolDestructive',
-					MAGIC_SCHOOL_SPECIAL: 'SchoolSpecial',
-					MAGIC_SCHOOL_LIGHT: 'SchoolLight', 
-					MAGIC_SCHOOL_RUNIC: 'SchoolSpecial', 
-					MAGIC_SCHOOL_WARCRIES: 'Warcries', 
-					MAGIC_SCHOOL_ADVENTURE: 'AdventureSpells' }
-					
-	guilds.each_with_index do |g, i|
-		db.execute "insert into guilds values (?, ?)", g, i
-		(make_text "en/guilds/#{g}", [ "name" ], "#{SOURCE_TXT}/Text/Tooltips/SpellBook/#{txt_guilds[:"#{g}"]}.txt")
-	end
-	
-=begin
-	############ add magic guild creature summoning to spell database
-	flag, @num_2_element, num_2_faction, num_2_creature, dblood_const = 0, {}, {}, {}, {}
+	db.spells_spec(spells_spec)
 
-	File.read(source_core55).each_line do |line|
-		case flag
-		when 0 then line.include?('function H55_GetTownRaceID') ? flag=1 : nil
-		when 1 then line.include?('townid')? ( num_2_faction[:"#{sort_line line, 'num == ', ' then'}"] = (sort_line line, 'townid = TOWN_', ' end') ) : nil
-			line.include?('return') ? flag=0 : nil
-		end
+	############ Create magic guild  table and add shatter summoning to spell database
+	guilds, flag, @town_2_elmnt, num_2_faction, num_2_creature, dblood_const, = [], 0, {}, {}, {}, {}
+	guild_doc = File.open('data/types.xml') { |f| Nokogiri::XML(f) }
+	guild_doc.xpath("//Base/SharedClasses/Item")[299].xpath("Entries/Item").each do |g| 
+		guild = g.xpath("Name").text
+		guilds << guild if guild != "MAGIC_SCHOOL_NONE"
 	end
+	db.guild_update(guilds)
+	create_text.guild_update(guilds)
 	
 	File.read(source_core55).each_line do |line|
 		case flag
-		when 0 then line.include?('function H55_GetRaceElementalTypeID') ? (flag=1;) : nil
-		when 1 then if ( line.include?('cityrace') && line.include?('H55_DKSpecial[player]') ) then
-						@num_2_element[:"#{sort_line line, 'cityrace == ', ' and H5'}#{sort_line line, 'player] == ', ' then'}"] = (sort_line line, 'elemtype = ', ' end')
-					else
-						if line.include?('cityrace') then
-							@num_2_element[:"#{sort_line line, 'cityrace == ', ' then'}"] = (sort_line line, 'elemtype = ', ' end')
+		when 0 then flag=1 if line.include?('function H55_GetTownRaceID')
+		when 1 then num_2_faction[:"#{sort_line line, 'num == ', ' then'}"] = (sort_line line, 'townid = TOWN_', ' end') if line.include?('townid')
+					flag=2 if line.include?('return')
+		when 2 then flag=3 if line.include?('function H55_GetRaceElementalTypeID')
+		when 3 then if line.include?('cityrace') then
+						town, element = nil, nil
+						if line.include?('H55_DKSpecial[player]') then
+							town = "#{sort_line line, 'cityrace == ', ' and H5'}#{sort_line line, 'player] == ', ' then'}"
+							element = line.split('elemtype = ')[1]
+						elsif line.include?('end') then
+							town = "#{sort_line line, 'cityrace == ', ' then'}"
+							element = "#{sort_line line, 'elemtype = ', ' end'}"
+						elsif line.include?('cityrace') then
+							town = "#{sort_line line, 'cityrace == ', ' then'}"
+							element = line.split('elemtype = ')[1]
+							
 						end
+						element = element.chars.map {|x| x[/\d+/]}.join('')
+						@town_2_elmnt[:"#{town}"] = element
 					end
-					line.include?('return')? flag=2 : nil
-		end
+					flag=4 if line.include?('return')
+		when 4 then flag=5 if line.include?('function H55_InfoElementals')
+		when 5 then (flag=6; dblood_const[:"0"] = line.split(' = ')[1].to_i.to_s ) if line.include?('local bloodcoef')
+		when 6 then if line.include?('bloodcoef') then
+						key = sort_line line, 'townrace == ', ' then'
+						key = 41 if key == nil
+						dblood_const[:"#{key}"] = sort_line line, 'bloodcoef = ', ' end'
+					end
+					break if line.include?('townrace == 8')
+			
+		end		
 	end
 	 
 	flag=0
 	File.read(source_common).each_line do |line|
 		case flag
-		when 0 then line.include?('	-- Creatures IDs') ? flag=1 : nil
-		when 1 then line.include?('CREATURE_')? ( num_2_creature[:"#{line.split(' = ')[1].to_i.to_s}"] = (sort_line line, 'CREATURE_', ' = ') ) : nil
-			line.include?('War machines') ? flag=2 : nil
+		when 0 then flag=1 if line.include?('	-- Creatures IDs')
+		when 1 then ( num_2_creature[:"#{line.split(' = ')[1].to_i.to_s}"] = (sort_line line, 'CREATURE_', ' = ') )if line.include?('CREATURE_')
+					break if line.include?('War machines')
 		end
 	end
-	
-	flag = 0
-	File.read(source_core55).each_line do |line|
-		case flag
-		when 0 then line.include?('function H55_InfoElementals') ? flag=1 : nil
-		when 1 then if line.include?('local bloodcoef') then
-							dblood_const[:"0"] = line.split(' = ')[1].to_i.to_s
-							flag = 2
-					end
-		when 2 then if line.include?('bloodcoef') then
-						key = sort_line line, 'townrace == ', ' then'
-						key == nil ? key=41 : nil
-						dblood_const[:"#{key}"] = sort_line line, 'bloodcoef = ', ' end'
-					end
-					line.include?('townrace == 8')? flag=3 : nil
-		end
-	end
-
-	@num_2_element.each do |key, val|
+	spells_new = []
+	@town_2_elmnt.each do |key, val|
 		desc_vars = []
-		text_guild = File.read("#{SOURCE_ADD}/spells/creature_summoning.txt")
-		text_guild.scan(Regexp.union(/<.*?>/,/<.*?>/)).each { |match| desc_vars << match }
+		guild_desc = File.read("#{SOURCE_ADD}/spells/creature_summoning.txt")
+		guild_desc.scan(Regexp.union(/<.*?>/,/<.*?>/)).each { |match| desc_vars << match }
 		this_town = num_2_faction[:"#{key[0]}"]
+		
 		id = "#{num_2_creature[:"#{val}"]}"
-		id == "SNOW_APE"? id="SNOWAPE" : nil
+		id = "SNOWAPE" if id == "SNOW_APE"
 		this_dblood = dblood_const[:"#{dblood_const[:"#{key}"] == nil ? "0" : key}"]
 		
 		Dir.glob("#{source_creatures}/**/*#{id}.xdb").reject{ |rj| File.directory?(rj) }.each do |fn|
 			doc = File.open(fn) { |f| Nokogiri::XML(f) }
 			header = fn.split("GameMechanics")[0]
-			@visuals = File.open("#{header.chop}#{doc.xpath("//Visual/@href").text.split('#xpointer')[0]}") { |f| Nokogiri::XML(f) }
-			debug(@visuals.xpath("/CreatureVisual/CreatureNameFileRef/@href"))
+			path = doc.xpath("//Visual/@href").text.split('#xpointer')[0]
+			next if path.nil? or path.include?('None.xdb')
+			@visuals = File.open("#{header.chop}#{path}") { |f| Nokogiri::XML(f) }
 			@name = File.read("#{SOURCE_TXT}#{@visuals.xpath("/CreatureVisual/CreatureNameFileRef/@href")}")
-			debug(@name)
 		end
-
-		town_id = faction_name[:"TOWN_#{this_town}"]
+		town_id = nil
+		towns.each { |t| town_id = t.text if t.town_id == "TOWN_#{this_town}" }
 		subs = [ val=='90'? "If Xerxon is chosen as starting hero, any" : "Any", town_id , town_id, @name, this_dblood ]
-		desc_vars.each_with_index do |var, i|
-			text_guild.sub! var, "#{subs[i]}"
-		end
+		desc_vars.each_with_index { |var, i| guild_desc.sub! var, "#{subs[i]}" }
 	
 		FileUtils.mkpath "en/spells/GUILD_SUMMONING_#{id}"
-	
 		@output_name = File.open("en/spells/GUILD_SUMMONING_#{id}/name.txt", 'w');
 		@output_name.write("#{@name.strip}")
 		@output_name.close()
 		
 		@output_des = File.open("en/spells/GUILD_SUMMONING_#{id}/desc.txt", 'w');
-		@output_des.write("#{text_guild.strip}")
+		@output_des.write("#{guild_desc.strip}")
 		@output_des.close()
 		
-		spells << Spell.new("GUILD_SUMMONING_#{id}",
+		
+		spells_new << Spell.new("GUILD_SUMMONING_#{id}",
 				this_dblood,
 				"Any hero", #power.join
 				(val=='90'? "If Xerxon is chosen as starting hero, any" : "Any"),
 				0,
 				"MAGIC_SCHOOL_SPECIAL",
-				nil,
+				"0,0,0,0,0,0",
 				nil, #@visuals.xpath("/CreatureVisual/CreatureNameFileRef/@href"),
 				nil,
 				nil )
-		
-		db.execute "insert into spells values ( ?, ?, ?, ?, ?, ?, ? );", spells.last.stats
-	end
-
+	end			
+	db.spell_update(spells_new)
+	#create_text.spell_update(spells)
+	#db.spells_spec(spells_spec)
+	
+=begin
 	############ make a list of all sets
 	source_sets = "#{SOURCE_IDX}/scripts/advmap-startup.lua"
 	flag, artif_set, artif = 0, {}, {}

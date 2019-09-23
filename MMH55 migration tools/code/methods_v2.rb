@@ -1,4 +1,4 @@
-def check_dir file, origin; return file.start_with?("/")? file : ((origin.split('MMH55-Index')[1].split('/'))[0...-1].join('/') + '/' + file ) end
+def check_dir file, origin; return file.start_with?("/")? file : ((origin.split('data')[1].split('/'))[0...-1].join('/') + '/' + file ) end
 
 def calc num
   result = num.to_f*100
@@ -54,9 +54,9 @@ def make_text dirr, target, source, mode=0, type='f',
 	end
 	#debug("#{dirr},#{target},#{mode}")
 	data_to_copy.each_with_index do |t, i|
-		@output = File.open("#{dirr + '/' + target[i]}.txt", 'w');
-		@output.write("#{t.strip}")
-		@output.close()
+		@OUTPUT = File.open("#{dirr + '/' + target[i]}.txt", 'w');
+		@OUTPUT.write("#{t.strip}")
+		@OUTPUT.close()
 	end
 end
 
@@ -270,7 +270,11 @@ class Manage_db
 		end
 	end
 	
-	def spell_update(spells); spells.each { |s|	db.execute "insert into spells values ( ?, ?, ?, ?, ?, ?, ? );", s.stats } if flag == 1 end
+	def spell_update(spells); spells.each { |s|	@db.execute "insert into spells values ( ?, ?, ?, ?, ?, ?, ? );", s.stats } if @flag == 1 end
+	
+	def spells_spec(spells_spec); spells_spec.each { |s| @db.execute "insert into spells_specials values ( ?, ?, ? );", s[0], s[1], s[2] } if @flag == 1 end
+	
+	def guild_update(guilds); guilds.each_with_index { |g,i| @db.execute "insert into guilds values (?, ?)", g, i } if @flag == 1 end
 	
 end
 
@@ -278,59 +282,62 @@ class Manage_texts
 
 	def initialize(var, flag=1); @flag = flag end
 	
-	def town_update(towns);	towns.each { |t| make_text "en/factions/#{t.town_id}", ["name"], [ t.text ], 0, 't' } if @flag == 1 end
+	def town_update(towns);	towns.each { |t| make_text "#{OUTPUT}/factions/#{t.town_id}", ["name"], [ t.text ], 0, 't' } if @flag == 1 end
 	
 	def hero_update(heroes)
 		if @flag == 1 then
 			heroes.each do |h| 
-				make_text "en/heroes/#{h.stats[0]}", [ "name" ], "#{SOURCE_TXT}#{h.text[0]}"
-				make_text "en/heroes/#{h.stats[0]}", ["spec", "additional" ], "#{SOURCE_TXT}#{h.text[1]}", 'hero'
+				make_text "#{OUTPUT}/heroes/#{h.stats[0]}", [ "name" ], "#{SOURCE_TXT}#{h.text[0]}"
+				make_text "#{OUTPUT}/heroes/#{h.stats[0]}", ["spec", "additional" ], "#{SOURCE_TXT}#{h.text[1]}", 'hero'
 			end
 		end
 	end
 	
-	def class_update(classes); classes.each { |c| make_text "en/classes/#{c.stats[0]}", ["name"], "#{SOURCE_TXT}/GameMechanics/RefTables/#{c.text}" } if @flag == 1 end
+	def class_update(classes); classes.each { |c| make_text "#{OUTPUT}/classes/#{c.stats[0]}", ["name"], "#{SOURCE_TXT}/GameMechanics/RefTables/#{c.text}" } if @flag == 1 end
 	
 	def skill_update(skills)
 		if @flag == 1 then
 			skills.each do |s|
 				if s.stats[1] == "SKILLTYPE_SKILL" then
 					s.texts[0].each_with_index do |_, q|
-						make_text "en/skills/#{s.stats[0]}", ["name#{q+1}"], "#{SOURCE_TXT}/#{s.texts[0][q]}"
-						make_text "en/skills/#{s.stats[0]}", ["desc#{q+1}", "additional#{q+1}"], "#{SOURCE_TXT}/#{s.texts[1][q]}", 'skill'
+						make_text "#{OUTPUT}/skills/#{s.stats[0]}", ["name#{q+1}"], "#{SOURCE_TXT}/#{s.texts[0][q]}"
+						make_text "#{OUTPUT}/skills/#{s.stats[0]}", ["desc#{q+1}", "additional#{q+1}"], "#{SOURCE_TXT}/#{s.texts[1][q]}", 'skill'
 					end
 				else
-					make_text "en/skills/#{s.stats[0]}", ["name"], "#{SOURCE_TXT}/#{s.texts[0][0]}"
-					make_text "en/skills/#{s.stats[0]}", ["desc", "additional" ], "#{SOURCE_TXT}/#{s.texts[1][0]}", 'skill'
+					make_text "#{OUTPUT}/skills/#{s.stats[0]}", ["name"], "#{SOURCE_TXT}/#{s.texts[0][0]}"
+					make_text "#{OUTPUT}/skills/#{s.stats[0]}", ["desc", "additional" ], "#{SOURCE_TXT}/#{s.texts[1][0]}", 'skill'
 				end
 			end
 		end
 	end
 
-	def unit_update(units); units.each { |u| make_text "en/creatures/#{u.id}", [ "name" ], "#{SOURCE_TXT}#{u.texts}" } if @flag == 1 end
+	def unit_update(units); units.each { |u| make_text "#{OUTPUT}/creatures/#{u.id}", [ "name" ], "#{SOURCE_TXT}#{u.texts}" } if @flag == 1 end
 	
 	def ability_update(abilities)
-		if flag == 1 then
+		if @flag == 1 then
 			abilities.each do |a|
-				make_text "en/abilities/#{a.id}", [ "name" ], "#{SOURCE_TXT}#{a.name}"
-				make_text "en/abilities/#{a.id}", [ "desc" ], "#{SOURCE_TXT}#{a.desc}"
+				make_text "#{OUTPUT}/abilities/#{a.id}", [ "name" ], "#{SOURCE_TXT}#{a.name}"
+				make_text "#{OUTPUT}/abilities/#{a.id}", [ "desc" ], "#{SOURCE_TXT}#{a.desc}"
 			end
 		end
 	end
 	
 	def spell_update(spells)
-		if flag == 1 then
+		if @flag == 1 then
 			spells.each do |s|
-				make_text "en/spells/#{s.id}", [ "name" ], "#{SOURCE_TXT}/#{s.texts[0]}" 
-				make_text "en/spells/#{s.id}", [ "desc", "additional" ], "#{SOURCE_TXT}/#{s.texts[1]}", 'spell';
-				txt[2].each do |p|
-					p = check_dir p, dr_source
-					p.include?('SpellBookPrediction.txt') ? ( make_text "en/spells/#{s.id}", [ "pred" ], "#{SOURCE_TXT}#{p}", 'pred' ) : nil
-					p.include?('SpellBookPrediction_Expert') ? ( make_text "en/spells/#{s.id}", [ "pred_expert" ], "#{SOURCE_TXT}#{p}", 'pred' ) : nil
-					p.include?('HealHPReduce.txt') ? ( make_text "en/spells/#{s.id}", [ "pred" ], "#{SOURCE_TXT}#{p}", 'pred' ) : nil
+				make_text "#{OUTPUT}/spells/#{s.id}", [ "name" ], "#{SOURCE_TXT}/#{s.texts[0]}" 
+				make_text "#{OUTPUT}/spells/#{s.id}", [ "desc", "additional" ], "#{SOURCE_TXT}/#{s.texts[1]}", 'spell';
+				s.texts[2].each do |p|
+					#p = check_dir p, dr_source
+					( make_text "#{OUTPUT}/spells/#{s.id}", [ "pred" ], "#{SOURCE_TXT}#{p}", 'pred' ) if p.include?('SpellBookPrediction.txt')
+				    ( make_text "#{OUTPUT}/spells/#{s.id}", [ "pred_expert" ], "#{SOURCE_TXT}#{p}", 'pred' ) if p.include?('SpellBookPrediction_Expert')
+					( make_text "#{OUTPUT}/spells/#{s.id}", [ "pred" ], "#{SOURCE_TXT}#{p}", 'pred' ) if p.include?('HealHPReduce.txt')
+					( make_text "#{OUTPUT}/spells/#{s.id}", [ "pred" ], "#{SOURCE_ADD}/none.txt", 'pred' ) if s.stats[5] == 'MAGIC_SCHOOL_ADVENTURE'
 				end
 			end
-			
+			make_text "#{OUTPUT}/spells", [ "universal_prediction" ], "#{SOURCE_TXT}/Text/Game/Spells/SpellBookPredictions/DirectDamage.txt", 'pred'
 		end
 	end
+	
+	def guild_update(guilds); guilds.each { |g| make_text "en/guilds/#{g}", [ "name" ], "#{SOURCE_TXT}/Text/Tooltips/SpellBook/#{GUILD_TEXT[:"#{g}"]}.txt" } if @flag == 1 end
 end
