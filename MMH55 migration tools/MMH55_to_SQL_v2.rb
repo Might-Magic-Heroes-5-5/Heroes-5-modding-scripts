@@ -23,7 +23,7 @@ Shoes.app do
 	source_creatures = "#{SOURCE_IDX}/GameMechanics/creature/creatures"
 	source_spells = "#{SOURCE_IDX}/GameMechanics/RefTables/UndividedSpells.xdb"
 	dfstats = File.open("#{SOURCE_IDX}/GameMechanics/RPGStats/DefaultStats.xdb") { |f| Nokogiri::XML(f) }
-	db = Manage_db.new('skillwheel.db', 1)
+	db = Manage_db.new('skillwheel.db', 0)
 	create_text = Manage_texts.new(nil, 1)
 	
 	############ create table with faction list
@@ -268,7 +268,8 @@ Shoes.app do
 				resource.join(','),
 				(check_dir doc.xpath("//NameFileRef/@href").text, dr_source),
 				(check_dir doc.xpath("//LongDescriptionFileRef/@href").text, dr_source),
-				predict )	
+				predict )
+			#debug("#{school_id} - #{spell_id}")
 		end		
 	end
 	db.spell(spells)
@@ -289,7 +290,13 @@ Shoes.app do
 	File.read(source_core55).each_line do |line|
 		case flag
 		when 0 then flag=1 if line.include?('function H55_GetTownRaceID') # flag 0-1 -  Match Tote Town ID with MMH55 town id; start at 1818 line
-		when 1 then num_2_faction[:"#{sort_line line, 'num == ', ' then'}"] = (sort_line line, 'townid = TOWN_', ' end') if line.include?('townid')
+		when 1 then if line.include?('townid') and line.include?('num') then
+						id = ""
+						line.split('townid = ')[1].chars.each do |c|
+							c == " " ? break : (id << c)
+						end
+						num_2_faction[:"#{sort_line line, 'num == ', ' then'}"] = id
+					end
 					flag=2 if line.include?('return')
 		when 2 then flag=3 if line.include?('function H55_GetRaceElementalTypeID') # flag - 2-4 Get town to summoning unit ID; start at 1857 line
 		when 3 then if line.include?('cityrace') then
@@ -312,12 +319,12 @@ Shoes.app do
 						@current_set = sort_line line, 'H55_Get', 'SetCount[(]hero[)]'
 						artifact_sets[:"#{@current_set}"] = []
 						flag=5
-						flag=6 if line.include?('function H55_InfoElementals') 
 					end
+					flag=6 if line.include?('function H55_InfoElementals') 
 		when 5 then ( artifact_sets[:"#{@current_set}"] += [(sort_line line, 'HasArtefact[(]hero[,]', '[,]')] ) if line.include?('HasArtefact(hero,')
 					flag = 4 if line.include?('return')
 					# Get blood crystal coef for guild summoning; start at 3034
-		when 6 then flag=7; dblood_const[:"0"] = line.split(' = ')[1].to_i.to_s if line.include?('local bloodcoef')
+		when 6 then (flag=7; dblood_const[:"0"] = line.split(' = ')[1].to_i.to_s) if line.include?('local bloodcoef'); 
 		when 7 then if line.include?('bloodcoef') then
 						key = sort_line line, 'townrace == ', ' then'
 						key = 41 if key == nil
@@ -342,7 +349,6 @@ Shoes.app do
 		guild_desc = File.read("#{SOURCE_ADD}/spells/creature_summoning.txt")
 		guild_desc.scan(Regexp.union(/<.*?>/,/<.*?>/)).each { |match| desc_vars << match }
 		this_town = num_2_faction[:"#{key[0]}"]
-		
 		id = "#{num_2_creature[:"#{val}"]}"
 		id = "SNOWAPE" if id == "SNOW_APE"
 		this_dblood = dblood_const[:"#{dblood_const[:"#{key}"] == nil ? "0" : key}"]
@@ -356,8 +362,8 @@ Shoes.app do
 			unit_name = File.read("#{SOURCE_TXT}#{@visuals.xpath("/CreatureVisual/CreatureNameFileRef/@href")}")
 		end
 		town_id = nil
-		towns.each { |t| town_id = t.text if t.town_id == "TOWN_#{this_town}" }
-		subs = [ val=='90'? "If Xerxon is chosen as starting hero, any" : "Any", town_id , town_id, unit_name, this_dblood ]
+		towns.each { |t| town_id = t.text if t.town_id == this_town }
+		subs = [ val=='90' ? "If Xerxon is chosen as starting hero, any" : "Any", town_id, town_id, unit_name, this_dblood ]
 		desc_vars.each_with_index { |var, i| guild_desc.sub! var, "#{subs[i]}" }
 		spells_new << Spell.new("GUILD_SUMMONING_#{id}",
 				this_dblood,

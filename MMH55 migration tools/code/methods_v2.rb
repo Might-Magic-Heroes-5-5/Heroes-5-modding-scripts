@@ -341,11 +341,14 @@ class Manage_texts
 			spells.each do |s|
 				make_text "#{OUTPUT}/spells/#{s.id}", [ "name" ], "#{SOURCE_TXT}/#{s.texts[0]}" 
 				make_text "#{OUTPUT}/spells/#{s.id}", [ "desc", "additional" ], "#{SOURCE_TXT}/#{s.texts[1]}", 'spell';
+				debug(s.id)
 				s.texts[2].each do |p|
+					debug(p)
 					#p = check_dir p, dr_source
 					( make_text "#{OUTPUT}/spells/#{s.id}", [ "pred" ], "#{SOURCE_TXT}#{p}", 'pred' ) if p.include?('SpellBookPrediction.txt')
 				    ( make_text "#{OUTPUT}/spells/#{s.id}", [ "pred_expert" ], "#{SOURCE_TXT}#{p}", 'pred' ) if p.include?('SpellBookPrediction_Expert')
 					( make_text "#{OUTPUT}/spells/#{s.id}", [ "pred" ], "#{SOURCE_TXT}#{p}", 'pred' ) if p.include?('HealHPReduce.txt')
+					
 					( make_text "#{OUTPUT}/spells/#{s.id}", [ "pred" ], "#{SOURCE_ADD}/none.txt", 'pred' ) if s.stats[5] == 'MAGIC_SCHOOL_ADVENTURE'
 				end
 			end
@@ -372,8 +375,8 @@ class Manage_texts
 	def artifact(artifacts)
 		if @flag == 1 then
 			artifacts.each do |a| 
-				make_text "#{OUTPUT}/artifacts/#{a.id}", [ "name" ], "#{SOURCE_TXT}#{artifacts.last.texts[0]}"
-				make_text "#{OUTPUT}/artifacts/#{a.id}", [ "desc", "additional" ], "#{SOURCE_TXT}#{artifacts.last.texts[1]}", 'artifact'
+				make_text "#{OUTPUT}/artifacts/#{a.id}", [ "name" ], "#{SOURCE_TXT}#{a.texts[0]}"
+				make_text "#{OUTPUT}/artifacts/#{a.id}", [ "desc", "additional" ], "#{SOURCE_TXT}#{a.texts[1]}", 'artifact'
 			end
 		end
 	end
@@ -401,9 +404,9 @@ class Manage_texts
 			shell.each do |s|
 				make_text "#{OUTPUT}/micro_artifacts/#{s.id}", [ "name" ], "#{SOURCE_TXT}#{s.texts[0]}";
 				if s.texts[1] == "" then
-					make_text "en/micro_artifacts/#{s.id}", [ "desc" ], "#{SOURCE_ADD}/none.txt";
+					make_text "#{OUTPUT}/micro_artifacts/#{s.id}", [ "desc" ], "#{SOURCE_ADD}/none.txt";
 				else
-					make_text "en/micro_artifacts/#{s.id}", [ "desc" ], "#{SOURCE_TXT}#{s.texts[1]}";
+					make_text "#{OUTPUT}/micro_artifacts/#{s.id}", [ "desc" ], "#{SOURCE_TXT}#{s.texts[1]}";
 				end
 			end
 		end
