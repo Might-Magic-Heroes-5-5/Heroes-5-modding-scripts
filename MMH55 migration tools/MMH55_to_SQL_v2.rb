@@ -6,10 +6,10 @@ require 'nokogiri'
 
 Shoes.app do
 	
-	OUTPUT = "output"
-	SOURCE_IDX = "data"
-	SOURCE_TXT = "Rc11/MMH55-Texts-EN"
-	SOURCE_ADD = "additions_en"
+	OUTPUT = "output/texts"
+	SOURCE_IDX = "source/data"
+	SOURCE_TXT = "source/texts/MMH55-Texts-EN"
+	SOURCE_ADD = "source/texts/additions_en"
 	GUILD_TEXT = { MAGIC_SCHOOL_DARK: 'SchoolDark',
 					MAGIC_SCHOOL_SUMMONING: 'SchoolSummoning',
 					MAGIC_SCHOOL_DESTRUCTIVE: 'SchoolDestructive',
@@ -18,12 +18,19 @@ Shoes.app do
 					MAGIC_SCHOOL_RUNIC: 'SchoolSpecial', 
 					MAGIC_SCHOOL_WARCRIES: 'Warcries', 
 					MAGIC_SCHOOL_ADVENTURE: 'AdventureSpells' }
+	FILTERS = [["ATTACK,DEFENCE,SPELLPOWER,KNOWLEDGE,MORALE,LUCK", "by_modifier"], 
+	["10000,20000,30000,40000,50000,60000,70000,80000,90000,100000", "by_price"],
+	["ARTF_CLASS_MINOR,ARTF_CLASS_MAJOR,ARTF_CLASS_RELIC,ARTF_CLASS_GRAIL", "by_rarity"],
+	["MONK,DWARVEN,LION,VESTMENT,NECRO,SARISSUS,DRAGONISH,SAINT,GUARDIAN,CORNUCOPIA,LEGION", "by_set"],
+	["FINGER,HEAD,NECK,CHEST,SECONDARY,MISCSLOT1,PRIMARY,FEET,SHOULDERS,INVENTORY", "by_slot"],
+	["", "micro_artifact"]]
+
 	source_core55 = "#{SOURCE_IDX}/scripts/H55-Core.lua"
 	source_common = "#{SOURCE_IDX}/scripts/common.lua"
 	source_creatures = "#{SOURCE_IDX}/GameMechanics/creature/creatures"
 	source_spells = "#{SOURCE_IDX}/GameMechanics/RefTables/UndividedSpells.xdb"
 	dfstats = File.open("#{SOURCE_IDX}/GameMechanics/RPGStats/DefaultStats.xdb") { |f| Nokogiri::XML(f) }
-	db = Manage_db.new('skillwheel.db', 0)
+	db = Manage_db.new('skillwheel.db', 1)
 	create_text = Manage_texts.new(nil, 1)
 	
 	############ create table with faction list
@@ -34,7 +41,7 @@ Shoes.app do
 	town_doc.xpath("//ID").each_with_index do |n,i|
 		next if town_txt_f[i].text == ''
 		town_id = n.text
-		town_txt = File.read("#{SOURCE_TXT}/#{town_txt_f[i].text}") 
+		town_txt = File.read("#{Dir.pwd}/#{SOURCE_TXT}#{town_txt_f[i].text}") 
 		towns << Town.new(town_id, town_txt)
 	end
 	db.town(towns)
@@ -269,7 +276,6 @@ Shoes.app do
 				(check_dir doc.xpath("//NameFileRef/@href").text, dr_source),
 				(check_dir doc.xpath("//LongDescriptionFileRef/@href").text, dr_source),
 				predict )
-			#debug("#{school_id} - #{spell_id}")
 		end		
 	end
 	db.spell(spells)
@@ -279,7 +285,7 @@ Shoes.app do
 	############ Create magic guild table, add shatter summoning to spell database, gather artifact sets
 	guilds, town_2_elmnt, num_2_faction, num_2_creature, dblood_const, artifact_sets = [], {}, {}, {}, {}, {}
 	flag, current_set = 0, ""
-	guild_doc = File.open('data/types.xml') { |f| Nokogiri::XML(f) }
+	guild_doc = File.open("#{SOURCE_IDX}/types.xml") { |f| Nokogiri::XML(f) }
 	guild_doc.xpath("//Base/SharedClasses/Item")[299].xpath("Entries/Item").each do |g| 
 		guild = g.xpath("Name").text
 		guilds << guild if guild != "MAGIC_SCHOOL_NONE"
@@ -379,12 +385,13 @@ Shoes.app do
 	db.spell(spells_new)
 	create_text.guild_summoning(spells_new)
 	
-	filters = []
-	Dir.glob("design/artifacts/filters/**/*").reject{ |rj| File.directory?(rj) }.each do |fl|
-		filter_name = fl.split("/")[-1].split('.')[0]
-		filters << [ "#{(filter_name == 'by_set' ? artifact_sets.keys : (read_skills fl)).join(",").upcase}", "#{filter_name}" ]
-	end	
-	db.artifact_filter(filters)
+	#filters = []
+	#Dir.glob("source/design/artifacts/filters/**/*").reject{ |rj| File.directory?(rj) }.each do |fl|
+	#	filter_name = fl.split("/")[-1].split('.')[0]
+	#	filter_desc = "#{filter_name == 'by_set' ? artifact_sets.keys : (read_skills fl).join(",").upcase}"
+	#	filters << [ "#{filter_desc}", "#{filter_name}" ]
+	#end	
+	db.artifact_filter(FILTERS)
 	
 	############ make a list of all sets
 	source_sets = "#{SOURCE_IDX}/scripts/advmap-startup.lua"

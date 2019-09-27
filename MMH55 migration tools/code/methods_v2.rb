@@ -34,6 +34,7 @@ def make_text dirr, target, source, mode=0, type='f',
 		data_to_copy = data_to_copy[0].split('<color_default>', target.count).each { |m| m.gsub!(/<color_default>/, '') }
 	when "artifact" then
 		data_to_copy[0].gsub!(/<color=.*?>/, '')
+		data_to_copy[0].gsub!(/<color_.*?>/, '')
 		data_to_copy = data_to_copy[0].split('<br><br>', target.count).each { |m| m.gsub!(/<br>/, "\n") }
 	when "spell" then
 		data_to_copy[0].gsub!(/<br>/,'')
@@ -59,7 +60,6 @@ def make_text dirr, target, source, mode=0, type='f',
 		file_out.close()
 	end
 end
-
 
 class Town
 
@@ -96,7 +96,6 @@ class Klass < Town
 	def stats; return@class_id, @at, @df, @sp, @kn, @town_id end
 	def skills; return @secondary_skills, @secondary_chance end
 	def text; return @text end
-	
 end
 
 class Hero < Klass
@@ -127,9 +126,9 @@ end
 class Creature
 	
 	def initialize(id, at, df, shots, min_d, max_d, spd, init, fly, hp, spell, masteries, mana, tier, faction, growth, ability, gold, wood, ore, mercury, crystal, sufur, gem, txt_name)
-		@id, @at, @df, @shots, @min_d, @max_d, @spd, @init, @fly, @hp, @spell, @masteries, @mana, @tier, @faction, @growth, @ability = id, at, df, shots, min_d, max_d, spd, init, fly, hp, spell, masteries, mana, tier, faction, growth, ability  ###Get creature vars
+		@id, @at, @df, @shots, @min_d, @max_d, @spd, @init, @fly, @hp, @spell, @masteries, @mana, @tier, @faction, @growth, @ability = id, at, df, shots, min_d, max_d, spd, init, fly, hp, spell, masteries, mana, tier, faction, growth, ability  				## Get creature vars
 		@gold, @wood, @ore, @mercury, @crystal, @sufur, @gem = gold, wood, ore, mercury, crystal, sufur, gem
-		@txt_name = txt_name 				 																																																		###Get text vars
+		@txt_name = txt_name 				 															   ## Get text vars
 	end
 
 	def id; return @id end
@@ -148,7 +147,6 @@ class Ability
 	def id; return @id end
 	def name; return @name end
 	def desc; return @desc end
-	
 end
 
 class Spell
@@ -245,7 +243,6 @@ class Manage_db
 						next if c.class_id != r.xpath("Class").text
 						req_skills = []
 						r.xpath("dependenciesIDs/Item").each { |p| req_skills << p.text }
-						#if (@db.execute "select skill from #{c.class_id} where type='SKILLTYPE_SKILL'").join(",").include?(s.stats[2] ) then
 						if skills_name.include?(s.stats[2])
 							@db.execute "insert into #{c.class_id} values ( ?, ?, ?, ?);",s.stats[0], req_skills.join(','), s.stats[1], '99' if not req_skills.empty?
 						end
@@ -259,11 +256,7 @@ class Manage_db
 	def skill(skills)
 		if @flag == 1 then
 			skills.each do |s| 
-				if s.stats[1] == "SKILLTYPE_SKILL" or s.stats[1] == "SKILLTYPE_STANDART_PERK" then
-					@db.execute "insert into skills values ( ?, ?, ?, ? );", s.stats, 1
-				else
-					s.stats[3]
-				end
+				@db.execute "insert into skills values ( ?, ?, ?, ? );", s.stats, 1 if [ "SKILLTYPE_SKILL", "SKILLTYPE_STANDART_PERK" ].include?(s.stats[1])
 			end
 		end
 	end
@@ -341,14 +334,10 @@ class Manage_texts
 			spells.each do |s|
 				make_text "#{OUTPUT}/spells/#{s.id}", [ "name" ], "#{SOURCE_TXT}/#{s.texts[0]}" 
 				make_text "#{OUTPUT}/spells/#{s.id}", [ "desc", "additional" ], "#{SOURCE_TXT}/#{s.texts[1]}", 'spell';
-				debug(s.id)
 				s.texts[2].each do |p|
-					debug(p)
-					#p = check_dir p, dr_source
 					( make_text "#{OUTPUT}/spells/#{s.id}", [ "pred" ], "#{SOURCE_TXT}#{p}", 'pred' ) if p.include?('SpellBookPrediction.txt')
 				    ( make_text "#{OUTPUT}/spells/#{s.id}", [ "pred_expert" ], "#{SOURCE_TXT}#{p}", 'pred' ) if p.include?('SpellBookPrediction_Expert')
 					( make_text "#{OUTPUT}/spells/#{s.id}", [ "pred" ], "#{SOURCE_TXT}#{p}", 'pred' ) if p.include?('HealHPReduce.txt')
-					
 					( make_text "#{OUTPUT}/spells/#{s.id}", [ "pred" ], "#{SOURCE_ADD}/none.txt", 'pred' ) if s.stats[5] == 'MAGIC_SCHOOL_ADVENTURE'
 				end
 			end
@@ -393,9 +382,7 @@ class Manage_texts
 	
 	def micro_prefix(prefix, id)
 		if @flag == 1 then
-			prefix.each_with_index do |p,i|	
-				make_text "#{OUTPUT}/micro_artifacts/#{id}", [ "f_#{i+1}" ], "#{SOURCE_TXT}#{p}";
-			end
+			prefix.each_with_index { |p,i| make_text "#{OUTPUT}/micro_artifacts/#{id}", [ "f_#{i+1}" ], "#{SOURCE_TXT}#{p}"; }
 		end
 	end
 	
