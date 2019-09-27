@@ -27,5 +27,5 @@ The order of running the scripts is as follows:
 2. Inside migration create the following folders "source" and "texts"
 3. In "source" folder create folder called "data" and extract inside files from <game folder>/data/data.pak
 4. In "texts" folder create a folder called "game_texts" and extract inside files from <game folder>/data/text.pak
-5. (Optional) Extract MMH55_Index.pak and MMH55_data.pak in "data" folder and overlap existing files
+5. (Optional) Extract MMH55_Index.pak, MMH55_DATA.pak and MMh55_FRAME in "data" folder and overlap existing files
 6. (Optional) Extract MMh55-Texts-EN in "game_texts" folder and 
