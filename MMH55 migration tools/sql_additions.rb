@@ -6,7 +6,7 @@ require 'nokogiri'
 
 
 def popupate_skill_perks hero_id, new_skill, template_klass, db
-	source_perks = 'Rc11\MMH55-Index\GameMechanics\RefTables\Skills.xdb'
+	source_perks = 'source\data\GameMechanics\RefTables\Skills.xdb'
 	doc = File.open(source_perks) { |f| Nokogiri::XML(f) }
 	doc.xpath("//objects/Item").each_with_index do |n, i|
 		txt_name, txt_desc = [], []
@@ -23,9 +23,9 @@ def popupate_skill_perks hero_id, new_skill, template_klass, db
 				t.xpath("dependenciesIDs/Item").each { |p| req_skills << p.text }
 				if klas == "#{template_klass}" then
 					unless req_skills.empty? then
-						db.execute "insert into #{hero_id} values ( ?, ?, ?, ?);",s_id, req_skills.join(','), type, '99'
-						make_text "en/skills/#{s_id}", ["name"], "#{SOURCE_TXT}/#{txt_name[0]}", 'skill'
-						make_text "en/skills/#{s_id}", ["desc", "additional" ], "#{SOURCE_TXT}/#{txt_desc[0]}", 'skill'
+						db.execute "insert into #{hero_id} values ( ?, ?, ?, ?);",s_id, req_skills.join(','), type, '99' if @db_flag == 1
+						make_text "#{OUTPUT}/skills/#{s_id}", ["name"], "#{SOURCE_TXT}/#{txt_name[0]}", 'skill'
+						make_text "#{OUTPUT}/skills/#{s_id}", ["desc", "additional" ], "#{SOURCE_TXT}/#{txt_desc[0]}", 'skill'
 					end
 				end
 			end
@@ -36,83 +36,92 @@ end
 Shoes.app do
 
 	DB_NAME = 'skillwheel.db'
-	SOURCE_ADD = 'additions_ru'
-	SOURCE_TXT = 'Rc11/MMH55-Texts-RU'
+	SOURCE_ADD = 'source/texts/additions_ru'
+	SOURCE_TXT = 'source/texts/MMH55-Texts-RU'
+	OUTPUT = 'output/texts'
 	db = SQLite3::Database.new DB_NAME
-	source_phoenix_stats = 'Rc11/MMH55-Index/GameMechanics/RPGStats/ConjuredPhoenix.xdb'
-
+	source_phoenix_stats = 'source/data/GameMechanics/RPGStats/ConjuredPhoenix.xdb'
+	@db_flag = 0
 	###########add Haven Renegade class
 	id = 'HERO_CLASS_KNIGHT_RENEGADE'
 	get_klas = db.execute "select * from HERO_CLASS_KNIGHT"
-	db.execute "delete from classes WHERE id='#{id}';"
+	db.execute "delete from classes WHERE id='#{id}';" if @db_flag == 1
 	#db.execute "DROP TABLE #{id};"
-	db.execute "CREATE TABLE #{id} ( skill string, chance int, type string, sequence int );"
+	db.execute "CREATE TABLE #{id} ( skill string, chance int, type string, sequence int );" if @db_flag == 1
 	klas_entry = (db.execute "select * from classes WHERE id='HERO_CLASS_KNIGHT'")[0]
-	db.execute "INSERT into classes VALUES ( ?, ?, ?, ?, ?, ?, ?);", id, klas_entry[1..-1]	
-	make_text "en/classes/#{id}", ["name"], "#{SOURCE_ADD}/classes/#{id}.txt"
+	db.execute "INSERT into classes VALUES ( ?, ?, ?, ?, ?, ?, ?);", id, klas_entry[1..-1] if @db_flag == 1 
+	make_text "#{OUTPUT}/classes/#{id}", ["name"], "#{SOURCE_ADD}/classes/#{id}.txt"
 	get_klas.each do |n|
-		n[0] == 'HERO_SKILL_SHATTER_DARK_MAGIC' ? n[0] = 'HERO_SKILL_DARK_MAGIC' : nil
-		db.execute "INSERT into #{id} VALUES ( ?, ?, ?, ?);",n
+		n[0] = 'HERO_SKILL_DARK_MAGIC' if n[0] == 'HERO_SKILL_SHATTER_DARK_MAGIC'
+		db.execute "INSERT into #{id} VALUES ( ?, ?, ?, ?);",n if @db_flag == 1
 	end
 	popupate_skill_perks id, "HERO_SKILL_DARK_MAGIC", "HERO_CLASS_KNIGHT", db
 	
 	##add heroes to Knight Renegade class
-	db.execute "UPDATE heroes SET classes='#{id}' WHERE id='RedHeavenHero01';"
-	db.execute "UPDATE heroes SET classes='#{id}' WHERE id='Mardigo';"
-	db.execute "UPDATE heroes SET classes='#{id}' WHERE id='RedHeavenHero05';"
+	if @db_flag == 1 then
+		db.execute "UPDATE heroes SET classes='#{id}' WHERE id='RedHeavenHero01';" 
+		db.execute "UPDATE heroes SET classes='#{id}' WHERE id='Mardigo';"
+		db.execute "UPDATE heroes SET classes='#{id}' WHERE id='RedHeavenHero05';"
+	end
 	
 	###########add Stronghold Khan class
 	id = 'HERO_CLASS_BARBARIAN_KHAN'
 	get_klas = db.execute "select * from HERO_CLASS_BARBARIAN"
-	db.execute "delete from classes WHERE id='#{id}';"
-	klas_entry = (db.execute "select * from classes WHERE id='HERO_CLASS_BARBARIAN'")[0]
-	db.execute "INSERT into classes VALUES ( ?, ?, ?, ?, ?, ?, ?);", id, klas_entry[1..-1]
-	#db.execute "DROP TABLE #{id};"
-	db.execute "CREATE TABLE #{id} ( skill string, chance int, type string, sequence int );"
-	get_klas.each { |n| db.execute "INSERT into #{id} VALUES ( ?, ?, ?, ?);",n }
-	db.execute "INSERT into #{id} VALUES ( 'HERO_SKILL_VOICE', 12, 'SKILLTYPE_SKILL', 12);"
+	if @db_flag == 1 then
+		db.execute "delete from classes WHERE id='#{id}';" if 
+		klas_entry = (db.execute "select * from classes WHERE id='HERO_CLASS_BARBARIAN'")[0]
+		db.execute "INSERT into classes VALUES ( ?, ?, ?, ?, ?, ?, ?);", id, klas_entry[1..-1]
+		#db.execute "DROP TABLE #{id};"
+		db.execute "CREATE TABLE #{id} ( skill string, chance int, type string, sequence int );"
+		get_klas.each { |n| db.execute "INSERT into #{id} VALUES ( ?, ?, ?, ?);",n  }
+		db.execute "INSERT into #{id} VALUES ( 'HERO_SKILL_VOICE', 12, 'SKILLTYPE_SKILL', 12);" 
+	end
+	
 	popupate_skill_perks id, "HERO_SKILL_VOICE", "HERO_CLASS_BARBARIAN", db
-	make_text "en/classes/#{id}", ["name"], "#{SOURCE_ADD}/classes/#{id}.txt"
+	make_text "#{OUTPUT}/classes/#{id}", ["name"], "#{SOURCE_ADD}/classes/#{id}.txt"
 	
 	##add heroes to Khan class
-	db.execute "UPDATE heroes SET classes='#{id}' WHERE id='Gottai';"
-	db.execute "UPDATE heroes SET classes='#{id}' WHERE id='Quroq';"
-	db.execute "UPDATE heroes SET classes='#{id}' WHERE id='Kunyak';"
-	
+	if @db_flag == 1 then
+		db.execute "UPDATE heroes SET classes='#{id}' WHERE id='Gottai';"
+		db.execute "UPDATE heroes SET classes='#{id}' WHERE id='Quroq';"
+		db.execute "UPDATE heroes SET classes='#{id}' WHERE id='Kunyak';"
+	end
 	###########add Stronghold Veteran class
 	id = 'HERO_CLASS_BARBARIAN_VET'
 	get_klas = db.execute "select * from HERO_CLASS_BARBARIAN"
-	db.execute "delete from classes WHERE id='#{id}';"
-	klas_entry = (db.execute "select * from classes WHERE id='HERO_CLASS_BARBARIAN'")[0]
-	#db.execute "DROP TABLE #{id};"
-	db.execute "CREATE TABLE #{id} ( skill string, chance int, type string, sequence int );"
-	db.execute "INSERT into classes VALUES ( ?, ?, ?, ?, ?, ?, ?);", id, klas_entry[1..-1]
-	get_klas.each { |n| db.execute "INSERT into #{id} VALUES ( ?, ?, ?, ?);",n }
-	db.execute "INSERT into #{id} VALUES ( 'HERO_SKILL_BARBARIAN_LEARNING', 12, 'SKILLTYPE_SKILL', 12);"
-	popupate_skill_perks id, "HERO_SKILL_BARBARIAN_LEARNING", "HERO_CLASS_BARBARIAN", db
-	make_text "en/classes/#{id}", ["name"], "#{SOURCE_ADD}/classes/#{id}.txt"
+	if @db_flag == 1 then
+		db.execute "delete from classes WHERE id='#{id}';"
+		klas_entry = (db.execute "select * from classes WHERE id='HERO_CLASS_BARBARIAN'")[0]
+		db.execute "CREATE TABLE #{id} ( skill string, chance int, type string, sequence int );"
+		db.execute "INSERT into classes VALUES ( ?, ?, ?, ?, ?, ?, ?);", id, klas_entry[1..-1]
+		get_klas.each { |n| db.execute "INSERT into #{id} VALUES ( ?, ?, ?, ?);",n }
+		db.execute "INSERT into #{id} VALUES ( 'HERO_SKILL_BARBARIAN_LEARNING', 12, 'SKILLTYPE_SKILL', 12);"
+		popupate_skill_perks id, "HERO_SKILL_BARBARIAN_LEARNING", "HERO_CLASS_BARBARIAN", db
+	end
+	make_text "#{OUTPUT}/classes/#{id}", ["name"], "#{SOURCE_ADD}/classes/#{id}.txt"
 	
 	##add heroes to Veteran class 
-	db.execute "UPDATE heroes SET  classes='#{id}' WHERE id='Azar';"
-	db.execute "UPDATE heroes SET  classes='#{id}' WHERE id='Crag';"
-	db.execute "UPDATE heroes SET  classes='#{id}' WHERE id='Hero6';"
-
+	if @db_flag == 1 then
+		db.execute "UPDATE heroes SET  classes='#{id}' WHERE id='Azar';"
+		db.execute "UPDATE heroes SET  classes='#{id}' WHERE id='Crag';"
+		db.execute "UPDATE heroes SET  classes='#{id}' WHERE id='Hero6';"
+	end
 	###ARTIFACTS
 	sets = db.execute "select name from artifact_filter WHERE filter='by_set'"
 	sets = sets[0][0] + ",CORNUCOPIA,LEGION"
-	db.execute "UPDATE artifact_filter SET name='#{sets}' WHERE filter='by_set';"
-	cornucopia = [ "RES_CRYSTAL", "RES_GEM", "RES_MERCURY", "RES_ORE", "RES_SULPHUR", "RES_WOOD" ]
-	cornucopia.each { |c| debug(c); db.execute "UPDATE artifacts SET art_set='CORNUCOPIA' WHERE id='#{c}';" }
-
-	legion = [ "ENDLESS_BAG_OF_GOLD", "LEGION_T1", "LEGION_T2", "LEGION_T3", "LEGION_T4", "LEGION_T5", "LEGION_T6", "LEGION_T7" ]
-	legion.each { |l| db.execute "UPDATE artifacts SET art_set='LEGION' WHERE id='#{l}';" }
-		
+	if @db_flag == 1 then
+		db.execute "UPDATE artifact_filter SET name='#{sets}' WHERE filter='by_set';"
+		cornucopia = [ "RES_CRYSTAL", "RES_GEM", "RES_MERCURY", "RES_ORE", "RES_SULPHUR", "RES_WOOD" ]
+		cornucopia.each { |c| debug(c); db.execute "UPDATE artifacts SET art_set='CORNUCOPIA' WHERE id='#{c}';" } 
+		legion = [ "ENDLESS_BAG_OF_GOLD", "LEGION_T1", "LEGION_T2", "LEGION_T3", "LEGION_T4", "LEGION_T5", "LEGION_T6", "LEGION_T7" ]
+		legion.each { |l| db.execute "UPDATE artifacts SET art_set='LEGION' WHERE id='#{l}';" } 
+	end
 	###SPELLS
-	make_text "en/spells/SPELL_PHANTOM", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_PHANTOM/pred.txt", 'pred'
-	make_text "en/spells/SPELL_DISPEL", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_DISPEL/pred.txt", 'pred'
-	make_text "en/spells/SPELL_BLESS", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_BLESS/pred.txt", 'pred'
-	make_text "en/spells/SPELL_CURSE", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_CURSE/pred.txt", 'pred'
-	make_text "en/spells/SPELL_BERSERK", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_BERSERK/pred.txt", 'pred'
+	make_text "#{OUTPUT}/spells/SPELL_PHANTOM", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_PHANTOM/pred.txt", 'pred'
+	make_text "#{OUTPUT}/spells/SPELL_DISPEL", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_DISPEL/pred.txt", 'pred'
+	make_text "#{OUTPUT}/spells/SPELL_BLESS", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_BLESS/pred.txt", 'pred'
+	make_text "#{OUTPUT}/spells/SPELL_CURSE", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_CURSE/pred.txt", 'pred'
+	make_text "#{OUTPUT}/spells/SPELL_BERSERK", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_BERSERK/pred.txt", 'pred'
 	phoenix_stats = File.open(source_phoenix_stats) { |f| Nokogiri::XML(f) }
 	hp_flat = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/Health").text
 	hp_sp = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/Health_PerPower").text
@@ -144,73 +153,68 @@ Defense = #{defence_flat} + #{defence_sp}*SP + #{defence_lvl}*HERO_LVL
 Initiative = #{init_flat} + #{init_sp}*SP + #{init_lvl}*HERO_LVL
 Speed = #{speed_flat} + #{speed_sp}*SP + #{speed_lvl}*HERO_LVL"
 	File.open("#{SOURCE_ADD}/spells/SPELL_CONJURE_PHOENIX/additional.txt", 'w') { |file| file.write(ph_stats) }
-	make_text "en/spells/SPELL_CONJURE_PHOENIX", [ "additional" ], "#{SOURCE_ADD}/spells/SPELL_CONJURE_PHOENIX/additional.txt", 'skill'
-	make_text "en/spells/SPELL_CONJURE_PHOENIX", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_CONJURE_PHOENIX/pred.txt", 'pred'
-	make_text "en/spells/SPELL_DIVINE_VENGEANCE", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_DIVINE_VENGEANCE/pred.txt", 'pred'
-	["SPELL_RUNE_OF_CHARGE", "SPELL_RUNE_OF_BERSERKING", "SPELL_RUNE_OF_MAGIC_CONTROL",
-	"SPELL_RUNE_OF_EXORCISM", "SPELL_RUNE_OF_ELEMENTAL_IMMUNITY", "SPELL_RUNE_OF_STUNNING",
-	"SPELL_RUNE_OF_BATTLERAGE",	"SPELL_RUNE_OF_ETHEREALNESS","SPELL_RUNE_OF_REVIVE", "SPELL_RUNE_OF_DRAGONFORM",
-	"SPELL_EFFECT_FINE_RUNE", "SPELL_EFFECT_STRONG_RUNE"].each_with_index do |r, i| 
-		make_text "en/spells/#{r}", [ "pred" ], "#{SOURCE_ADD}/spells/runes/pred.txt", 'pred'
-	end
-	["SPELL_WARCRY_RALLING_CRY", "SPELL_WARCRY_CALL_OF_BLOOD", "SPELL_WARCRY_WORD_OF_THE_CHIEF", "SPELL_WARCRY_FEAR_MY_ROAR",
-"SPELL_WARCRY_BATTLECRY", "SPELL_WARCRY_SHOUT_OF_MANY"].each_with_index do |r, i| 
-		make_text "en/spells/#{r}", [ "pred" ], "#{SOURCE_ADD}/spells/#{r}/pred.txt", 'pred'
-	end
+	make_text "#{OUTPUT}/spells/SPELL_CONJURE_PHOENIX", [ "additional" ], "#{SOURCE_ADD}/spells/SPELL_CONJURE_PHOENIX/additional.txt", 'skill'
+	make_text "#{OUTPUT}/spells/SPELL_CONJURE_PHOENIX", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_CONJURE_PHOENIX/pred.txt", 'pred'
+	make_text "#{OUTPUT}/spells/SPELL_DIVINE_VENGEANCE", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_DIVINE_VENGEANCE/pred.txt", 'pred'
 	
-	db.execute "insert into spells values ( ?, ?, ?, ?, ?, ?, ? );", "MANAGE_TOWN", "", "", "0", "0", "MAGIC_SCHOOL_SPECIAL", "0,0,0,0,0,0"
-	db.execute "insert into spells values ( ?, ?, ?, ?, ?, ?, ? );", "MANAGE_TOWN_GOVERNOR", "", "", "0", "0", "MAGIC_SCHOOL_SPECIAL", "0,0,0,0,0,0"
-	db.execute "insert into spells values ( ?, ?, ?, ?, ?, ?, ? );", "MANAGE_TOWN_GATE", "", "", "25", "0", "MAGIC_SCHOOL_SPECIAL", "0,0,0,0,0,0"
-	db.execute "insert into spells values ( ?, ?, ?, ?, ?, ?, ? );", "MANAGE_TOWN_CONVERSION", "", "", "0", "0", "MAGIC_SCHOOL_SPECIAL", "0,0,0,0,0,0"
+	RUNES.each_with_index { |r, i| make_text "#{OUTPUT}/spells/#{r}", [ "pred" ], "#{SOURCE_ADD}/spells/runes/pred.txt", 'pred' }
+	WARCRIES.each_with_index { |r, i| make_text "#{OUTPUT}/spells/#{r}", [ "pred" ], "#{SOURCE_ADD}/spells/#{r}/pred.txt", 'pred' }
 	
-	make_text "en/spells/SPELL_MANAGE_TOWN", [ "name" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN/name.txt"
-	make_text "en/spells/SPELL_MANAGE_TOWN", [ "desc" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN/desc.txt"
-	make_text "en/spells/SPELL_MANAGE_TOWN", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN/pred.txt"
-	make_text "en/spells/SPELL_MANAGE_TOWN_GOVERNOR", [ "name" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GOVERNOR/name.txt"
-	make_text "en/spells/SPELL_MANAGE_TOWN_GOVERNOR", [ "desc" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GOVERNOR/desc.txt"
-	make_text "en/spells/SPELL_MANAGE_TOWN_GOVERNOR", [ "additional" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GOVERNOR/additional.txt"
-	make_text "en/spells/SPELL_MANAGE_TOWN_GOVERNOR", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GOVERNOR/pred.txt"
-	make_text "en/spells/SPELL_MANAGE_TOWN_GATE", [ "name" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GATE/name.txt"
-	make_text "en/spells/SPELL_MANAGE_TOWN_GATE", [ "desc" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GATE/desc.txt"
-	make_text "en/spells/SPELL_MANAGE_TOWN_GATE", [ "additional" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GATE/additional.txt"
-	make_text "en/spells/SPELL_MANAGE_TOWN_GATE", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GATE/pred.txt"
-	make_text "en/spells/SPELL_MANAGE_TOWN_CONVERSION", [ "name" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_CONVERSION/name.txt"
-	make_text "en/spells/SPELL_MANAGE_TOWN_CONVERSION", [ "desc" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_CONVERSION/desc.txt"
-	make_text "en/spells/SPELL_MANAGE_TOWN_CONVERSION", [ "additional" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_CONVERSION/additional.txt"
-	make_text "en/spells/SPELL_MANAGE_TOWN_CONVERSION", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_CONVERSION/pred.txt"
-	make_text "en/spells", [ "empowered_prediction" ], "#{SOURCE_ADD}/spells/empowered_prediction.txt"
-	make_text "en/spells", [ "summon_formula" ], "#{SOURCE_ADD}/spells/summon_formula.txt"
+	if @db_flag == 1 then
+		db.execute "insert into spells values ( ?, ?, ?, ?, ?, ?, ? );", "SPELL_MANAGE_TOWN", "", "", "0", "0", "MAGIC_SCHOOL_ADVENTURE", "0,0,0,0,0,0" 
+		db.execute "insert into spells values ( ?, ?, ?, ?, ?, ?, ? );", "SPELL_MANAGE_TOWN_GOVERNOR", "", "", "0", "0", "MAGIC_SCHOOL_ADVENTURE", "0,0,0,0,0,0"
+		db.execute "insert into spells values ( ?, ?, ?, ?, ?, ?, ? );", "SPELL_MANAGE_TOWN_GATE", "", "", "25", "0", "MAGIC_SCHOOL_ADVENTURE", "0,0,0,0,0,0"
+		db.execute "insert into spells values ( ?, ?, ?, ?, ?, ?, ? );", "SPELL_MANAGE_TOWN_CONVERSION", "", "", "0", "0", "MAGIC_SCHOOL_ADVENTURE", "0,0,0,0,0,0"
+	end
+	make_text "#{OUTPUT}/spells/SPELL_MANAGE_TOWN", [ "name" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN/name.txt"
+	make_text "#{OUTPUT}/spells/SPELL_MANAGE_TOWN", [ "desc" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN/desc.txt"
+	make_text "#{OUTPUT}/spells/SPELL_MANAGE_TOWN", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN/pred.txt"
+	make_text "#{OUTPUT}/spells/SPELL_MANAGE_TOWN_GOVERNOR", [ "name" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GOVERNOR/name.txt"
+	make_text "#{OUTPUT}/spells/SPELL_MANAGE_TOWN_GOVERNOR", [ "desc" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GOVERNOR/desc.txt"
+	make_text "#{OUTPUT}/spells/SPELL_MANAGE_TOWN_GOVERNOR", [ "additional" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GOVERNOR/additional.txt"
+	make_text "#{OUTPUT}/spells/SPELL_MANAGE_TOWN_GOVERNOR", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GOVERNOR/pred.txt"
+	make_text "#{OUTPUT}/spells/SPELL_MANAGE_TOWN_GATE", [ "name" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GATE/name.txt"
+	make_text "#{OUTPUT}/spells/SPELL_MANAGE_TOWN_GATE", [ "desc" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GATE/desc.txt"
+	make_text "#{OUTPUT}/spells/SPELL_MANAGE_TOWN_GATE", [ "additional" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GATE/additional.txt"
+	make_text "#{OUTPUT}/spells/SPELL_MANAGE_TOWN_GATE", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_GATE/pred.txt"
+	make_text "#{OUTPUT}/spells/SPELL_MANAGE_TOWN_CONVERSION", [ "name" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_CONVERSION/name.txt"
+	make_text "#{OUTPUT}/spells/SPELL_MANAGE_TOWN_CONVERSION", [ "desc" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_CONVERSION/desc.txt"
+	make_text "#{OUTPUT}/spells/SPELL_MANAGE_TOWN_CONVERSION", [ "additional" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_CONVERSION/additional.txt"
+	make_text "#{OUTPUT}/spells/SPELL_MANAGE_TOWN_CONVERSION", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_MANAGE_TOWN_CONVERSION/pred.txt"
+	make_text "#{OUTPUT}/spells", [ "empowered_prediction" ], "#{SOURCE_ADD}/spells/empowered_prediction.txt"
+	make_text "#{OUTPUT}/spells", [ "summon_formula" ], "#{SOURCE_ADD}/spells/summon_formula.txt"
 	
 	###GUILDS
-	make_text "en/guilds/MAGIC_SCHOOL_RUNIC", [ "name.txt" ], "#{SOURCE_ADD}/guilds/MAGIC_SCHOOL_RUNIC/name.txt"
-	make_text "en/guilds/MAGIC_SCHOOL_SPECIAL", [ "name.txt" ], "#{SOURCE_ADD}/guilds/MAGIC_SCHOOL_SPECIAL/name.txt"
+	make_text "#{OUTPUT}/guilds/MAGIC_SCHOOL_RUNIC", [ "name" ], "#{SOURCE_ADD}/guilds/MAGIC_SCHOOL_RUNIC/name.txt"
+	make_text "#{OUTPUT}/guilds/MAGIC_SCHOOL_SPECIAL", [ "name" ], "#{SOURCE_ADD}/guilds/MAGIC_SCHOOL_SPECIAL/name.txt"
 	
 
 	###CREATURE ARTIFACTS
-	[ "MAE_ARMOR_CRUSHING", "MAE_DEFENCE", "MAE_HASTE", "MAE_HEALTH", "MAE_LUCK", "MAE_MAGIC_PROTECTION", "MAE_MORALE", "MAE_PIERCING", "MAE_SPEED" ].each do |micro|
-		make_text "en/micro_artifacts/#{micro}", [ "effect" ], "#{SOURCE_ADD}/micro_artifacts/#{micro}/effect.txt", 'pred'
+	MICRO_ARTIFACTS.each do |micro|
+		make_text "#{OUTPUT}/micro_artifacts/#{micro}", [ "effect" ], "#{SOURCE_ADD}/micro_artifacts/#{micro}/effect.txt", 'pred'
 	end
 
-	db.execute "CREATE TABLE micro_protection ( id int )"
-	db.execute "INSERT into micro_protection VALUES ('0.073'), ('0.146'), ('0.219'), ('0.292'), ('0.347'), ('0.402'), ('0.457'), ('0.497'), ('0.537'), ('0.577'),
-('0.607'), ('0.637'), ('0.657'), ('0.677'), ('0.697'), ('0.717'), ('0.737'), ('0.757'), ('0.777'), ('0.787'), ('0.797'), ('0.807'), ('0.817'),
-('0.827'), ('0.837'), ('0.847'), ('0.857'), ('0.867'), ('0.877'), ('0.882'), ('0.887'), ('0.892'), ('0.897'), ('0.902'), ('0.907'), ('0.912'),
-('0.917'), ('0.922'), ('0.927'), ('0.932'), ('0.937'), ('0.942'), ('0.947'), ('0.952'), ('0.957'), ('0.962'), ('0.967'), ('0.971'), ('0.975'),
-('0.979'), ('0.982'), ('0.985'), ('0.988'), ('0.991'), ('0.993'), ('0.995'), ('0.997'), ('0.998'), ('0.999'), ('1');"
+	if @db_flag == 1 then
+		db.execute "CREATE TABLE micro_protection ( id int )"
+		db.execute "INSERT into micro_protection VALUES ('0.073'), ('0.146'), ('0.219'), ('0.292'), ('0.347'), ('0.402'), ('0.457'), ('0.497'), ('0.537'), ('0.577'),
+	('0.607'), ('0.637'), ('0.657'), ('0.677'), ('0.697'), ('0.717'), ('0.737'), ('0.757'), ('0.777'), ('0.787'), ('0.797'), ('0.807'), ('0.817'),
+	('0.827'), ('0.837'), ('0.847'), ('0.857'), ('0.867'), ('0.877'), ('0.882'), ('0.887'), ('0.892'), ('0.897'), ('0.902'), ('0.907'), ('0.912'),
+	('0.917'), ('0.922'), ('0.927'), ('0.932'), ('0.937'), ('0.942'), ('0.947'), ('0.952'), ('0.957'), ('0.962'), ('0.967'), ('0.971'), ('0.975'),
+	('0.979'), ('0.982'), ('0.985'), ('0.988'), ('0.991'), ('0.993'), ('0.995'), ('0.997'), ('0.998'), ('0.999'), ('1');"
 
-	db.execute "UPDATE micro_artifact_effect SET effect='0' WHERE id='MAE_NONE';"
-	db.execute "UPDATE micro_artifact_effect SET effect='0.25' WHERE id='MAE_PIERCING';"
-	db.execute "UPDATE micro_artifact_effect SET effect='0.0666667' WHERE id='MAE_ARMOR_CRUSHING';"
-	db.execute "UPDATE micro_artifact_effect SET effect='0.2' WHERE id='MAE_HEALTH';"
-	db.execute "UPDATE micro_artifact_effect SET effect='0.25' WHERE id='MAE_DEFENCE';"
-	db.execute "UPDATE micro_artifact_effect SET effect='55' WHERE id='MAE_MAGIC_PROTECTION';"
-	db.execute "UPDATE micro_artifact_effect SET effect='0.0833333333333333' WHERE id='MAE_LUCK';"
-	db.execute "UPDATE micro_artifact_effect SET effect='0.0833333333333333' WHERE id='MAE_MORALE';"
-	db.execute "UPDATE micro_artifact_effect SET effect='0.0666667' WHERE id='MAE_SPEED';"
-	db.execute "UPDATE micro_artifact_effect SET effect='0.75' WHERE id='MAE_HASTE';"
-
-	FileUtils.copy_entry "#{SOURCE_ADD}/panes", "en/panes"
-	FileUtils.copy_entry "#{SOURCE_ADD}/properties", "en/properties"
+		db.execute "UPDATE micro_artifact_effect SET effect='0' WHERE id='MAE_NONE';"
+		db.execute "UPDATE micro_artifact_effect SET effect='0.25' WHERE id='MAE_PIERCING';"
+		db.execute "UPDATE micro_artifact_effect SET effect='0.0666667' WHERE id='MAE_ARMOR_CRUSHING';"
+		db.execute "UPDATE micro_artifact_effect SET effect='0.2' WHERE id='MAE_HEALTH';"
+		db.execute "UPDATE micro_artifact_effect SET effect='0.25' WHERE id='MAE_DEFENCE';"
+		db.execute "UPDATE micro_artifact_effect SET effect='55' WHERE id='MAE_MAGIC_PROTECTION';"
+		db.execute "UPDATE micro_artifact_effect SET effect='0.0833333333333333' WHERE id='MAE_LUCK';"
+		db.execute "UPDATE micro_artifact_effect SET effect='0.0833333333333333' WHERE id='MAE_MORALE';"
+		db.execute "UPDATE micro_artifact_effect SET effect='0.0666667' WHERE id='MAE_SPEED';"
+		db.execute "UPDATE micro_artifact_effect SET effect='0.75' WHERE id='MAE_HASTE';"
+	end
+	FileUtils.copy_entry "#{SOURCE_ADD}/panes", "#{OUTPUT}/panes"
+	FileUtils.copy_entry "#{SOURCE_ADD}/properties", "#{OUTPUT}/properties"
 	
 	para "GOOD!"
 

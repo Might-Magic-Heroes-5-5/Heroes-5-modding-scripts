@@ -1,0 +1,1 @@
+Governor experience gained = (town_lvl*10) + (1 + hero_lvl/10)*hero_level^2

@@ -1,2 +1,0 @@
-Moves creature ATB by <value=damage>% and gives it <value=duration> rage points.
-Rises army rage by 30.

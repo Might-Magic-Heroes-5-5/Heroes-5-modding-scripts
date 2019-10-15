@@ -1,2 +1,0 @@
-Creature min damage = min dmg + (max dmg - min dmg)*<value=damage>%.
-Duration: <value=duration> turns.

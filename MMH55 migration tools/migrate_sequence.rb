@@ -4,7 +4,7 @@
 Shoes.app do
 
 	db = SQLite3::Database.new 'skillwheel.db'
-	db_old = SQLite3::Database.new 'skillwheel_working.db'
+	db_old = SQLite3::Database.new 'skillwheel_RC11.db'
 	klasses = db.execute "select id from classes"
 
 	klasses.each do |k|

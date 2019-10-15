@@ -1,3 +1,0 @@
-Ranger
-Warden
-Druid
