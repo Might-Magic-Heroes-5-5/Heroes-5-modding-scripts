@@ -59,6 +59,7 @@ def make_text dirr, target, source, mode=0, type='f',
 		file_out.write("#{t.strip}")
 		file_out.close()
 	end
+	return data_to_copy
 end
 
 class Town
@@ -202,7 +203,7 @@ class Manage_db
 	
 	def initialize(db, flag=1)
 		@flag = flag
-		if @flag == 1 then
+		if @flag != 0 then
 			@db = SQLite3::Database.new "#{db}"
 			@db.execute "create table factions ( name string );"
 			@db.execute "create table heroes ( id string, atk int, def int, spp int, knw int, skills string, masteries string, perks string, spells string, classes string, faction string, sequence int );"
@@ -222,15 +223,15 @@ class Manage_db
 	end
 	
 	def town(towns)
-		towns.each { |t| @db.execute("INSERT INTO factions ( name ) VALUES ( '#{t.town_id}' )") } if @flag == 1
+		towns.each { |t| @db.execute("INSERT INTO factions ( name ) VALUES ( '#{t.town_id}' )") } if @flag != 0
 	end
 	
 	def hero(heroes)
-		heroes.each { |h| @db.execute("insert into heroes values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )", h.stats, 0) } if @flag == 1
+		heroes.each { |h| @db.execute("insert into heroes values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )", h.stats, 0) } if @flag != 0
 	end
 	
 	def klass(classes, skills)
-		if @flag == 1 then
+		if @flag != 0 then
 			classes.each do |c|
 				@db.execute "insert into classes values ( ?, ?, ?, ?, ?, ?, ? )", c.stats, 1
 				@db.execute "create table #{c.class_id} (skill string, chance int, type string, sequence int);"
@@ -254,7 +255,7 @@ class Manage_db
 	end
 	
 	def skill(skills)
-		if @flag == 1 then
+		if @flag != 0 then
 			skills.each do |s| 
 				@db.execute "insert into skills values ( ?, ?, ?, ? );", s.stats, 1 if [ "SKILLTYPE_SKILL", "SKILLTYPE_STANDART_PERK" ].include?(s.stats[1])
 			end
@@ -262,26 +263,26 @@ class Manage_db
 	end
 	
 	def unit(units)
-		if @flag == 1 then
+		if @flag != 0 then
 			units.each do |u|
 				@db.execute "insert into creatures values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?, ?, ?, ? );", u.stats, u.price, 0
 			end
 		end
 	end
 	
-	def spell(spells); spells.each { |s| @db.execute "insert into spells values ( ?, ?, ?, ?, ?, ?, ? );", s.stats } if @flag == 1 end
+	def spell(spells); spells.each { |s| @db.execute "insert into spells values ( ?, ?, ?, ?, ?, ?, ? );", s.stats } if @flag != 0 end
 	
-	def spell_spec(spells_spec); spells_spec.each { |s| @db.execute "insert into spells_specials values ( ?, ?, ? );", s[0], s[1], s[2] } if @flag == 1 end
+	def spell_spec(spells_spec); spells_spec.each { |s| @db.execute "insert into spells_specials values ( ?, ?, ? );", s[0], s[1], s[2] } if @flag != 0 end
 	
-	def guild(guilds); guilds.each_with_index { |g,i| @db.execute "insert into guilds values (?, ?)", g, i } if @flag == 1 end
+	def guild(guilds); guilds.each_with_index { |g,i| @db.execute "insert into guilds values (?, ?)", g, i } if @flag != 0 end
 	
-	def artifact(artifacts); artifacts.each { |a| @db.execute "insert into artifacts values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? );", a.stats } if @flag == 1 end
+	def artifact(artifacts); artifacts.each { |a| @db.execute "insert into artifacts values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? );", a.stats } if @flag != 0 end
 	
-	def artifact_filter(filter); filter.each { |f| @db.execute "insert into artifact_filter values ( ?, ?)", f[0], f[1] } if @flag == 1 end
+	def artifact_filter(filter); filter.each { |f| @db.execute "insert into artifact_filter values ( ?, ?)", f[0], f[1] } if @flag != 0 end
 	
-	def micro_effect(micro); micro.each { |m| @db.execute "insert into micro_artifact_effect values ( ?, ?, ?, ?, ?, ?, ?, ?, ? );", m.stats, m.price} if @flag == 1 end
+	def micro_effect(micro); micro.each { |m| @db.execute "insert into micro_artifact_effect values ( ?, ?, ?, ?, ?, ?, ?, ?, ? );", m.stats, m.price} if @flag != 0 end
 	
-	def micro_shell(shell); shell.each { |s| @db.execute "insert into micro_artifact_shell values ( ? );", s.id } if @flag == 1 end
+	def micro_shell(shell); shell.each { |s| @db.execute "insert into micro_artifact_shell values ( ? );", s.id } if @flag != 0 end
 	
 end
 
@@ -289,10 +290,10 @@ class Manage_texts
 
 	def initialize(var, flag=1); @flag = flag end
 	
-	def town(towns); towns.each { |t| make_text "#{OUTPUT}/factions/#{t.town_id}", ["name"], [ t.text ], 0, 't' } if @flag == 1 end
+	def town(towns); towns.each { |t| make_text "#{OUTPUT}/factions/#{t.town_id}", ["name"], [ t.text ], 0, 't' } if @flag != 0 end
 	
 	def hero(heroes)
-		if @flag == 1 then
+		if @flag != 0 then
 			heroes.each do |h| 
 				make_text "#{OUTPUT}/heroes/#{h.stats[0]}", [ "name" ], "#{SOURCE_TXT}#{h.text[0]}"
 				make_text "#{OUTPUT}/heroes/#{h.stats[0]}", ["spec", "additional" ], "#{SOURCE_TXT}#{h.text[1]}", 'hero'
@@ -300,28 +301,34 @@ class Manage_texts
 		end
 	end
 	
-	def klass(classes); classes.each { |c| make_text "#{OUTPUT}/classes/#{c.stats[0]}", ["name"], "#{SOURCE_TXT}/GameMechanics/RefTables/#{c.text}" } if @flag == 1 end
+	def klass(classes); classes.each { |c| make_text "#{OUTPUT}/classes/#{c.stats[0]}", ["name"], "#{SOURCE_TXT}/GameMechanics/RefTables/#{c.text}" } if @flag != 0 end
 	
 	def skill(skills)
-		if @flag == 1 then
+		master = [ "NONE", "BASIC", "ADVANCED", "EXPERT", "ULTIMATE" ]
+		if @flag != 0 then
+			aFile = File.new("skills.csv", "w") if @flag == 2
 			skills.each do |s|
+				dscp = []
 				if s.stats[1] == "SKILLTYPE_SKILL" then
 					s.texts[0].each_with_index do |_, q|
 						make_text "#{OUTPUT}/skills/#{s.stats[0]}", ["name#{q+1}"], "#{SOURCE_TXT}/#{s.texts[0][q]}"
-						make_text "#{OUTPUT}/skills/#{s.stats[0]}", ["desc#{q+1}", "additional#{q+1}"], "#{SOURCE_TXT}/#{s.texts[1][q]}", 'skill'
+						dscp = (make_text "#{OUTPUT}/skills/#{s.stats[0]}", ["desc#{q+1}", "additional#{q+1}"], "#{SOURCE_TXT}/#{s.texts[1][q]}", 'skill')
+						aFile.write("#{master[q+1]}@ #{s.stats[0]}@, #{dscp}\n") if @flag == 2
 					end
 				else
 					make_text "#{OUTPUT}/skills/#{s.stats[0]}", ["name"], "#{SOURCE_TXT}/#{s.texts[0][0]}"
-					make_text "#{OUTPUT}/skills/#{s.stats[0]}", ["desc", "additional" ], "#{SOURCE_TXT}/#{s.texts[1][0]}", 'skill'
+					dscp = make_text "#{OUTPUT}/skills/#{s.stats[0]}", ["desc", "additional" ], "#{SOURCE_TXT}/#{s.texts[1][0]}", 'skill'
+					aFile.write("PERK@ #{s.stats[0]}@, #{dscp}\n") if @flag == 2
 				end
 			end
+			aFile.close if @flag == 2
 		end
 	end
 
-	def unit(units); units.each { |u| make_text "#{OUTPUT}/creatures/#{u.id}", [ "name" ], "#{SOURCE_TXT}#{u.texts}" } if @flag == 1 end
+	def unit(units); units.each { |u| make_text "#{OUTPUT}/creatures/#{u.id}", [ "name" ], "#{SOURCE_TXT}#{u.texts}" } if @flag != 0 end
 	
 	def ability(abilities)
-		if @flag == 1 then
+		if @flag != 0 then
 			abilities.each do |a|
 				make_text "#{OUTPUT}/abilities/#{a.id}", [ "name" ], "#{SOURCE_TXT}#{a.name}"
 				make_text "#{OUTPUT}/abilities/#{a.id}", [ "desc" ], "#{SOURCE_TXT}#{a.desc}"
@@ -330,7 +337,7 @@ class Manage_texts
 	end
 	
 	def spell(spells)
-		if @flag == 1 then
+		if @flag != 0 then
 			spells.each do |s|
 				make_text "#{OUTPUT}/spells/#{s.id}", [ "name" ], "#{SOURCE_TXT}/#{s.texts[0]}" 
 				make_text "#{OUTPUT}/spells/#{s.id}", [ "desc", "additional" ], "#{SOURCE_TXT}/#{s.texts[1]}", 'spell';
@@ -345,10 +352,10 @@ class Manage_texts
 		end
 	end
 	
-	def guild(guilds); guilds.each { |g| make_text "#{OUTPUT}/guilds/#{g}", [ "name" ], "#{SOURCE_TXT}/Text/Tooltips/SpellBook/#{GUILD_TEXT[:"#{g}"]}.txt" } if @flag == 1 end
+	def guild(guilds); guilds.each { |g| make_text "#{OUTPUT}/guilds/#{g}", [ "name" ], "#{SOURCE_TXT}/Text/Tooltips/SpellBook/#{GUILD_TEXT[:"#{g}"]}.txt" } if @flag != 0 end
 	
 	def guild_summoning(summoning);
-		if @flag == 1 then
+		if @flag != 0 then
 			summoning.each do |s|
 				FileUtils.mkpath "#{OUTPUT}/spells/#{s.id}"
 				file1 = File.open("#{OUTPUT}/spells/#{s.id}/name.txt", 'w');
@@ -362,16 +369,19 @@ class Manage_texts
 	end
 	
 	def artifact(artifacts)
-		if @flag == 1 then
+		aFile = File.new("artifact.csv", "w") if @flag == 2
+		if @flag != 0 then
 			artifacts.each do |a| 
 				make_text "#{OUTPUT}/artifacts/#{a.id}", [ "name" ], "#{SOURCE_TXT}#{a.texts[0]}"
-				make_text "#{OUTPUT}/artifacts/#{a.id}", [ "desc", "additional" ], "#{SOURCE_TXT}#{a.texts[1]}", 'artifact'
+				dscp = make_text "#{OUTPUT}/artifacts/#{a.id}", [ "desc", "additional" ], "#{SOURCE_TXT}#{a.texts[1]}", 'artifact'
+				aFile.write("#{a.id}@, #{dscp}\n") if @flag == 2
 			end
 		end
+		aFile.close if @flag == 2
 	end
 	
 	def micro_effect(micro);
-		if @flag == 1 then
+		if @flag != 0 then
 			micro.each do |m|
 				make_text "#{OUTPUT}/micro_artifacts/#{m.id}", [ "name" ], "#{SOURCE_TXT}#{m.texts[0]}";
 				make_text "#{OUTPUT}/micro_artifacts/#{m.id}", [ "suffix" ], "#{SOURCE_TXT}#{m.texts[1]}";
@@ -381,13 +391,13 @@ class Manage_texts
 	end
 	
 	def micro_prefix(prefix, id)
-		if @flag == 1 then
+		if @flag != 0 then
 			prefix.each_with_index { |p,i| make_text "#{OUTPUT}/micro_artifacts/#{id}", [ "f_#{i+1}" ], "#{SOURCE_TXT}#{p}"; }
 		end
 	end
 	
 	def micro_shell(shell)
-		if @flag == 1 then
+		if @flag != 0 then
 			shell.each do |s|
 				make_text "#{OUTPUT}/micro_artifacts/#{s.id}", [ "name" ], "#{SOURCE_TXT}#{s.texts[0]}";
 				if s.texts[1] == "" then

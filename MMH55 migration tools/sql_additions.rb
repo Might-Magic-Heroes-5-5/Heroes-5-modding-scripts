@@ -42,7 +42,7 @@ Shoes.app do
 	OUTPUT = 'output/texts'
 	db = SQLite3::Database.new "output/#{DB_NAME}"
 	source_phoenix_stats = 'source/data/GameMechanics/RPGStats/ConjuredPhoenix.xdb'
-	@db_flag = 1
+	@db_flag = 0
 	###########add Haven Renegade class
 	id = 'HERO_CLASS_KNIGHT_RENEGADE'
 	get_klas = db.execute "select * from HERO_CLASS_KNIGHT"
@@ -113,7 +113,7 @@ Shoes.app do
 	if @db_flag != 0 then
 		db.execute "UPDATE artifact_filter SET name='#{sets}' WHERE filter='by_set';"
 		cornucopia = [ "RES_CRYSTAL", "RES_GEM", "RES_MERCURY", "RES_ORE", "RES_SULPHUR", "RES_WOOD" ]
-		cornucopia.each { |c| debug(c); db.execute "UPDATE artifacts SET art_set='CORNUCOPIA' WHERE id='#{c}';" } 
+		cornucopia.each { |c| db.execute "UPDATE artifacts SET art_set='CORNUCOPIA' WHERE id='#{c}';" } 
 		legion = [ "ENDLESS_BAG_OF_GOLD", "LEGION_T1", "LEGION_T2", "LEGION_T3", "LEGION_T4", "LEGION_T5", "LEGION_T6", "LEGION_T7" ]
 		legion.each { |l| db.execute "UPDATE artifacts SET art_set='LEGION' WHERE id='#{l}';" } 
 	end
@@ -191,7 +191,7 @@ Speed = #{speed_flat} + #{speed_sp}*SP + #{speed_lvl}*HERO_LVL"
 	
 
 	###CREATURE ARTIFACTS
-	MICRO_ARTIFACTS.each do |micro|
+	MICROARTIFACTS.each do |micro|
 		make_text "#{OUTPUT}/micro_artifacts/#{micro}", [ "effect" ], "#{SOURCE_ADD}/micro_artifacts/#{micro}/effect.txt", 'pred'
 	end
 

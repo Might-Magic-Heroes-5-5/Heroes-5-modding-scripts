@@ -8,7 +8,7 @@ require 'code/statics'
 Shoes.app do
 
 	dfstats = File.open("#{SOURCE_DFSTATS}") { |f| Nokogiri::XML(f) }
-	db = Manage_db.new("#{DB_NAME}", 1)
+	db = Manage_db.new("#{DB_NAME}", 0)
 	create_text = Manage_texts.new(nil, 1)
 
 	############ create table with faction list
@@ -175,13 +175,14 @@ Shoes.app do
 	############ create table with all spells 
 	spell_src = File.open(SOURCE_SPELLS)  { |f| Nokogiri::XML(f) }
 	spell_dirs = ["Combat_Spells", "Hero_Abilities/Barbarian", "Adventure_Spells" ]
-	spells, b_effect, p_effect, spells_spec = [], [], [], []
+	spells, spells_spec = [], []
 	spell_src.xpath("/Table_Spell_SpellID/objects/Item").each do |sp|
 		spell_id = sp.xpath("ID").text
 		spell_xdb = "#{sp.xpath("Obj/@href").text}"
 		next if %w(SpellVisual Mass_ Empowered).any? { |word| spell_xdb.include?(word) } or spell_xdb.empty?
+		next if %w(ABILITY).any? { |word| spell_id.include?(word) } or spell_id.empty?
 		spell_xdb = "#{SOURCE_IDX}#{spell_xdb.split("#xpointer")[0]}"
-		base, power, resource, predict = [], [], [], []
+		base, power, resource, predict, b_effect, p_effect = [], [], [], [], [], []
 		doc = File.open(spell_xdb) { |f| Nokogiri::XML(f) }
 		school_id = doc.xpath("//MagicSchool").text
 		next if doc.xpath("//NameFileRef/@href").text == '' or school_id == 'MAGIC_SCHOOL_SPECIAL'
@@ -268,14 +269,15 @@ Shoes.app do
 	end
 
 	############ add shatter summoning to spell database, gather artifact sets
-	town_2_elmnt, num_2_faction, dblood_const, artifact_sets = {}, {}, {}, {}
+	town_2_elmnt, num_2_faction, dblood_const, artifact_sets,flag = {}, {}, {}, {}, 0
 	File.read(SOURCE_55CORE).each_line do |line|
 		case flag
 		when 0 then flag=1 if line.include?('function H55_GetTownRaceID') # flag 0-1 -  Match Tote Town ID with MMH55 town id; start at 1818 line
 		when 1 then if line.include?('townid') and line.include?('num') then
 						id = ""
 						line.split('townid = ')[1].chars.each do |c|
-							c == " " ? break : (id << c)
+							break if [ " ", "\n" ].any? { |d| c == d }
+							id << c
 						end
 						num_2_faction[:"#{sort_line line, 'num == ', ' then'}"] = id
 					end
@@ -317,16 +319,17 @@ Shoes.app do
 	end
 		 
 	flag=0
-	
-	
-	
+	debug(town_2_elmnt)
+	debug(num_2_faction)
 	spells_new = []
 	town_2_elmnt.each do |key, val|
 		unit_name = ''
 		desc_vars = []
-		guild_desc = File.read("#{SOURCE_ADD}/spells/creature_summoning.txt")
+		file_source = val=='90' ? "creature_summoning_xerxon.txt" : "creature_summoning.txt"
+		guild_desc = File.read("#{SOURCE_ADD}/spells/#{file_source}")
 		guild_desc.scan(Regexp.union(/<.*?>/,/<.*?>/)).each { |match| desc_vars << match }
 		this_town = num_2_faction[:"#{key[0]}"]
+		#debug(this_town)
 		id = "#{num_2_creature[:"#{val}"]}"
 		id = "SNOWAPE" if id == "SNOW_APE"
 		this_dblood = dblood_const[:"#{dblood_const[:"#{key}"] == nil ? "0" : key}"]
@@ -341,12 +344,12 @@ Shoes.app do
 		end
 		town_id = nil
 		towns.each { |t| town_id = t.text if t.town_id == this_town }
-		subs = [ val=='90' ? "If Xerxon is chosen as starting hero, any" : "Any", town_id, town_id, unit_name, this_dblood ]
+		subs = [ town_id, town_id, unit_name, this_dblood ]
 		desc_vars.each_with_index { |var, i| guild_desc.sub! var, "#{subs[i]}" }
 		spells_new << Spell.new("GUILD_SUMMONING_#{id}",
 				this_dblood,
 				"Any hero", #power.join
-				(val=='90'? "If Xerxon is chosen as starting hero, any" : "Any"),
+				nil,
 				0,
 				"MAGIC_SCHOOL_SPECIAL",
 				"0,0,0,0,0,0",
@@ -357,6 +360,7 @@ Shoes.app do
 	db.spell(spells_new)
 	create_text.guild_summoning(spells_new)
 	db.artifact_filter(FILTERS)
+
 
 	############ make a list of all sets
 	flag, artif_set, artif = 0, {}, {}

@@ -3,7 +3,7 @@
 
 Shoes.app do
 
-	db = SQLite3::Database.new 'skillwheel.db'
+	db = SQLite3::Database.new 'skillwheel_RC13.db'
 	db_old = SQLite3::Database.new 'skillwheel_RC12b.db'
 	klasses = db.execute "select id from classes"
 
