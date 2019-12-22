@@ -1,2 +1,2 @@
 Damage is modified by <value=enchant>.
-Spell duration: <value=duration> actions.
+Spell duration: <value=duration> action.
