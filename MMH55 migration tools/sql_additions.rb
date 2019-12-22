@@ -1,6 +1,7 @@
 require 'fileutils'
 require 'sqlite3'
 require 'code/readskills'
+require 'code/statics'
 require 'code/methods'
 require 'nokogiri'
 
@@ -23,7 +24,7 @@ def popupate_skill_perks hero_id, new_skill, template_klass, db
 				t.xpath("dependenciesIDs/Item").each { |p| req_skills << p.text }
 				if klas == "#{template_klass}" then
 					unless req_skills.empty? then
-						db.execute "insert into #{hero_id} values ( ?, ?, ?, ?);",s_id, req_skills.join(','), type, '99' if @db_flag == 1
+						db.execute "insert into #{hero_id} values ( ?, ?, ?, ?);",s_id, req_skills.join(','), type, '99' if @db_flag != 0
 						make_text "#{OUTPUT}/skills/#{s_id}", ["name"], "#{SOURCE_TXT}/#{txt_name[0]}", 'skill'
 						make_text "#{OUTPUT}/skills/#{s_id}", ["desc", "additional" ], "#{SOURCE_TXT}/#{txt_desc[0]}", 'skill'
 					end
@@ -36,29 +37,29 @@ end
 Shoes.app do
 
 	DB_NAME = 'skillwheel.db'
-	SOURCE_ADD = 'source/texts/additions_ru'
-	SOURCE_TXT = 'source/texts/MMH55-Texts-RU'
+	SOURCE_ADD = 'source/texts/additions_en'
+	SOURCE_TXT = 'source/texts/MMH55-Texts-EN'
 	OUTPUT = 'output/texts'
-	db = SQLite3::Database.new DB_NAME
+	db = SQLite3::Database.new "output/#{DB_NAME}"
 	source_phoenix_stats = 'source/data/GameMechanics/RPGStats/ConjuredPhoenix.xdb'
-	@db_flag = 0
+	@db_flag = 1
 	###########add Haven Renegade class
 	id = 'HERO_CLASS_KNIGHT_RENEGADE'
 	get_klas = db.execute "select * from HERO_CLASS_KNIGHT"
-	db.execute "delete from classes WHERE id='#{id}';" if @db_flag == 1
+	db.execute "delete from classes WHERE id='#{id}';" if @db_flag != 0
 	#db.execute "DROP TABLE #{id};"
-	db.execute "CREATE TABLE #{id} ( skill string, chance int, type string, sequence int );" if @db_flag == 1
+	db.execute "CREATE TABLE #{id} ( skill string, chance int, type string, sequence int );" if @db_flag != 0
 	klas_entry = (db.execute "select * from classes WHERE id='HERO_CLASS_KNIGHT'")[0]
-	db.execute "INSERT into classes VALUES ( ?, ?, ?, ?, ?, ?, ?);", id, klas_entry[1..-1] if @db_flag == 1 
+	db.execute "INSERT into classes VALUES ( ?, ?, ?, ?, ?, ?, ?);", id, klas_entry[1..-1] if @db_flag != 0 
 	make_text "#{OUTPUT}/classes/#{id}", ["name"], "#{SOURCE_ADD}/classes/#{id}.txt"
 	get_klas.each do |n|
 		n[0] = 'HERO_SKILL_DARK_MAGIC' if n[0] == 'HERO_SKILL_SHATTER_DARK_MAGIC'
-		db.execute "INSERT into #{id} VALUES ( ?, ?, ?, ?);",n if @db_flag == 1
+		db.execute "INSERT into #{id} VALUES ( ?, ?, ?, ?);",n if @db_flag != 0
 	end
 	popupate_skill_perks id, "HERO_SKILL_DARK_MAGIC", "HERO_CLASS_KNIGHT", db
 	
 	##add heroes to Knight Renegade class
-	if @db_flag == 1 then
+	if @db_flag != 0 then
 		db.execute "UPDATE heroes SET classes='#{id}' WHERE id='RedHeavenHero01';" 
 		db.execute "UPDATE heroes SET classes='#{id}' WHERE id='Mardigo';"
 		db.execute "UPDATE heroes SET classes='#{id}' WHERE id='RedHeavenHero05';"
@@ -67,7 +68,7 @@ Shoes.app do
 	###########add Stronghold Khan class
 	id = 'HERO_CLASS_BARBARIAN_KHAN'
 	get_klas = db.execute "select * from HERO_CLASS_BARBARIAN"
-	if @db_flag == 1 then
+	if @db_flag != 0 then
 		db.execute "delete from classes WHERE id='#{id}';" if 
 		klas_entry = (db.execute "select * from classes WHERE id='HERO_CLASS_BARBARIAN'")[0]
 		db.execute "INSERT into classes VALUES ( ?, ?, ?, ?, ?, ?, ?);", id, klas_entry[1..-1]
@@ -81,7 +82,7 @@ Shoes.app do
 	make_text "#{OUTPUT}/classes/#{id}", ["name"], "#{SOURCE_ADD}/classes/#{id}.txt"
 	
 	##add heroes to Khan class
-	if @db_flag == 1 then
+	if @db_flag != 0 then
 		db.execute "UPDATE heroes SET classes='#{id}' WHERE id='Gottai';"
 		db.execute "UPDATE heroes SET classes='#{id}' WHERE id='Quroq';"
 		db.execute "UPDATE heroes SET classes='#{id}' WHERE id='Kunyak';"
@@ -89,7 +90,7 @@ Shoes.app do
 	###########add Stronghold Veteran class
 	id = 'HERO_CLASS_BARBARIAN_VET'
 	get_klas = db.execute "select * from HERO_CLASS_BARBARIAN"
-	if @db_flag == 1 then
+	if @db_flag != 0 then
 		db.execute "delete from classes WHERE id='#{id}';"
 		klas_entry = (db.execute "select * from classes WHERE id='HERO_CLASS_BARBARIAN'")[0]
 		db.execute "CREATE TABLE #{id} ( skill string, chance int, type string, sequence int );"
@@ -101,7 +102,7 @@ Shoes.app do
 	make_text "#{OUTPUT}/classes/#{id}", ["name"], "#{SOURCE_ADD}/classes/#{id}.txt"
 	
 	##add heroes to Veteran class 
-	if @db_flag == 1 then
+	if @db_flag != 0 then
 		db.execute "UPDATE heroes SET  classes='#{id}' WHERE id='Azar';"
 		db.execute "UPDATE heroes SET  classes='#{id}' WHERE id='Crag';"
 		db.execute "UPDATE heroes SET  classes='#{id}' WHERE id='Hero6';"
@@ -109,7 +110,7 @@ Shoes.app do
 	###ARTIFACTS
 	sets = db.execute "select name from artifact_filter WHERE filter='by_set'"
 	sets = sets[0][0] + ",CORNUCOPIA,LEGION"
-	if @db_flag == 1 then
+	if @db_flag != 0 then
 		db.execute "UPDATE artifact_filter SET name='#{sets}' WHERE filter='by_set';"
 		cornucopia = [ "RES_CRYSTAL", "RES_GEM", "RES_MERCURY", "RES_ORE", "RES_SULPHUR", "RES_WOOD" ]
 		cornucopia.each { |c| debug(c); db.execute "UPDATE artifacts SET art_set='CORNUCOPIA' WHERE id='#{c}';" } 
@@ -160,7 +161,7 @@ Speed = #{speed_flat} + #{speed_sp}*SP + #{speed_lvl}*HERO_LVL"
 	RUNES.each_with_index { |r, i| make_text "#{OUTPUT}/spells/#{r}", [ "pred" ], "#{SOURCE_ADD}/spells/runes/pred.txt", 'pred' }
 	WARCRIES.each_with_index { |r, i| make_text "#{OUTPUT}/spells/#{r}", [ "pred" ], "#{SOURCE_ADD}/spells/#{r}/pred.txt", 'pred' }
 	
-	if @db_flag == 1 then
+	if @db_flag != 0 then
 		db.execute "insert into spells values ( ?, ?, ?, ?, ?, ?, ? );", "SPELL_MANAGE_TOWN", "", "", "0", "0", "MAGIC_SCHOOL_ADVENTURE", "0,0,0,0,0,0" 
 		db.execute "insert into spells values ( ?, ?, ?, ?, ?, ?, ? );", "SPELL_MANAGE_TOWN_GOVERNOR", "", "", "0", "0", "MAGIC_SCHOOL_ADVENTURE", "0,0,0,0,0,0"
 		db.execute "insert into spells values ( ?, ?, ?, ?, ?, ?, ? );", "SPELL_MANAGE_TOWN_GATE", "", "", "25", "0", "MAGIC_SCHOOL_ADVENTURE", "0,0,0,0,0,0"
@@ -194,7 +195,7 @@ Speed = #{speed_flat} + #{speed_sp}*SP + #{speed_lvl}*HERO_LVL"
 		make_text "#{OUTPUT}/micro_artifacts/#{micro}", [ "effect" ], "#{SOURCE_ADD}/micro_artifacts/#{micro}/effect.txt", 'pred'
 	end
 
-	if @db_flag == 1 then
+	if @db_flag != 0 then
 		db.execute "CREATE TABLE micro_protection ( id int )"
 		db.execute "INSERT into micro_protection VALUES ('0.073'), ('0.146'), ('0.219'), ('0.292'), ('0.347'), ('0.402'), ('0.457'), ('0.497'), ('0.537'), ('0.577'),
 	('0.607'), ('0.637'), ('0.657'), ('0.677'), ('0.697'), ('0.717'), ('0.737'), ('0.757'), ('0.777'), ('0.787'), ('0.797'), ('0.807'), ('0.817'),

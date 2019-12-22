@@ -8,9 +8,9 @@ require 'code/statics'
 Shoes.app do
 
 	dfstats = File.open("#{SOURCE_DFSTATS}") { |f| Nokogiri::XML(f) }
-	db = Manage_db.new("#{DB_NAME}", 0)
+	db = Manage_db.new("#{DB_NAME}", 1)
 	create_text = Manage_texts.new(nil, 1)
-	
+
 	############ create table with faction list
 	towns = []
 	town_doc = File.open(SOURCE_TOWNS) { |f| Nokogiri::XML(f) }
@@ -41,10 +41,11 @@ Shoes.app do
 			skill_req,
 			skill_name,
 			skill_desc )
-	end
+	end	
+
 	db.skill(skills)
 	create_text.skill(skills)
-	
+
 	############ create table with all in-game heroes and their starting primary and secondary stats
 	heroes, output_table, class_to_town = [], [], {}
 	q = 0
@@ -178,7 +179,7 @@ Shoes.app do
 	spell_src.xpath("/Table_Spell_SpellID/objects/Item").each do |sp|
 		spell_id = sp.xpath("ID").text
 		spell_xdb = "#{sp.xpath("Obj/@href").text}"
-		next if %w['SpellVisual','Mass_','Empowered'].any? { |word| spell_xdb.include?(word) } or spell_xdb.empty?
+		next if %w(SpellVisual Mass_ Empowered).any? { |word| spell_xdb.include?(word) } or spell_xdb.empty?
 		spell_xdb = "#{SOURCE_IDX}#{spell_xdb.split("#xpointer")[0]}"
 		base, power, resource, predict = [], [], [], []
 		doc = File.open(spell_xdb) { |f| Nokogiri::XML(f) }
@@ -248,13 +249,14 @@ Shoes.app do
 	guilds = []
 	flag, current_set = 0, ""
 	guild_doc = File.open("#{SOURCE_IDX}/types.xml") { |f| Nokogiri::XML(f) }
-	guild_doc.xpath("//Base/SharedClasses/Item")[299].xpath("Entries/Item").each do |g| 
+	guild_doc.xpath("//Base/SharedClasses/Item")[298].xpath("Entries/Item").each do |g| 
 		guild = g.xpath("Name").text
 		guilds << guild if guild != "MAGIC_SCHOOL_NONE"
 	end
+	
 	db.guild(guilds)
 	create_text.guild(guilds)
-	
+
 	############ Create hash of creatures number to text ID
 	num_2_creature = {}
 	File.read(SOURCE_COMMON).each_line do |line|
@@ -264,7 +266,7 @@ Shoes.app do
 					break if line.include?('War machines')
 		end
 	end
-	
+
 	############ add shatter summoning to spell database, gather artifact sets
 	town_2_elmnt, num_2_faction, dblood_const, artifact_sets = {}, {}, {}, {}
 	File.read(SOURCE_55CORE).each_line do |line|
@@ -355,7 +357,7 @@ Shoes.app do
 	db.spell(spells_new)
 	create_text.guild_summoning(spells_new)
 	db.artifact_filter(FILTERS)
-	
+
 	############ make a list of all sets
 	flag, artif_set, artif = 0, {}, {}
 	File.read(SOURCE_ADVENTUREMAP).each_line do |line|
@@ -435,6 +437,6 @@ Shoes.app do
 	end
 	db.micro_shell(micro_shells)
 	create_text.micro_shell(micro_shells)
-	
+
 	para "Success"
 end

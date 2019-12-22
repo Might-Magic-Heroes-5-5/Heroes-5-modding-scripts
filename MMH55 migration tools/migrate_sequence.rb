@@ -4,7 +4,7 @@
 Shoes.app do
 
 	db = SQLite3::Database.new 'skillwheel.db'
-	db_old = SQLite3::Database.new 'skillwheel_RC11.db'
+	db_old = SQLite3::Database.new 'skillwheel_RC12b.db'
 	klasses = db.execute "select id from classes"
 
 	klasses.each do |k|
@@ -35,9 +35,12 @@ Shoes.app do
 	end
 	
 	heroes = db.execute "select id from heroes"
-	old_sequence = db_old.execute "select sequence from heroes"
-	heroes.each_with_index do |p, i|
-		db.execute "update heroes set sequence = '#{old_sequence[i][0]}' where id = '#{p[0]}';"
+	old_heroes = db_old.execute "select id, sequence from heroes"
+	#old_sequence = db_old.execute "select sequence from heroes where id = '#{p}';"
+	
+	old_heroes.each do |p|
+		#db.execute "update heroes set sequence = '#{old_sequence[i][0]}' where id = '#{p[0]}';"
+		db.execute "update heroes set sequence = '#{p[1]}' where id = '#{p[0]}';"
 	end
 	
 	para "Migration Complete!"
