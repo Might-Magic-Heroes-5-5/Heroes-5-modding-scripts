@@ -36,13 +36,10 @@ end
 
 Shoes.app do
 
-	DB_NAME = 'skillwheel.db'
-	SOURCE_ADD = 'source/texts/additions_en'
-	SOURCE_TXT = 'source/texts/MMH55-Texts-EN'
-	OUTPUT = 'output/texts'
-	db = SQLite3::Database.new "output/#{DB_NAME}"
+	
 	source_phoenix_stats = 'source/data/GameMechanics/RPGStats/ConjuredPhoenix.xdb'
 	@db_flag = 0
+	db = SQLite3::Database.new "#{DB_NAME}"
 	###########add Haven Renegade class
 	id = 'HERO_CLASS_KNIGHT_RENEGADE'
 	get_klas = db.execute "select * from HERO_CLASS_KNIGHT"

@@ -348,7 +348,7 @@ Shoes.app do
 		desc_vars.each_with_index { |var, i| guild_desc.sub! var, "#{subs[i]}" }
 		spells_new << Spell.new("GUILD_SUMMONING_#{id}",
 				this_dblood,
-				"Any hero", #power.join
+				nil, #power.join
 				nil,
 				0,
 				"MAGIC_SCHOOL_SPECIAL",
