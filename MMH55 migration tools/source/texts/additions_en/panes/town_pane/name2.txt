@@ -1,7 +1,7 @@
 Might and Magic Heroes 5.5 changes
 Towns:
 Heroes:
-Adventure map:
+Racial skills:
 Appearance:
 Mechanics:
 Known issues:
@@ -32,3 +32,4 @@ Dragonblood Crystals
 Duel Mode
 Boots of Illogical Levitation
 Bloodrage
+Training grounds

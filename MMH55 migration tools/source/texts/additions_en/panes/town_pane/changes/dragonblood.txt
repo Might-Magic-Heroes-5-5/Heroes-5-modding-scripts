@@ -1,4 +1,4 @@
 Dragonblood crystal is the very blood of the Dragons Gods, that was spilled over Ashan during the Wars of Creation. It is used in Magic guilds (read building description) and allows the breeding of magical creatures. If H1 = level of your first hero; C1 = amount of crystals this hero has.
-The summmoning capability of a player is ((H1*C1)+(H2*C2)+(H3*C3)+....)) and cannot exceed 800.
+The summmoning capability of a player is SQRT((H1*C1)+(H2*C2)+(H3*C3)+....) and the value within the square root cannot exceed 600.
 
 Click here to find more!
