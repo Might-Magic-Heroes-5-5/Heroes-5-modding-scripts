@@ -1,10 +1,14 @@
+###################################### 	 What to do 	 ###########################################
+DB_FLAG = 0
+TXT_FLAG = 1
 ###################################### 	 Output dirs    ######################################
-OUTPUT = "output/texts"
+OUTPUT = "output/texts_ru"
 DB_NAME = "output/skillwheel.db"
-
+###################################### texts sources ######################################
+SOURCE_TXT = "source/texts/MMH55-Texts-RU"
+SOURCE_ADD = "source/texts/additions_ru"
 ###################################### Heroes V sources ######################################
 SOURCE_IDX = "source/data"
-SOURCE_TXT = "source/texts/MMH55-Texts-EN"
 SOURCE_CREATURES = "#{SOURCE_IDX}/GameMechanics/creature/creatures"
 SOURCE_SPELLS = "#{SOURCE_IDX}/GameMechanics/RefTables/UndividedSpells.xdb"
 SOURCE_DFSTATS = "#{SOURCE_IDX}/GameMechanics/RPGStats/DefaultStats.xdb"
@@ -21,7 +25,6 @@ SOURCE_ADVENTUREMAP = "#{SOURCE_IDX}/scripts/advmap-startup.lua"
 SOURCE_COMMON = "#{SOURCE_IDX}/scripts/common.lua"
 ###################################### MMH55 sources ######################################
 SOURCE_55CORE = "#{SOURCE_IDX}/scripts/H55-Core.lua"
-SOURCE_ADD = "source/texts/additions_en"
 
 ###################################### 	STATIC ARRAYS and sources 	##########################################
 

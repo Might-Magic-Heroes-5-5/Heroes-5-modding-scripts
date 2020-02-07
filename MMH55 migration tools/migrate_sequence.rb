@@ -3,12 +3,13 @@
 
 Shoes.app do
 
-	db = SQLite3::Database.new 'skillwheel_RC13.db'
-	db_old = SQLite3::Database.new 'skillwheel_RC12b.db'
+	db = SQLite3::Database.new 'skillwheel.db'
+	db_old = SQLite3::Database.new 'skillwheelRC13.db'
+
 	klasses = db.execute "select id from classes"
 
 	klasses.each do |k|
-		k[0] == 'HERO_CLASS_NONE' ? next : nil
+		next if k[0] == 'HERO_CLASS_NONE'
 		perks = db.execute "select skill from #{k[0]}"
 		old_sequence = db_old.execute "select sequence from #{k[0]}"
 		perks.each_with_index do |p, i|
@@ -36,10 +37,8 @@ Shoes.app do
 	
 	heroes = db.execute "select id from heroes"
 	old_heroes = db_old.execute "select id, sequence from heroes"
-	#old_sequence = db_old.execute "select sequence from heroes where id = '#{p}';"
-	
-	old_heroes.each do |p|
-		#db.execute "update heroes set sequence = '#{old_sequence[i][0]}' where id = '#{p[0]}';"
+	old_heroes.each_with_index do |p, i|
+		debug("#{p[0]} - #{p[1]}")
 		db.execute "update heroes set sequence = '#{p[1]}' where id = '#{p[0]}';"
 	end
 	

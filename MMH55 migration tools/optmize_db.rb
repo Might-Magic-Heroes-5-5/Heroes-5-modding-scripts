@@ -1,9 +1,10 @@
 require 'sqlite3'
 
-DB = SQLite3::Database.new "settings/skillwheel.db"
+DB = SQLite3::Database.new "skillwheel.db"
 
 INDEX_LIST = DB.execute( "SELECT name FROM sqlite_master WHERE type == 'index';" )
 INDEX_LIST.each { |i| DB.execute( "DROP INDEX '#{i[0]}';" ) }
+DB.execute( "VACUUM;" )
 
 DB.execute( "CREATE INDEX classes_by_faction ON classes (faction, sequence);" )
 DB.execute( "CREATE INDEX classes_by_id ON classes (id);" )

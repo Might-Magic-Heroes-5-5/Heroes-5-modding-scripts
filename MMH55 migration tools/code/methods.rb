@@ -202,6 +202,7 @@ end
 class Manage_db
 	
 	def initialize(db, flag=1)
+		debug(flag)
 		@flag = flag
 		if @flag != 0 then
 			@db = SQLite3::Database.new "#{db}"

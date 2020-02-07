@@ -6,10 +6,11 @@ require 'nokogiri'
 require 'code/statics'
 
 Shoes.app do
-
+	
+	debug(DB_FLAG)
 	dfstats = File.open("#{SOURCE_DFSTATS}") { |f| Nokogiri::XML(f) }
-	db = Manage_db.new("#{DB_NAME}", 0)
-	create_text = Manage_texts.new(nil, 1)
+	db = Manage_db.new("#{DB_NAME}", DB_FLAG)
+	create_text = Manage_texts.new(nil, TXT_FLAG)
 
 	############ create table with faction list
 	towns = []
@@ -319,8 +320,6 @@ Shoes.app do
 	end
 		 
 	flag=0
-	debug(town_2_elmnt)
-	debug(num_2_faction)
 	spells_new = []
 	town_2_elmnt.each do |key, val|
 		unit_name = ''
@@ -329,11 +328,9 @@ Shoes.app do
 		guild_desc = File.read("#{SOURCE_ADD}/spells/#{file_source}")
 		guild_desc.scan(Regexp.union(/<.*?>/,/<.*?>/)).each { |match| desc_vars << match }
 		this_town = num_2_faction[:"#{key[0]}"]
-		#debug(this_town)
 		id = "#{num_2_creature[:"#{val}"]}"
 		id = "SNOWAPE" if id == "SNOW_APE"
 		this_dblood = dblood_const[:"#{dblood_const[:"#{key}"] == nil ? "0" : key}"]
-		
 		Dir.glob("#{SOURCE_CREATURES}/**/*#{id}.xdb").reject{ |rj| File.directory?(rj) }.each do |fn|
 			doc = File.open(fn) { |f| Nokogiri::XML(f) }
 			header = fn.split("GameMechanics")[0]
