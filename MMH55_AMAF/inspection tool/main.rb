@@ -89,7 +89,7 @@ end
 
 def get_tree (src, &block)	
 	Dir.entries(src).reject{ |rj| rj == '..' or rj == '.' }.each_with_index do |f, i|
-		debug("#{src}\\#{f}") if @var_debug == 1
+		#debug("#{src}\\#{f}") if @var_debug == 1
 		curDir = "#{src}\\#{f}"
 		File.directory?("#{src}\\#{f}")? get_tree(curDir, &block ) : ( block.call(curDir) )
 	end
@@ -105,18 +105,18 @@ def get_and_update_unitHp (file)
 	end
 end
 
-def update_objectData_to_xml (file)
+def get_files_from_filter (file)
 	doc = File.open("#{file}") { |f| Nokogiri::XML(f) }
 	@AdvMapShared.each do |adv|
 		if doc.at_xpath(adv) != nil then
 			######### Gatierhing object data
-			razed = doc.at_xpath("#{adv}/RazedStatic")
-			razed['href'] = '/MapObjects/RazedTowns/Fake_PeasantHut.xdb#xpointer(/AdvMapStaticShared)'
+			#razed = doc.at_xpath("#{adv}/RazedStatic")
+			#razed['href'] = '/MapObjects/RazedTowns/Fake_PeasantHut.xdb#xpointer(/AdvMapStaticShared)'
 			destDir = ((@f_wr2 + file.split('data')[1]).split('\\'))
 			file2 = destDir.pop
 			destDir = destDir.join('/')
 			directory_exists?(destDir)
-			debug("########DestDir is #{destDir}") if @var_debug == 1;
+			#debug("########DestDir is #{destDir}") if @var_debug == 1;
 			######### creating pak file for DATA folder
 			File.write("#{destDir}/#{file2}", doc)
 			break
@@ -193,13 +193,14 @@ end
 def mainmenu
 	left, top = 300, 30
 	@canvas.clear do
-		button("Modify AdvMapShared xdbs",   left: left, top: top +   0, width: 300) { modify_AdvMapShared }
+		button("Extract AdvMapShared xdbs",  left: left, top: top +   0, width: 300) { extract_AdvMapShared }
 		button("Inspect AdvMapShared xdbs",  left: left, top: top +  50, width: 300) { analyze_AdvMapShared }
-		button("Modify Creature xdbs", 		 left: left, top: top + 100, width: 300) { nil }
+		button("Modify AdvMapShared xdbs",   left: left, top: top + 100, width: 300) { modify_AdvMapShared  }
+		button("Modify Creature xdbs", 		 left: left, top: top + 150, width: 300) { nil }
 	end
 end
 
-def modify_AdvMapShared 
+def extract_AdvMapShared 
 	source = Dir.pwd + '/data/MapObjects'
 	@f_wr2 = Dir.pwd  + '/output'
 	@canvas.clear do
@@ -215,8 +216,7 @@ def modify_AdvMapShared
 		## Files filter
 		para "Filter files by XML tree", left: 30, top: 130
 		dir_filter = edit_line("#{@AdvMapShared}", left: 115, top: 160, height: 30, width: 676, tooltip: "Directory to to write in") { |t| @@AdvMapShared = t.text }
-		
-		button("Extract", left: 430, top: 250, width: 140, tooltip: "Copy all files and changes razed object") { get_tree(source, &method(:update_objectData_to_xml)) }
+		button("Extract", left: 430, top: 250, width: 140, tooltip: "Copy all files and changes razed object") { get_tree(source, &method(:get_files_from_filter)) }
 	end
 end
 
@@ -306,7 +306,45 @@ def analyze_AdvMapShared
 	end
 end
 
+def modify_AdvMapShared
+source = Dir.pwd + '/data/MapObjects'
+	source = Dir.pwd  + '/output'
+	@canvas.clear do
+		button("Main Menu", left: 430, top: 0, width: 140, tooltip: "Go to main menu") { mainmenu }
+		## Input dir 
+		para "Input dir", left: 30, top: 50
+		dir_in = edit_line("#{source}" , left: 115, top: 50, height: 30, width: 550, tooltip: "Directory to inspect from", state: 'disabled') { |t| source = t.text }
+		button("Browse", left: 690, top: 50, width: 100, tooltip: "Browse directory") { dir_in.text = fix_string(ask_open_folder) }
+		## filter by XML branch
+		para "Filter files by XML tree", left: 115, top: 90
+		dir_filter = edit_line("#{@AdvMapShared}", left: 115, top: 120, height: 30, width: 676, tooltip: "Files to apply changes on") { |t| @@AdvMapShared = t.text }
+		## Modifications
+		@options = []
+		flow left: 115, top: 170, width: 800, height: 400 do
+			#border green;
+			check(checked: false) { |cc| cc.checked? ? @options.push("RazedStatic") : @options.delete("RazedStatic") }			
+			para "Add dummy RazedStatic", align: "left", size: 13			
+		end
+		button("Apply", left: 430, top: 400, width: 140, tooltip: "Apply selected changes to all files in input dir") { get_tree(source, &method(:apply_to_AdvMapShared)) }
+	end
+end
 
+def apply_to_AdvMapShared(file)
+	return 0 if @options.empty?
+	doc = File.open("#{file}") { |f| Nokogiri::XML(f) }
+	flag_razed = options.include?("RazedStatic")? 1 : 0 
+	
+	@AdvMapShared.each do |adv|
+		if doc.at_xpath(adv) != nil then
+			if flag_razed == 1 then 
+				razed = doc.at_xpath("#{adv}/RazedStatic")
+				razed['href'] = '/MapObjects/RazedTowns/Fake_PeasantHut.xdb#xpointer(/AdvMapStaticShared)'
+			end
+			File.write("#{file}", doc)
+			break
+		end
+	end
+end 
 Shoes.app(width: 1000, height: 700, resizable: false) do
 	
 	@var_debug = 0;
