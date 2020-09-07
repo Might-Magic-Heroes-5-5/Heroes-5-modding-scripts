@@ -8,4 +8,4 @@ Mastery Level
 Mana cost
 Spellpower
 Left/right click to increase spellpower by 1/10. Middle click to reset.
-Cost
+Requirements
