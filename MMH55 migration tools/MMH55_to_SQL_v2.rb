@@ -24,7 +24,7 @@ Shoes.app do
 	end
 	db.town(towns)
 	create_text.town(towns)
-	
+
 	############ create skills table
 	skills = []	
 	skill_doc = File.open(SOURCE_SKILLS) { |f| Nokogiri::XML(f) }
@@ -150,13 +150,13 @@ Shoes.app do
 			unit_doc.xpath("//CreatureTown").text,
 			unit_doc.xpath("//WeeklyGrowth").text,
 			abilities.join(','),
-			unit_doc.xpath("//Cost/Gold").text,
 			unit_doc.xpath("//Cost/Wood").text,
 			unit_doc.xpath("//Cost/Ore").text,
 			unit_doc.xpath("//Cost/Mercury").text,
 			unit_doc.xpath("//Cost/Crystal").text,
 			unit_doc.xpath("//Cost/Sulfur").text,
 			unit_doc.xpath("//Cost/Gem").text,
+			unit_doc.xpath("//Cost/Gold").text,
 			visuals.xpath("/CreatureVisual/CreatureNameFileRef/@href") )
 	end
 	db.unit(units)
@@ -248,14 +248,8 @@ Shoes.app do
 	db.spell_spec(spells_spec)
 
 	############ Create magic guild table
-	guilds = []
+	guilds = ["MAGIC_SCHOOL_DESTRUCTIVE", "MAGIC_SCHOOL_DARK", "MAGIC_SCHOOL_LIGHT", "MAGIC_SCHOOL_SUMMONING", "MAGIC_SCHOOL_ADVENTURE", "MAGIC_SCHOOL_RUNIC", "MAGIC_SCHOOL_WARCRIES", "MAGIC_SCHOOL_SPECIAL" ]
 	flag, current_set = 0, ""
-	guild_doc = File.open("#{SOURCE_IDX}/types.xml") { |f| Nokogiri::XML(f) }
-	guild_doc.xpath("//Base/SharedClasses/Item")[298].xpath("Entries/Item").each do |g| 
-		guild = g.xpath("Name").text
-		guilds << guild if guild != "MAGIC_SCHOOL_NONE"
-	end
-	
 	db.guild(guilds)
 	create_text.guild(guilds)
 

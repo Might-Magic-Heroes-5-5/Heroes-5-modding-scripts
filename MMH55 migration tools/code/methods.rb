@@ -212,7 +212,7 @@ class Manage_db
 			@db.execute "create table skills (name string, type string, tree string, sequence int);"
 			@db.execute "create table creatures ( id string, at int, df int, shots int, min_d int, max_d int, spd int, init int, fly int, hp int,
 	spells string, spell_mastery string, mana int, tier int, faction string, growth int, ability string,
-	gold int, wood int, ore int, mercury int, crystal int, Sulfur int, gem int, sequence int );"
+	wood int, ore int, mercury int, crystal int, Sulfur int, gem int, gold int, sequence int );"
 			@db.execute "create table guilds ( id string, sequence int );"
 			@db.execute "create table spells ( id string, spell_effect string, spell_increase string, mana int, tier int, guild string, resource_cost string );"
 			@db.execute "create table spells_specials ( id string, base string, perpower string );"

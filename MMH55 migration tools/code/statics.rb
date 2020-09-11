@@ -1,12 +1,22 @@
+############### HOW TO MIGRATE DATA FROM NEW VERSION ####################
+# 1. Go to migrationdir/output/delete/texts_## contents
+# 2. Go to migrationdir/output/delete/skillwheel.db
+# 3. Extract MMH55_TEXT_##.pak convert to utf8 and put it in migrationdir/source/texts/MMH55-Texts-##
+# 4. Launch MMH55_to_SQL_v2
+# 5. If no errors launch sql_additions 
+# 6. If no errors migrate_sequence where befure lauching it edit the top of the file to point to new and old DB so it can take sequences.
+# 7. migrate_sequence usually generates errors. Use debug messages to find and fix them.
+# Note: if major class changes are done you will have to fix the Class skill sequences manually.
+
 ###################################### 	 What to do 	 ###########################################
 DB_FLAG = 0
 TXT_FLAG = 1
 ###################################### 	 Output dirs    ######################################
-OUTPUT = "output/texts_ru"
+OUTPUT = "output/texts_en"
 DB_NAME = "output/skillwheel.db"
 ###################################### texts sources ######################################
-SOURCE_TXT = "source/texts/MMH55-Texts-RU"
-SOURCE_ADD = "source/texts/additions_ru"
+SOURCE_TXT = "source/texts/MMH55-Texts-EN"
+SOURCE_ADD = "source/texts/additions_en"
 ###################################### Heroes V sources ######################################
 SOURCE_IDX = "source/data"
 SOURCE_CREATURES = "#{SOURCE_IDX}/GameMechanics/creature/creatures"

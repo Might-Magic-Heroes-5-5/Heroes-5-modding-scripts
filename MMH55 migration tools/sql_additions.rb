@@ -65,7 +65,7 @@ Shoes.app do
 	id = 'HERO_CLASS_BARBARIAN_KHAN'
 	get_klas = db.execute "select * from HERO_CLASS_BARBARIAN"
 	if DB_FLAG != 0 then
-		db.execute "delete from classes WHERE id='#{id}';" if 
+		db.execute "delete from classes WHERE id='#{id}';"  
 		klas_entry = (db.execute "select * from classes WHERE id='HERO_CLASS_BARBARIAN'")[0]
 		db.execute "INSERT into classes VALUES ( ?, ?, ?, ?, ?, ?, ?);", id, klas_entry[1..-1]
 		#db.execute "DROP TABLE #{id};"
@@ -79,7 +79,7 @@ Shoes.app do
 	
 	##add heroes to Khan class
 	if DB_FLAG != 0 then
-		db.execute "UPDATE heroes SET classes='#{id}' WHERE id='Gottai';"
+		db.execute "UPDATE heroes SET classes='#{id}' WHERE id='GottaiMP';"
 		db.execute "UPDATE heroes SET classes='#{id}' WHERE id='Quroq';"
 		db.execute "UPDATE heroes SET classes='#{id}' WHERE id='Kunyak';"
 	end
