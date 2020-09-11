@@ -1,1 +1,7 @@
-Health = 160 + 30*SP + 0*HERO_LVL + 20*KN, Min damage = 0 + 10*SP + 0*HERO_LVL, Max damage = 0 + 15*SP + 0*HERO_LVL, Attack = 4 + 1*SP + 1*HERO_LVL, Defense = 4 + 1*SP + 1*HERO_LVL, Initiative = 12 + 0.1*SP + 0.1*HERO_LVL, Speed = 6 + 0.1*SP + 0*HERO_LVL
+Health = 200 + 30*SP + 10*HERO_LVL + 0*KN
+Min damage = 0 + 15*SP + 0*HERO_LVL
+Max damage = 0 + 22*SP + 0*HERO_LVL
+Attack = 10 + 1*SP + 0*HERO_LVL
+Defense = 10 + 1*SP + 0*HERO_LVL
+Initiative = 14 + 0.05*SP + 0*HERO_LVL
+Speed = 6 + 0.075*SP + 0*HERO_LVL
