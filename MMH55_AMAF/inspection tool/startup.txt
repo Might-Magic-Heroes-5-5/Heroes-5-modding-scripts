@@ -1,0 +1,407 @@
+H55_NewDayTrigger = 1;
+sleep();
+OpenCircleFog(0, 0, 0, 9999, PLAYER_1);
+sleep();
+consoleCmd('game_writelog 1');
+sleep();
+doFile("/Scripts/MapObjects.lua");
+sleep();
+------------------------------------------------
+ -- Define mod statics
+------------------------------------------------
+-- mod tables
+
+-- 'SHIPYARD', 'SIGN', 'SEER_HUT, PRISON
+-- Shrines -- 'MAGMA_SHRINE', SHRINE_OF_MAGIC, 'DWARVEN_WARREN'
+-- removed from 55 -- 'BUILDING_FIRE_LAKE'
+AdventureBuildingsTypes = {
+mineTypes = { 'BUILDING_SAWMILL', 'BUILDING_ORE_PIT', 'BUILDING_ALCHEMIST_LAB', 'BUILDING_CRYSTAL_CAVERN', 'BUILDING_GEM_POND', 'BUILDING_SULFUR_DUNE', 'BUILDING_GOLD_MINE' , 'BUILDING_ABANDONED_MINE' },
+dwellingTypes = { 'BUILDING_PEASANT_HUT'   , 'BUILDING_ARCHERS_HOUSE'      , 'BUILDING_BARRACKS'            , 'BUILDING_HEAVEN_MILITARY_POST',
+             'BUILDING_IMP_CRUCIBLE'      , 'BUILDING_DEMON_GATE'         , 'BUILDING_KENNELS'             , 'BUILDING_INFERNO_MILITARY_POST',
+             'BUILDING_GRAVEYARD'         , 'BUILDING_FORGOTTEN_CRYPT'    , 'BUILDING_RUINED_TOWER'        , 'BUILDING_NECROPOLIS_MILITARY_POST',
+             'BUILDING_FAIRIE_TREE'       , 'BUILDING_HIGH_CABINS'        , 'BUILDING_WOOD_GUARD_QUARTERS' , 'BUILDING_PRESERVE_MILITARY_POST',
+             'BUILDING_WORKSHOP'          , 'BUILDING_STONE_PARAPET'      , 'BUILDING_GOLEM_FORGE'         , 'BUILDING_ACADEMY_MILITARY_POST',
+             'BUILDING_BATTLE_ACADEMY'    , 'BUILDING_SHADOW_STONE'       , 'BUILDING_MAZE'                , 'BUILDING_DUNGEON_MILITARY_POST',
+             'BUILDING_FORTRESS_DEFENDERS', 'BUILDING_FORTRESS_AXEMEN'    , 'BUILDING_FORTRESS_BEAR_RIDERS', 'BUILDING_FORTRESS_MILITARY_POST',
+             'BUILDING_STRONGHOLD_GOBLINS', 'BUILDING_STRONGHOLD_CENTAURS', 'BUILDING_STRONGHOLD_WARRIORS' , 'BUILDING_STRONGHOLD_MILITARY_POST'},
+
+weeklyResourceType = { 'BUILDING_WATER_WHEEL', 'BUILDING_WINDMILL', 'BUILDING_TAVERN', 'BUILDING_MERCENARY_CAMP', 'BUILDING_WITCH_HUT', 'BUILDING_TREE_OF_KNOWLEDGE', 'BUILDING_ARENA', 'BUILDING_SCHOOL_OF_MAGIC', 'BUILDING_WAR_ACADEMY', 'BUILDING_LIBRARY_OF_ENLIGHTENMENT' },
+oneTimeBoostType = { 'BUILDING_STABLES', 'BUILDING_RALLY_FLAG', 'BUILDING_OASIS', 'BUILDING_LAKE_OF_SCARLET_SWAN', 'BUILDING_FONTAIN_OF_FORTUNE', 'BUILDING_MAGIC_SPRING', 'BUILDING_FONTAIN_OF_YOUTH', 'BUILDING_FAERIE_RING', 'BUILDING_IDOL_OF_FORTUNE', 'BUILDING_TEMPLE', 'BUILDING_LEARNING_STONE', 'BUILDING_FORTUITOUS_SANCTUARY' },
+weirdSitesType = { 'BUILDING_SANCTUARY', 'BUILDING_LIGHTHOUSE', 'BUILDING_HILL_FORT', 'BUILDING_MAGIC_WELL', 'BUILDING_REDWOORD_OBSERVATORY', 'BUILDING_HUT_OF_MAGI', 'BUILDING_EYE_OF_MAGI', 'BUILDING_BORDER_GUARD', 'BUILDING_KEYMASTER_TENT', 'BUILDING_DEN_OF_THIEVES', 'BUILDING_OBELISK', 'BUILDING_CARTOGRAPHER', 'BUILDING_SPHINX', 'BUILDING_WARMACHINE_FACTORY', 'BUILDING_MEMORY_MENTOR', 'BUILDING_SACRIFICIAL_ALTAR', 'BUILDING_ASTROLOGER_TOWER' },
+teleportType = { 'BUILDING_SUBTERRA_GATE', 'BUILDING_MONOLITH_ONE_WAY_EXIT', 'BUILDING_MONOLITH_ONE_WAY_ENTRANCE', 'BUILDING_MONOLITH_TWO_WAY' },
+blockingType = { 'BUILDING_GARRISON', 'BUILDING_GARRISON_ANTIMAGIC', 'BUILDING_OUTPOST' },
+dungeonType = { 'BUILDING_CRYPT', 'BUILDING_CYCLOPS_STOCKPILE', 'BUILDING_NAGA_BANK', 'BUILDING_PYRAMID', 'BUILDING_DRAGON_UTOPIA' , 'BUILDING_MARLETTO_TOWER', 'BUILDING_DWARVEN_TREASURE', 'BUILDING_BLOOD_TEMPLE', 'BUILDING_TREANT_THICKET', 'BUILDING_GARGOYLE_STONEVAULT', 'BUILDING_NAGA_TEMPLE' },
+unknownType = { 'BUILDING_STAR_AXIS', 'BUILDING_GARDEN_OF_REVELATION', 'BUILDING_MYSTICAL_GARDEN', 'BUILDING_ELEMENTAL_CONFLUX', 'BUILDING_DEMOLISH', 'BUILDING_UNKEMPT', 'BUILDING_TOMB_OF_THE_WARRIOR', 'BUILDING_NOMADS_SHAMAN'},
+marketTypes = { 'BUILDING_TRADING_POST', 'BUILDING_BLACK_MARKET', 'BUILDING_REFUGEE_CAMP', 'BUILDING_SPELL_SHOP' },
+luckyTypes = { 'BUILDING_LEAN_TO',  'BUILDING_WAGON', 'BUILDING_SKELETON' },
+waterTypes = { 'BUILDING_BUOY', 'BUILDING_MERMAIDS', 'BUILDING_SIRENS', 'BUILDING_WHIRLPOOL', 'BUILDING_SHIP_GALEON', 'BUILDING_SUNKEN_TEMPLE' },
+campaign = { 'BUILDING_BIARA_CITADEL', 'BUILDING_DEMON_SOVEREIGN_CITADEL' },
+TownIDs = { 'TOWN_HEAVEN', 'TOWN_PRESERVE', 'TOWN_INFERNO', 'TOWN_NECROMANCY', 'TOWN_ACADEMY', 'TOWN_DUNGEON', 'TOWN_FORTRESS', 'TOWN_STRONGHOLD' }
+}
+
+-- Initialize variables
+AdventureBuildingsArray = {};
+
+-- Debug vars
+H55K_DEBUG = 0;
+debug_objects = {};
+
+--- Power mod vars
+PlayerPower = {};
+PlayerHeroes = {};
+PlayerInfrastructure = {};
+PlayerInfrastructureCount = {};
+DwellingArray = {};
+
+			 
+			   
+				   
+
+
+-- mod difficulty settings
+
+PowerValue = {};
+PowerValueMine = 5;
+PowerValueTown = 30;
+PowerValueDwell = 10;
+PowerValueLevel = 2;
+------------------------------------------------
+-- basic functionality
+------------------------------------------------
+
+						  
+					  
+			   
+	  
+				 
+	 
+   
+
+									   
+
+								  
+												
+																		  
+	  
+   
+
+function SetArrayFromType(array, filter)
+   for _, object in GetObjectNamesByType(filter) do
+       --print(filter, " in ", object)
+       H55_Insert(array, object);
+   end
+end
+
+function PrintMap(array)
+  local printer = "";
+  local y_max = length(array);
+  local x_max = length(array[1]);
+  print("MapSize ",x_max,", ",y_max);
+  printer = "    ";
+
+  for a = 0, y_max-1 do
+      if a < 9 then
+         printer = printer..a..", ";
+      else
+         printer = printer..a..",";
+      end
+  end
+  print(printer);
+  for y = 1, y_max do
+      if y_max - y  < 10 then
+         printer = y_max - y .."  :";
+      elseif y_max - y  < 100 then
+         printer = y_max - y .." :";
+      else
+          printer = y_max - y ..":";
+      end
+
+      for i,x in array[ y_max - y ] do
+          printer = printer..x..", ";
+      end
+      print(printer);
+  end
+end
+
+function GetObjectRotation(x, y, angle, array, tile)
+											
+											
+											
+											
+   
+
+													 
+  if length(array["x"]) == 0 then return 1 end;
+  for i=0, length(array["x"])-1 do
+     local xx, yy = 0, 0;
+     if angle == 1 then xx, yy =   array["x"][i],  array["y"][i]; end
+     if angle == 2 then xx, yy = - array["y"][i],  array["x"][i]; end
+     if angle == 3 then xx, yy = - array["x"][i],- array["y"][i]; end
+     if angle == 4 then xx, yy =   array["y"][i],- array["x"][i]; end
+     --print(xx, ", ", yy);
+     if MapL1[y + yy][x + xx] == tile then
+       H55_Insert(ObjectTileX, x + xx);
+       H55_Insert(ObjectTileY, y + yy);
+     else
+       return 0;   -- fail
+     end
+  end
+  return 1;        -- success
+end
+
+------------------------------------------------
+-- mod functionality
+------------------------------------------------
+
+function GetMapL1PassableLayer()
+   local passable = 0;
+   MapL1 = {};
+   x,y = GetTerrainSize();
+
+   for yi = 0,y-1 do
+      MapL1[ yi ] = {};
+      for xi = 0,x-1 do
+          if IsTilePassable( xi, yi, 0 ) == nil then
+			passable = 0;
+		  else
+			passable = 1;
+		  end
+		  MapL1[ yi ][ xi ] = passable;
+      end
+   end
+end
+
+function GetMapL2BuildingLayer(filter)
+																							   
+
+   if length(AdventureBuildingsArray[filter]) == 0 then
+     print(filter, " array is EMPTY");
+     return 0;
+   end
+   local x, y, z, v, r, mode;
+
+   print("Begining ", filter," type gathering cycle...");
+   for _, obj in AdventureBuildingsArray[filter] do
+     x, y, z, v, mode = 0, 0, 0, 0, 0;
+     x, y, z = GetObjectPosition(obj);
+     entry = MapObjects[filter]["entries"];
+     while mode < 2 and v < MapObjects[filter]["entries"]+1 do
+       r = 0;
+       local active = MapObjects[filter]["activeTiles"][""..v];
+       local blocked = MapObjects[filter]["blockedTiles"][""..v];
+       while mode < 2 and r < 4 do
+         ObjectTileX, ObjectTileY = {}, {};
+         local xx, yy = 0, 0;
+         mode = 0;
+         r = r + 1;
+         mode = mode + GetObjectRotation(x, y, r, active , 1);
+         --print("mode A: ",mode)
+         mode = mode + GetObjectRotation(x, y, r, blocked, 0);
+         --print("mode A + B: ",mode)
+       end
+       v = v + 1;
+     end
+
+     if ObjectTileX == nil then
+        print(filter, "  ", obj, " is nil");
+     end
+
+		
+     if mode == 2 then
+       for i,h in ObjectTileX do MapL2[ ObjectTileY[i]][ ObjectTileX[i] ] = obj; end
+       print("Object ",obj, " collected - angle ", r)
+     else
+       H55_Insert(debug_objects, filter..obj);
+       print("Could not get object ", obj, " angle.");
+     end
+   end
+end
+
+-----------------------------------------------
+function GetPlayerPower()
+	for i = 1,8 do
+		if ( GetPlayerState(i) == 1 ) then
+			PlayerPower[i] = 0;
+			PlayerInfrastructure[i] = {};
+			PlayerInfrastructureCount[i] = 0;
+			PlayerHeroes[i] = GetPlayerHeroes(i);
+			for _, hero in PlayerHeroes[i] do
+				PlayerPower[i] = PlayerPower[i] + PowerValueLevel*GetHeroLevel(hero);
+			end
+			GetPlayerInfrastructure(listtMapMines,PowerValueMine,i);
+			GetPlayerInfrastructure(listtMapDwellings,PowerValueDwell,i);
+			GetPlayerInfrastructure(listtMapTowns,PowerValueTown,i);
+		end
+   end
+
+   sleep();
+   print("player 1:", PlayerPower[1]);
+   print("player 2:", PlayerPower[2]);
+end
+
+
+function GetPlayerInfrastructure(array, value, player)
+
+	for _, x in array do
+		local p = GetObjectOwner(x);
+		if p == player then
+			PlayerInfrastructureCount[p] = PlayerInfrastructureCount[p] + 1
+			H55_Insert(PlayerInfrastructure[p], x);
+			PlayerPower[p] = PlayerPower[p] + value;
+		end
+	end
+
+end
+
+function CreateCorruptedUnits(p)
+    local SummonStrength = H55_RoundDown(PlayerPower[p]/25);
+    local PlayerStructure = PlayerInfrastructure[p][ random( PlayerInfrastructureCount[p] ) ];
+    local radius = 20;
+    local obj_x, obj_y, obj_z = GetObjectPosition(PlayerStructure);
+    local x_min = -radius+obj_x;
+    local x_max = obj_x;
+    local y_min = -radius+obj_y;
+    local y_max = radius+obj_y;
+    local passable = 0;
+    SummonLocationSurroundings = {};
+
+    for y = y_min,y_max do
+        SummonLocationSurroundings[ y ] = {}
+        for x = x_min,x_max do
+            if IsTilePassable( x, y ) == nil then
+                local skip = 0;
+                for _,t in { MapBuildings } do
+                    passable, skip = GetObjectAtLocation(x,y,t,skip)
+                    --print("passable is ",passable,";skip is ",skip)
+                end
+            else
+               passable = 1
+            end
+            SummonLocationSurroundings[ y ][ x ] = passable
+        end
+    end
+
+-- H55 DEBUG --
+
+	if H55K_DEBUG == 1 then
+		local flag = 0;
+		local label = "";
+		local printer = ""
+
+		for y = 0, 2*radius do
+			printer = "";
+			yy = y_max - y;
+			for x = x_min, x_max do
+				printer = printer..SummonLocationSurroundings[ yy ][ x ]..", "
+				if flag == 0 then
+					label = label..x..",";
+					if x == x_max then
+						print("y x=",label);
+						flag = 1;
+					end
+				end
+			end
+			print(yy," : ",printer);
+		end
+	end
+end
+
+function GetObjectAtLocation(x,y,array,flag)
+	if flag == 0 then
+		print("################## Search location x:",x,"; y:",y)
+		for _, a in array do
+			x1, y1, z1 = GetObjectPosition(a);
+			print("a is ", a," with x:",x1,"; y:",y1);
+			if (x == x1) and (y == y1) then
+				return a, 1;
+			end
+		end
+		return 0, 0;
+	else
+       print("################ Fail at Search location x:",x,"; y:",y);
+       return 0, 0;
+   end
+end
+
+function MapDwellings(player)
+
+	x, y, z, rot, radius = 20, 60, 0, 0, 5;
+	--for _,t in TownIDs do
+    for town = 0,0 do
+  		for tier = 1,1 do
+  			CreateDwelling( "dwelling_test", town, tier, player, x, y, z, rot );
+  			sleep();
+  			--H55_Insert(DwellingArray, GetMapTiles(x, y, z, radius));
+  			--RazeBuilding("dwelling_test");
+        --sleep();
+  			--RemoveObject("dwelling_test");
+  		 -- sleep();
+  		end
+    end
+
+end
+
+------------------------------------------------
+ -- Main thread
+-----------------------------------------------
+print("Getting passable tiles..");
+GetMapL1PassableLayer();
+sleep();
+--PrintMap(MapL1);
+sleep();
+print("Defining positioning of map objects..");
+MapL2 = MapL1;
+
+for i,b in AdventureBuildingsTypes do
+   for i,bb in b do
+       AdventureBuildingsArray[bb] = {};
+       SetArrayFromType( AdventureBuildingsArray[bb], bb );
+       if AdventureBuildingsArray[bb] ~= nil then
+          GetMapL2BuildingLayer(bb);
+       else
+          print(bb, " Array is empty!");
+       end
+   end
+end
+
+
+sleep();
+--PrintMap(MapL2);
+--sleep();
+
+
+function H55_TriggerDaily()
+
+	--local GameDay = GetDate(DAY_OF_WEEK);
+	--sleep(5);
+	--if GameDay == 1 then
+    --GetPlayerPower();
+    --for i = 1,8 do
+  	--   if (GetPlayerState(i) == 1) then
+    --     if i == 1 then
+    --        CreateCorruptedUnits(i);
+    --          MapDwellings(i);
+    --     end
+    --  end
+    --end
+    --for _, i in DwellingArray do
+   --    print()
+
+
+   -- end
+    print("end");
+		 -- elseif ( sw_day == 2 ) then
+		 --    print("here we go!");
+		 --    sleep(5);
+		 --    local x = 50 + i*3
+		 --    CreateMonster("swarm"..i, CREATURE_CYCLOP_UNTAMED, 10, x, 65, 0, MONSTER_MOOD_AGGRESSIVE,MONSTER_COURAGE_ALWAYS_FIGHT);
+		 --    sleep(5);
+		 --    PlayVisualEffect('/Effects/_(Effect)/Modes/Ghost/Posses.(Effect).xdb#xpointer(/Effect)', "swarm"..i);
+		 --    sleep(5);
+
+		--sleep(5);
+		--if (IsObjectExists("swarm1")) then
+		--  x, y = GetObjectPosition("swarm1");
+		--  SetObjectPosition("swarm1", x-1, y, 0);
+    --end
+end
