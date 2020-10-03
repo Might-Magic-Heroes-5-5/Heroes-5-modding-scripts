@@ -133,7 +133,7 @@
 		
 		local NextNearby = {};
 		local index = 0;
-		print("zone is ", zone, ", length is ", length(array), ", arr is ", array);
+		--print("zone is ", zone, ", length is ", length(array), ", arr is ", array);
 		print("distance ", distance);
 		for i, t in array do
 			local y = t[2] - 1;
@@ -143,8 +143,15 @@
 					print("x = ", x,"(",t[1],")",", y = ", y,"(",t[2],")");
 					if MapL3[y][x] == nil then
 						if MapL1[y][x] == 1 or MapL2[y][x] ~= 0 then
-							print("sure map it");
-							MapL3[y][x] = zone..distance;
+								d = 000;
+							if distance < 10 then
+								d = "00"..distance;
+							elseif distance < 100 then
+								d = "0"..distance;
+							else
+								d = distance;
+							end
+							MapL3[y][x] = zone;
 							NextNearby[index] = {x, y};
 							index = index + 1;
 						else
@@ -246,7 +253,7 @@
 			NearBy[zones[i+1]][0] = { x, y };
 		end
 		local distance = 1;
-		for i = 1,10 do
+		for i = 1,70 do
 			for z, n in NearBy do
 				NearBy[z] = GetNearByTilesInZones(n, i, z);
 				print(length(NearBy[z]));
