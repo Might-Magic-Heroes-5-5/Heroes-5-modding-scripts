@@ -76,7 +76,6 @@
 	end
 
 	function PrintMap(array)
-
 		local printer = "";
 		local x_max, y_max = Mx, My;
 		print("MapSize ",x_max,", ",y_max);
