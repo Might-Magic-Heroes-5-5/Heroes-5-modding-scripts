@@ -76,34 +76,38 @@
 	end
 
 	function PrintMap(array)
-	  local printer = "";
-	  local y_max = length(array);
-	  local x_max = length(array[1]);
-	  print("MapSize ",x_max,", ",y_max);
-	  printer = "    ";
 
-	  for a = 0, y_max-1 do
-		  if a < 9 then
-			 printer = printer..a..", ";
-		  else
-			 printer = printer..a..",";
-		  end
-	  end
-	  print(printer);
-	  for y = 1, y_max do
-		  if y_max - y  < 10 then
-			 printer = y_max - y .."  :";
-		  elseif y_max - y  < 100 then
-			 printer = y_max - y .." :";
-		  else
+		local printer = "";
+		local x_max, y_max = Mx, My;
+		print("MapSize ",x_max,", ",y_max);
+		printer = "    ";
+
+		for a = 0, y_max-1 do
+			if a < 9 then
+				printer = printer..a..", ";
+			else
+				printer = printer..a..",";
+			end
+		end
+		print(printer);
+		for y = 1, y_max do
+			if y_max - y  < 10 then
+				printer = y_max - y .."  :";
+			elseif y_max - y  < 100 then
+				printer = y_max - y .." :";
+			else
 			  printer = y_max - y ..":";
-		  end
+			end
 
-		  for i,x in array[ y_max - y ] do
-			  printer = printer..x..", ";
-		  end
-		  print(printer);
-	  end
+			for x = 1, x_max-1 do
+				if array[ y_max - y ][x] == nil then
+					printer = printer.."0"..", ";
+				else
+					printer = printer..array[ y_max - y ][x]..", ";
+				end
+			end
+			print(printer);
+		end
 	end
 
 	function GetObjectRotation(x, y, angle, array, tile)
@@ -126,29 +130,38 @@
 	  return 1;        -- success
 	end
 	
-	function GetNearByTilesInZones(array, distance)
+	function GetNearByTilesInZones(array, distance, zone)
+		
 		local NextNearby = {};
 		local index = 0;
+		print("zone is ", zone, ", length is ", length(array), ", arr is ", array);
+		print("distance ", distance);
 		for i, t in array do
-			local y = t[1] - 1;
-			while y >= 0 and y < My - 1 and y <= t[1] - 1 do
-				local x = t[0] - 1;
-				while x >= 0 and x < Mx - 1 and x <= t[0] - 1 do
+			local y = t[2] - 1;
+			while y >= 0 and y < My - 1 and y <= t[2] + 1 do
+				local x = t[1] - 1;	
+				while x >= 0 and x < Mx - 1 and x <= t[1] + 1 do
+					print("x = ", x,"(",t[1],")",", y = ", y,"(",t[2],")");
 					if MapL3[y][x] == nil then
 						if MapL1[y][x] == 1 or MapL2[y][x] ~= 0 then
-							MapL3[y][x] = zones[i]..distance;
-							NextNearby[index] = {};
-							H55_Insert(NextNearby[index], x );
-							H55_Insert(NextNearby[index], y );
+							print("sure map it");
+							MapL3[y][x] = zone..distance;
+							NextNearby[index] = {x, y};
+							index = index + 1;
 						else
 							MapL3[y][x] = "X";
 						end
 					end
 					x = x + 1;
 				end
+				y = y + 1;
 			end
 		end
-		return NextNearby;
+		if index == 0 then
+			return nil;
+		else
+			return NextNearby;
+		end
 	end
 
 	------------------------------------------------
@@ -224,19 +237,27 @@
 
 	function GetTownZones()
 		print("Zone analysis");
-		local zones = { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "Y", "Z" };
+		zones = { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "Y", "Z" };
 		zoneTowns, NearBy = {}, {};
-		townCoordinates = {};
+		local index = 0;
 		SetArrayFromType(zoneTowns, "TOWN");
 		for i, t in zoneTowns do
 			local x, y, z = GetObjectPosition(t);
-			townCoordinates[zones[i]] = { x, y };
+			NearBy[zones[i+1]] = {};
+			NearBy[zones[i+1]][0] = { x, y };
 		end
-
+		local distance = 1;
+		for i = 1,10 do
+			for z, n in NearBy do
+				NearBy[z] = GetNearByTilesInZones(n, i, z);
+				print(length(NearBy[z]));
+			end
+		end
+		print("done");
 		-- find starting pathing location - walkable or used by adventure map object
 
-		local distance = 1;
-		NearBy = GetNearByTilesInZones(townCoordinates, distance);
+		
+		
 
 	end
 
