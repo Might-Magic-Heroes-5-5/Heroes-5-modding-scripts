@@ -267,7 +267,7 @@ Shoes.app do
 	town_2_elmnt, num_2_faction, dblood_const, artifact_sets,flag = {}, {}, {}, {}, 0
 	File.read(SOURCE_55CORE).each_line do |line|
 		case flag
-		when 0 then flag=1 if line.include?('function H55_GetTownRaceID') # flag 0-1 -  Match Tote Town ID with MMH55 town id; start at 1818 line
+		when 0 then flag=1 if line.include?('function H55_GetTownRaceID') # flag 0-1 -  Match Tote Town ID with MMH55 town id; start at 1882 line as of RC14B4
 		when 1 then if line.include?('townid') and line.include?('num') then
 						id = ""
 						line.split('townid = ')[1].chars.each do |c|
@@ -277,12 +277,13 @@ Shoes.app do
 						num_2_faction[:"#{sort_line line, 'num == ', ' then'}"] = id
 					end
 					flag=2 if line.include?('return')
-		when 2 then flag=3 if line.include?('function H55_GetRaceElementalTypeID') # flag - 2-4 Get town to summoning unit ID; start at 1857 line
+		when 2 then flag=3 if line.include?('function H55_GetRaceElementalTypeID') # flag - 2-4 Get town to summoning unit ID; start at 1934 line as of RC14B4
 		when 3 then if line.include?('cityrace') then
 						town, element = nil, nil
-						if line.include?('H55_DKSpecial[player]') then
+						if line.include?('H55_BKnightSwitch') then
 							town = "#{sort_line line, 'cityrace == ', ' and H5'}#{sort_line line, 'player] == ', ' then'}"
 							element = line.split('elemtype = ')[1]
+						elsif line.include?("[player]") then next;
 						elsif line.include?('end') then
 							town = "#{sort_line line, 'cityrace == ', ' then'}"
 							element = "#{sort_line line, 'elemtype = ', ' end'}"

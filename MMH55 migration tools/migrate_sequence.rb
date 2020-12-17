@@ -4,7 +4,7 @@
 Shoes.app do
 
 	db = SQLite3::Database.new 'skillwheel.db'
-	db_old = SQLite3::Database.new 'skillwheelRC13a.db'
+	db_old = SQLite3::Database.new 'skillwheelRC14B4.db'
 
 	klasses = db.execute "select id from classes"
 	debug("=============== PERKS PER CLASS ===============");

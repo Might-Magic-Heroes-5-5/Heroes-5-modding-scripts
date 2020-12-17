@@ -1,0 +1,1 @@
+New internal manuals were implemented - one to present units stats and abilities in the game and another one to present hero classes and available skills. Design by theGryphon.

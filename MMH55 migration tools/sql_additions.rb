@@ -40,26 +40,26 @@ Shoes.app do
 	source_phoenix_stats = 'source/data/GameMechanics/RPGStats/ConjuredPhoenix.xdb'
 	db = SQLite3::Database.new "#{DB_NAME}"
 	###########add Haven Renegade class
-	id = 'HERO_CLASS_KNIGHT_RENEGADE'
-	get_klas = db.execute "select * from HERO_CLASS_KNIGHT"
-	db.execute "delete from classes WHERE id='#{id}';" if DB_FLAG != 0
-	#db.execute "DROP TABLE #{id};"
-	db.execute "CREATE TABLE #{id} ( skill string, chance int, type string, sequence int );" if DB_FLAG != 0
-	klas_entry = (db.execute "select * from classes WHERE id='HERO_CLASS_KNIGHT'")[0]
-	db.execute "INSERT into classes VALUES ( ?, ?, ?, ?, ?, ?, ?);", id, klas_entry[1..-1] if DB_FLAG != 0 
-	make_text "#{OUTPUT}/classes/#{id}", ["name"], "#{SOURCE_ADD}/classes/#{id}.txt"
-	get_klas.each do |n|
-		n[0] = 'HERO_SKILL_DARK_MAGIC' if n[0] == 'HERO_SKILL_SHATTER_DARK_MAGIC'
-		db.execute "INSERT into #{id} VALUES ( ?, ?, ?, ?);",n if DB_FLAG != 0
-	end
-	popupate_skill_perks id, "HERO_SKILL_DARK_MAGIC", "HERO_CLASS_KNIGHT", db
+	#id = 'HERO_CLASS_KNIGHT_RENEGADE'
+	#get_klas = db.execute "select * from HERO_CLASS_KNIGHT"
+	#db.execute "delete from classes WHERE id='#{id}';" if DB_FLAG != 0
+	##db.execute "DROP TABLE #{id};"
+	#db.execute "CREATE TABLE #{id} ( skill string, chance int, type string, sequence int );" if DB_FLAG != 0
+	#klas_entry = (db.execute "select * from classes WHERE id='HERO_CLASS_KNIGHT'")[0]
+	#db.execute "INSERT into classes VALUES ( ?, ?, ?, ?, ?, ?, ?);", id, klas_entry[1..-1] if DB_FLAG != 0 
+	#make_text "#{OUTPUT}/classes/#{id}", ["name"], "#{SOURCE_ADD}/classes/#{id}.txt"
+	#get_klas.each do |n|
+	#	n[0] = 'HERO_SKILL_DARK_MAGIC' if n[0] == 'HERO_SKILL_SHATTER_DARK_MAGIC'
+	#	db.execute "INSERT into #{id} VALUES ( ?, ?, ?, ?);",n if DB_FLAG != 0
+	#end
+	#popupate_skill_perks id, "HERO_SKILL_DARK_MAGIC", "HERO_CLASS_KNIGHT", db
 	
 	##add heroes to Knight Renegade class
-	if DB_FLAG != 0 then
-		db.execute "UPDATE heroes SET classes='#{id}' WHERE id='RedHeavenHero01';" 
-		db.execute "UPDATE heroes SET classes='#{id}' WHERE id='Mardigo';"
-		db.execute "UPDATE heroes SET classes='#{id}' WHERE id='RedHeavenHero05';"
-	end
+	#if DB_FLAG != 0 then
+	#	db.execute "UPDATE heroes SET classes='#{id}' WHERE id='RedHeavenHero01';" 
+	#	db.execute "UPDATE heroes SET classes='#{id}' WHERE id='Mardigo';"
+	#	db.execute "UPDATE heroes SET classes='#{id}' WHERE id='RedHeavenHero05';"
+	#end
 	
 	###########add Stronghold Khan class
 	id = 'HERO_CLASS_BARBARIAN_KHAN'
@@ -142,14 +142,14 @@ Shoes.app do
 	speed_flat = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/Speed").text
 	speed_sp = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/Speed_PerPower").text
 	speed_lvl = phoenix_stats.xpath("/RPGCombatUniqueCreatureStats/Speed_PerLevel").text
-	ph_stats = "Health = #{hp_flat} + #{hp_sp}*SP + #{hp_lvl}*HERO_LVL + #{hp_kn}*KN
-Min damage = #{d_min_flat} + #{d_min_sp}*SP + #{d_min_lvl}*HERO_LVL
-Max damage = #{d_max_flat} + #{d_max_sp}*SP + #{d_max_lvl}*HERO_LVL
-Attack = #{offence_flat} + #{offence_sp}*SP + #{offence_lvl}*HERO_LVL
-Defense = #{defence_flat} + #{defence_sp}*SP + #{defence_lvl}*HERO_LVL
-Initiative = #{init_flat} + #{init_sp}*SP + #{init_lvl}*HERO_LVL
-Speed = #{speed_flat} + #{speed_sp}*SP + #{speed_lvl}*HERO_LVL"
-	File.open("#{SOURCE_ADD}/spells/SPELL_CONJURE_PHOENIX/additional.txt", 'w') { |file| file.write(ph_stats) }
+	#ph_stats = "Health = #{hp_flat} + #{hp_sp}*SP + #{hp_lvl}*HERO_LVL + #{hp_kn}*KN
+#Min damage = #{d_min_flat} + #{d_min_sp}*SP + #{d_min_lvl}*HERO_LVL
+#Max damage = #{d_max_flat} + #{d_max_sp}*SP + #{d_max_lvl}*HERO_LVL
+#Attack = #{offence_flat} + #{offence_sp}*SP + #{offence_lvl}*HERO_LVL
+#Defense = #{defence_flat} + #{defence_sp}*SP + #{defence_lvl}*HERO_LVL
+#Initiative = #{init_flat} + #{init_sp}*SP + #{init_lvl}*HERO_LVL
+#Speed = #{speed_flat} + #{speed_sp}*SP + #{speed_lvl}*HERO_LVL"
+	#File.open("#{SOURCE_ADD}/spells/SPELL_CONJURE_PHOENIX/additional.txt", 'w') { |file| file.write(ph_stats) }
 	make_text "#{OUTPUT}/spells/SPELL_CONJURE_PHOENIX", [ "additional" ], "#{SOURCE_ADD}/spells/SPELL_CONJURE_PHOENIX/additional.txt", 'skill'
 	make_text "#{OUTPUT}/spells/SPELL_CONJURE_PHOENIX", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_CONJURE_PHOENIX/pred.txt", 'pred'
 	make_text "#{OUTPUT}/spells/SPELL_DIVINE_VENGEANCE", [ "pred" ], "#{SOURCE_ADD}/spells/SPELL_DIVINE_VENGEANCE/pred.txt", 'pred'
@@ -184,7 +184,7 @@ Speed = #{speed_flat} + #{speed_sp}*SP + #{speed_lvl}*HERO_LVL"
 	###GUILDS
 	make_text "#{OUTPUT}/guilds/MAGIC_SCHOOL_RUNIC", [ "name" ], "#{SOURCE_ADD}/guilds/MAGIC_SCHOOL_RUNIC/name.txt"
 	make_text "#{OUTPUT}/guilds/MAGIC_SCHOOL_SPECIAL", [ "name" ], "#{SOURCE_ADD}/guilds/MAGIC_SCHOOL_SPECIAL/name.txt"
-	
+	make_text "#{OUTPUT}/guilds/MAGIC_SCHOOL_WARCRIES", [ "name" ], "#{SOURCE_ADD}/guilds/MAGIC_SCHOOL_WARCRIES/name.txt"
 
 	###CREATURE ARTIFACTS
 	MICROARTIFACTS.each do |micro|

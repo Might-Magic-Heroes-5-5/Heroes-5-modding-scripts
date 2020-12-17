@@ -33,3 +33,5 @@ Duel Mode
 Boots of Illogical Levitation
 Bloodrage
 Training grounds
+Hero UI improvements
+Hero & Creaturepedia

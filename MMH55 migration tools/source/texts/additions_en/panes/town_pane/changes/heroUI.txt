@@ -1,0 +1,1 @@
+Hero UI pane was refurbished and improved. It also can show all 8 skills picked by any hero. Redesign by theGryphon.

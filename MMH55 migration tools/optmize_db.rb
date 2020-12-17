@@ -1,6 +1,6 @@
 require 'sqlite3'
 
-DB = SQLite3::Database.new "skillwheel.db"
+DB = SQLite3::Database.new "skillwheelRC14B5v3.db"
 
 INDEX_LIST = DB.execute( "SELECT name FROM sqlite_master WHERE type == 'index';" )
 INDEX_LIST.each { |i| DB.execute( "DROP INDEX '#{i[0]}';" ) }
