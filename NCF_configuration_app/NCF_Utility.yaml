@@ -1,0 +1,15 @@
+---
+app_name: NCF Utility
+app_version: NCF Utility Setup
+app_startmenu: Might & Magic - Heroes 5.5
+publisher: www.heroescommunity.com
+website: https://www.moddb.com/mods/heroes-v-new-creature-framework
+app_start: main.rb
+app_loc: D:/Temp/ncf_utility
+app_ico: C:/Users/dred/Documents/GitHub/Heroes-5-modding-scripts/NCF_configuration_app/icons/ncf.ico
+installer_header: NCF Utility
+installer_sidebar_bmp: D:/Temp/Shoes_packager/gui_files/side.bmp
+installer_header_bmp: D:/Temp/Shoes_packager/gui_files/head.bmp
+app_installer_ico: D:/Temp/Shoes_packager/gui_files/appicon.ico
+include_gems:
+- rubyzip
