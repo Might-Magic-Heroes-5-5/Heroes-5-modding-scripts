@@ -15,14 +15,15 @@
 DB_FLAG  = 0
 TXT_FLAG = 0
 ###################################### 	 Output dirs    ######################################
-OUTPUTE = "output/editor"
-OUTPUT = "output/texts_en"
-DB_NAME = "output/skillwheel.db"
+OUTPUTEDT = "output/editor"
+OUTPUT    = "output/texts_en"
+DB_NAME   = "output/skillwheel.db"
 ###################################### texts sources ######################################
 SOURCE_TXT = "source/texts/MMH55-Texts-EN"
 SOURCE_ADD = "source/texts/additions_en"
 ###################################### Heroes V sources ######################################
 SOURCE_IDX = "source/data"
+SOURCE_EDT = "source/editor"
 SOURCE_CREATURES = "#{SOURCE_IDX}/GameMechanics/creature/creatures"
 SOURCE_SPELLS = "#{SOURCE_IDX}/GameMechanics/RefTables/UndividedSpells.xdb"
 SOURCE_DFSTATS = "#{SOURCE_IDX}/GameMechanics/RPGStats/DefaultStats.xdb"

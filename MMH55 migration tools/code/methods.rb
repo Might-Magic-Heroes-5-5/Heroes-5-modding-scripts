@@ -12,7 +12,7 @@ def sort_line line, first, second
 	end
 end
 
-def make_text dirr, target, source, mode=0, type='f',
+def make_text dirr, target, source, mode=0, type='f', ext="txt"
 	script = $0
 	FileUtils.mkpath dirr
 	
@@ -58,7 +58,7 @@ def make_text dirr, target, source, mode=0, type='f',
 	end
 	#debug("#{dirr},#{target},#{mode}")
 	data_to_copy.each_with_index do |t, i|
-		file_out = File.open("#{dirr + '/' + target[i]}.txt", 'w');
+		file_out = File.open("#{dirr + '/' + target[i]}.#{ext}", 'w');
 		file_out.write("#{t.strip}")
 		file_out.close()
 	end
@@ -79,8 +79,8 @@ def create_AdvMapSharedGroup(heroes)
 	end
 	classGroup.keys.each do |k|
 		cBase = ""
-		FileUtils.mkpath "#{OUTPUTE}/AdvMapSharedGroup"
-		file_out = File.open("#{OUTPUTE}/AdvMapSharedGroup/#{k}.xdb", 'w');
+		FileUtils.mkpath "#{OUTPUTEDT}/_(AdvMapSharedGroup)/heroes"
+		file_out = File.open("#{OUTPUTEDT}/_(AdvMapSharedGroup)/heroes/#{k}.xdb", 'w');
 		classGroup[k].each do |v|
 			cBase = cBase + "\t\t<Item href=\"#{v}\"/>\n"
 		end
@@ -90,15 +90,17 @@ def create_AdvMapSharedGroup(heroes)
 end
 
 def create_AdvMapObjectLink(classes)
-	FileUtils.mkpath "#{OUTPUTE}/AdvMapObjectLink/GenericHeroes"
+	target = "#{OUTPUTEDT}/_(AdvMapObjectLink)/GenericHeroes"
+	FileUtils.mkpath target
 	lStart = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<AdvMapObjectLink>\n\t<Link/>\n"
 	lEnd   = "\t<HideInEditor>false</HideInEditor>\n</AdvMapObjectLink>"
+	FileUtils.copy_entry "#{SOURCE_EDT}/_(AdvMapObjectLink)", target
 	classes.each do |k|
 		input = File.open("#{SOURCE_TXT}/GameMechanics/RefTables/#{k.text}")
 		name = input.read().gsub(/\s+/, "")
 		input.close()
 		lBase = "\t<RndGroup href=\"/MapObjects/_(AdvMapSharedGroup)/Heroes/#{k.class_id}.xdb#xpointer(/AdvMapSharedGroup)\"/>\n\t<IconFile>Icons\\HeroClasses\\MMH55_#{name}.dds</IconFile>\n"
-		make_text "#{OUTPUTE}/AdvMapObjectLink/GenericHeroes", ["MMH55_#{name}"], [ "#{lStart + lBase + lEnd}" ], 0, 't'
+		make_text target, ["MMH55_#{name}"], [ "#{lStart + lBase + lEnd}" ], 0, 't', "xdb"
 	end
 end
 
