@@ -82,7 +82,8 @@ Shoes.app do
 			hero_class,
 			hero_town,
 			hero_name,
-			hero_spec)
+			hero_spec,
+			fn)
 		
 		towns.each do |t|
 			next if t.town_id != hero_town
@@ -101,7 +102,7 @@ Shoes.app do
 	end	
 	db.hero(heroes)
 	create_text.hero(heroes)
-
+	create_AdvMapSharedGroup(heroes)
 	############ create table with classes list, primary stats chances and secondary skills
 	classes = []
 	class_doc = File.open(SOURCE_CLASSES) { |f| Nokogiri::XML(f) }
@@ -119,6 +120,7 @@ Shoes.app do
 	
 	db.klass(classes, skills)
 	create_text.klass(classes)
+	create_AdvMapObjectLink(classes)
 
 	############ create creature table 
 	units = []

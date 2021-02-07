@@ -1,17 +1,21 @@
 ############### HOW TO MIGRATE DATA FROM NEW VERSION ####################
-# 1. Go to migrationdir/output/delete/texts_## contents
-# 2. Go to migrationdir/output/delete/skillwheel.db
-# 3. Extract MMH55_TEXT_##.pak convert to utf8 and put it in migrationdir/source/texts/MMH55-Texts-##
-# 4. Launch MMH55_to_SQL_v2
-# 5. If no errors launch sql_additions 
-# 6. If no errors migrate_sequence where befure lauching it edit the top of the file to point to new and old DB so it can take sequences.
-# 7. migrate_sequence usually generates errors. Use debug messages to find and fix them.
+# 1. Go to migrationdir/output and delete texts_## contents
+# 2. Go to migrationdir/output and delete skillwheel.db
+# 3. Extract MMH55_XXXX_##.paks (without TEXT) extact and drop into  migrationdir/source/data/
+# 4. Extract MMH55_TEXT_##.pak convert to utf8 and put it in migrationdir/source/texts/MMH55-Texts-##
+# 5.1. Open this file and set DB_FLAG and TXT_FLAG to 1 (this means both db and texts will be extracted)
+# 5.2. Launch MMH55_to_SQL_v2
+# 6. If no errors launch sql_additions 
+# 7. If no errors migrate_sequence where before lauching it edit the top of the file to point to new and old DB so it can take sequences. migrate_sequence usually generates errors. Use debug messages to find and fix them.
 # Note: if major class changes are done you will have to fix the Class skill sequences manually.
-
+# 8. If no errors launch optimizedb to optimize tables
+# 9. Once done use sqldif.exe --summary skillwheel_new.db skillwheel_old.db to find where there are differences
+# 10.
 ###################################### 	 What to do 	 ###########################################
-DB_FLAG = 0
-TXT_FLAG = 1
+DB_FLAG  = 0
+TXT_FLAG = 0
 ###################################### 	 Output dirs    ######################################
+OUTPUTE = "output/editor"
 OUTPUT = "output/texts_en"
 DB_NAME = "output/skillwheel.db"
 ###################################### texts sources ######################################

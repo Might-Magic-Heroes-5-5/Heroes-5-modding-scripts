@@ -50,6 +50,9 @@ def make_text dirr, target, source, mode=0, type='f',
 			data_to_copy[0].gsub!(/<br>/, "\n")
 			data_to_copy = data_to_copy[0].split('<color_default>', target.count ).each { |m| m.gsub!(/<color_default>/, '') }
 		end
+	when "ability" then
+		data_to_copy[0].gsub!(/<br>/, "")
+		data_to_copy[0].gsub!(/<color_default>/, " ")
 	when "pred"
 		data_to_copy[0].gsub!(/<br>/, "\n")
 	end
@@ -60,6 +63,43 @@ def make_text dirr, target, source, mode=0, type='f',
 		file_out.close()
 	end
 	return data_to_copy
+end
+
+def create_AdvMapSharedGroup(heroes)
+	cStart = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<AdvMapSharedGroup>\n\t<links>\n"
+	cEnd   = "\t</links>\n</AdvMapSharedGroup>"
+	classGroup   = {}
+	heroes.each do |h|
+		fpath = h.hero_source
+		fpath.slice!(SOURCE_HEROES)
+		if not classGroup.key?(:"#{h.stats[9]}") then
+			classGroup[:"#{h.stats[9]}"] = []
+		end
+		classGroup[:"#{h.stats[9]}"] = classGroup[:"#{h.stats[9]}"] + [ "/MapObjects" + fpath + "#xpointer(/AdvMapHeroShared)" ]
+	end
+	classGroup.keys.each do |k|
+		cBase = ""
+		FileUtils.mkpath "#{OUTPUTE}/AdvMapSharedGroup"
+		file_out = File.open("#{OUTPUTE}/AdvMapSharedGroup/#{k}.xdb", 'w');
+		classGroup[k].each do |v|
+			cBase = cBase + "\t\t<Item href=\"#{v}\"/>\n"
+		end
+		file_out.write("#{cStart + cBase + cEnd}")
+		file_out.close()
+	end
+end
+
+def create_AdvMapObjectLink(classes)
+	FileUtils.mkpath "#{OUTPUTE}/AdvMapObjectLink/GenericHeroes"
+	lStart = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<AdvMapObjectLink>\n\t<Link/>\n"
+	lEnd   = "\t<HideInEditor>false</HideInEditor>\n</AdvMapObjectLink>"
+	classes.each do |k|
+		input = File.open("#{SOURCE_TXT}/GameMechanics/RefTables/#{k.text}")
+		name = input.read().gsub(/\s+/, "")
+		input.close()
+		lBase = "\t<RndGroup href=\"/MapObjects/_(AdvMapSharedGroup)/Heroes/#{k.class_id}.xdb#xpointer(/AdvMapSharedGroup)\"/>\n\t<IconFile>Icons\\HeroClasses\\MMH55_#{name}.dds</IconFile>\n"
+		make_text "#{OUTPUTE}/AdvMapObjectLink/GenericHeroes", ["MMH55_#{name}"], [ "#{lStart + lBase + lEnd}" ], 0, 't'
+	end
 end
 
 class Town
@@ -101,13 +141,15 @@ end
 
 class Hero < Klass
 	
-	def initialize( h_id, at, df, sp, kn, skill, mastery, perk, spell, c_id, t_id, text, text_spec)
+	def initialize( h_id, at, df, sp, kn, skill, mastery, perk, spell, c_id, t_id, text, text_spec, srcFile)
 		super(c_id, at, df, sp, kn, t_id, text)												## Get inherited vars
 		@hero_id, @skill, @mastery, @perk, @spell = h_id, skill, mastery, perk, spell 		## Get hero vars
 		@text_spec = text_spec 					 					   					    ## Get text vars
+		@sourceF = srcFile
 	end
 	
 	def hero_id; return @hero_id end
+	def hero_source; return @sourceF end
 	def stats; return @hero_id, @at, @df, @sp, @kn, @skill, @mastery, @perk, @spell, @class_id, @town_id end
 	def text; return @text, @text_spec end	
 end	
@@ -332,7 +374,7 @@ class Manage_texts
 		if @flag != 0 then
 			abilities.each do |a|
 				make_text "#{OUTPUT}/abilities/#{a.id}", [ "name" ], "#{SOURCE_TXT}#{a.name}"
-				make_text "#{OUTPUT}/abilities/#{a.id}", [ "desc" ], "#{SOURCE_TXT}#{a.desc}"
+				make_text "#{OUTPUT}/abilities/#{a.id}", [ "desc" ], "#{SOURCE_TXT}#{a.desc}", 'ability'
 			end
 		end
 	end
